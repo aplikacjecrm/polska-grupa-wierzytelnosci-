@@ -192,7 +192,7 @@ class AttachmentUploader {
     
     try {
       const token = localStorage.getItem('token');
-      const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-7504.up.railway.app';
+      const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
       const response = await fetch(`${apiUrl}/api/attachments/upload`, {
         method: 'POST',
         headers: {
@@ -233,7 +233,7 @@ class AttachmentUploader {
   async loadAttachments() {
     try {
       const token = localStorage.getItem('token');
-      const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-7504.up.railway.app';
+      const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
       const response = await fetch(
         `${apiUrl}/api/attachments?entity_type=${this.entityType}&entity_id=${this.entityId}`,
         {
@@ -340,7 +340,7 @@ window.viewAttachment = function(attachmentId) {
     window.crmManager.viewDocument(attachmentId, null, 'attachment');
   } else {
     // Fallback - otwórz w nowej karcie
-    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-7504.up.railway.app';
+    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
     const token = localStorage.getItem('token');
     window.open(`${apiUrl}/api/attachments/${attachmentId}/download?token=${token}`, '_blank');
   }
@@ -372,7 +372,7 @@ window.downloadAttachment = async function(attachmentId) {
   
   try {
     const token = localStorage.getItem('token');
-    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-7504.up.railway.app';
+    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
     const response = await fetch(`${apiUrl}/api/attachments/${attachmentId}/download?download=true`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -407,7 +407,7 @@ window.deleteAttachment = async function(attachmentId, containerId) {
   
   try {
     const token = localStorage.getItem('token');
-    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-7504.up.railway.app';
+    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
     const response = await fetch(`${apiUrl}/api/attachments/${attachmentId}`, {
       method: 'DELETE',
       headers: {

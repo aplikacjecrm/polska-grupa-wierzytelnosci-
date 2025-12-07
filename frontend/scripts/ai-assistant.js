@@ -748,7 +748,7 @@ Podaj konkretny plan treści dokumentu.`
             formData.append('category', 'ai_generated');
             
             // Wyślij do backendu - poprawny endpoint
-            const response = await fetch(`https://web-production-7504.up.railway.app/api/cases/${this.currentCaseId}/documents`, {
+            const response = await fetch(`https://web-production-ef868.up.railway.app/api/cases/${this.currentCaseId}/documents`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
