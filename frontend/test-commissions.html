@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 Test Prowizji i Wypłat</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: #1a2332; 
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .buttons { 
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        button { 
+            padding: 15px 20px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .btn-primary { background: #3B82F6; color: white; }
+        .btn-success { background: #2ecc71; color: white; }
+        .btn-warning { background: #FFD700; color: #1a2332; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-info { background: #8b5cf6; color: white; }
+        
+        #results { 
+            margin-top: 20px; 
+            padding: 20px; 
+            background: #f9f9f9; 
+            border-radius: 12px;
+            min-height: 200px;
+        }
+        #results h3 {
+            margin-bottom: 15px;
+            color: #1a2332;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th { 
+            background: linear-gradient(135deg, #3B82F6, #1E40AF);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td { 
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:hover { background: #f5f5f5; }
+        .status-pending { color: #FFA500; font-weight: 700; }
+        .status-approved { color: #3B82F6; font-weight: 700; }
+        .status-paid { color: #2ecc71; font-weight: 700; }
+        .amount { 
+            font-size: 1.2rem; 
+            font-weight: 700; 
+            color: #2ecc71; 
+        }
+        pre {
+            background: #1a2332;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #999;
+        }
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+        .alert-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .alert-error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Test Prowizji i Wypłat</h1>
+        
+        <div class="buttons">
+            <button class="btn-primary" onclick="testFinances()">📊 Moje Finanse (User 1)</button>
+            <button class="btn-primary" onclick="testCommissions()">📋 Historia Prowizji</button>
+            <button class="btn-info" onclick="testPayments()">💳 Historia Wypłat</button>
+            <button class="btn-warning" onclick="testStats()">📊 Statystyki (Admin)</button>
+            <button class="btn-warning" onclick="testPending()">💰 Do Wypłaty (Admin)</button>
+            <button class="btn-info" onclick="testTopEarners()">🏆 Top 5 Zarabiających</button>
+            <button class="btn-success" onclick="testPayCommission()">💳 Wypłać Prowizję ID:2</button>
+            <button class="btn-danger" onclick="clearResults()">🗑️ Wyczyść</button>
+        </div>
+        
+        <div id="results">
+            <div class="alert alert-info">
+                👋 Wybierz opcję powyżej, aby przetestować API prowizji i wypłat.
+            </div>
+        </div>
+    </div>
+    
+    <script src="scripts/api.js"></script>
+    <script>
+        const results = document.getElementById('results');
+        
+        function showLoading() {
+            results.innerHTML = '<div class="loading">⏳ Ładowanie</div>';
+        }
+        
+        function showError(message) {
+            results.innerHTML = `<div class="alert alert-error">❌ Błąd: ${message}</div>`;
+        }
+        
+        function showSuccess(message) {
+            results.innerHTML = `<div class="alert alert-success">✅ ${message}</div>`;
+        }
+        
+        function clearResults() {
+            results.innerHTML = '<div class="alert alert-info">👋 Wybierz opcję powyżej, aby przetestować API prowizji i wypłat.</div>';
+        }
+        
+        async function testFinances() {
+            showLoading();
+            try {
+                const r = await api.request('/employees/1/finances/summary');
+                const comm = r.summary.commissions;
+                
+                results.innerHTML = `
+                    <h3>💰 Twoje Finanse (User ID: 1)</h3>
+                    
+                    <div class="stat-grid">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: white;">
+                            <div style="font-size: 0.9rem; opacity: 0.9;">⏸️ Oczekujące</div>
+                            <div style="font-size: 2.5rem; font-weight: 700;">${comm.pending_amount || 0} PLN</div>
+                            <div style="font-size: 0.85rem;">${comm.pending_count || 0} prowizji</div>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #3B82F6, #1E40AF); color: white;">
+                            <div style="font-size: 0.9rem; opacity: 0.9;">⏳ Do wypłaty</div>
+                            <div style="font-size: 2.5rem; font-weight: 700;">${comm.approved_amount || 0} PLN</div>
+                            <div style="font-size: 0.85rem;">${comm.approved_count || 0} prowizji</div>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #2ecc71, #27ae60); color: white;">
+                            <div style="font-size: 0.9rem; opacity: 0.9;">✅ Wypłacone</div>
+                            <div style="font-size: 2.5rem; font-weight: 700;">${comm.paid_amount || 0} PLN</div>
+                            <div style="font-size: 0.85rem;">${comm.paid_count || 0} prowizji</div>
+                        </div>
+                    </div>
+                    
+                    <h4 style="margin-top: 20px;">💳 Ostatnie Wypłaty:</h4>
+                    ${r.summary.recent_payments.length > 0 ? `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Kwota</th>
+                                    <th>Typ</th>
+                                    <th>Opis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${r.summary.recent_payments.map(p => `
+                                    <tr>
+                                        <td>${p.payment_date}</td>
+                                        <td class="amount">${p.amount} PLN</td>
+                                        <td>${p.payment_type}</td>
+                                        <td>${p.description}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<p style="text-align: center; padding: 20px; color: #999;">Brak wypłat</p>'}
+                    
+                    <details style="margin-top: 20px;">
+                        <summary style="cursor: pointer; font-weight: 600;">🔍 Dane JSON</summary>
+                        <pre>${JSON.stringify(r, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+        
+        async function testCommissions() {
+            showLoading();
+            try {
+                const r = await api.request('/employees/1/commissions/history');
+                
+                results.innerHTML = `
+                    <h3>📋 Historia Prowizji (${r.commissions.length})</h3>
+                    
+                    ${r.commissions.length > 0 ? `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Sprawa</th>
+                                    <th>Klient</th>
+                                    <th>Kwota</th>
+                                    <th>Stawka</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${r.commissions.map(c => `
+                                    <tr>
+                                        <td><strong>${c.id}</strong></td>
+                                        <td>${c.case_number || '-'}</td>
+                                        <td>${c.client_name || '-'}</td>
+                                        <td class="amount">${c.amount} PLN</td>
+                                        <td>${c.rate}%</td>
+                                        <td><span class="status-${c.status}">${c.status.toUpperCase()}</span></td>
+                                        <td>${c.created_at.split('T')[0]}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<p style="text-align: center; padding: 20px; color: #999;">Brak prowizji</p>'}
+                    
+                    <details style="margin-top: 20px;">
+                        <summary style="cursor: pointer; font-weight: 600;">🔍 Dane JSON</summary>
+                        <pre>${JSON.stringify(r, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+        
+        async function testPayments() {
+            showLoading();
+            try {
+                const r = await api.request('/employees/1/payments/history');
+                
+                results.innerHTML = `
+                    <h3>💳 Historia Wypłat (${r.payments.length})</h3>
+                    
+                    ${r.payments.length > 0 ? `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Data</th>
+                                    <th>Kwota</th>
+                                    <th>Typ</th>
+                                    <th>Status</th>
+                                    <th>Opis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${r.payments.map(p => `
+                                    <tr>
+                                        <td><strong>${p.id}</strong></td>
+                                        <td>${p.payment_date}</td>
+                                        <td class="amount">${p.amount} PLN</td>
+                                        <td>${p.payment_type}</td>
+                                        <td><span class="status-${p.status}">${p.status}</span></td>
+                                        <td>${p.description}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<p style="text-align: center; padding: 20px; color: #999;">Brak wypłat</p>'}
+                    
+                    <details style="margin-top: 20px;">
+                        <summary style="cursor: pointer; font-weight: 600;">🔍 Dane JSON</summary>
+                        <pre>${JSON.stringify(r, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+        
+        async function testStats() {
+            showLoading();
+            try {
+                const r = await api.request('/commissions/v2/stats');
+                const s = r.stats;
+                
+                results.innerHTML = `
+                    <h3>📊 Statystyki Prowizji (Admin/Finance)</h3>
+                    
+                    <div class="stat-grid">
+                        <div class="stat-card" style="background: #FFD700;">
+                            <div style="font-size: 0.9rem;">⏸️ Oczekujące</div>
+                            <div style="font-size: 2rem; font-weight: 700;">${s.pending_amount || 0} PLN</div>
+                            <div style="font-size: 0.85rem;">${s.pending_count || 0} prowizji</div>
+                        </div>
+                        <div class="stat-card" style="background: #3B82F6; color: white;">
+                            <div style="font-size: 0.9rem;">✅ Zatwierdzone</div>
+                            <div style="font-size: 2rem; font-weight: 700;">${s.approved_amount || 0} PLN</div>
+                            <div style="font-size: 0.85rem;">${s.approved_count || 0} do wypłaty</div>
+                        </div>
+                        <div class="stat-card" style="background: #2ecc71; color: white;">
+                            <div style="font-size: 0.9rem;">💳 Wypłacone</div>
+                            <div style="font-size: 2rem; font-weight: 700;">${s.paid_amount || 0} PLN</div>
+                            <div style="font-size: 0.85rem;">${s.paid_count || 0} prowizji</div>
+                        </div>
+                        <div class="stat-card" style="background: #8b5cf6; color: white;">
+                            <div style="font-size: 0.9rem;">📊 Razem</div>
+                            <div style="font-size: 2rem; font-weight: 700;">${s.total_amount || 0} PLN</div>
+                            <div style="font-size: 0.85rem;">${s.total_count || 0} prowizji</div>
+                        </div>
+                    </div>
+                    
+                    <details style="margin-top: 20px;">
+                        <summary style="cursor: pointer; font-weight: 600;">🔍 Dane JSON</summary>
+                        <pre>${JSON.stringify(r, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+        
+        async function testPending() {
+            showLoading();
+            try {
+                const r = await api.request('/commissions/v2/pending');
+                
+                results.innerHTML = `
+                    <h3>💰 Prowizje do Wypłaty (${r.commissions.length})</h3>
+                    
+                    ${r.commissions.length > 0 ? `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Pracownik</th>
+                                    <th>Sprawa</th>
+                                    <th>Klient</th>
+                                    <th>Kwota</th>
+                                    <th>Data</th>
+                                    <th>Akcja</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${r.commissions.map(c => `
+                                    <tr>
+                                        <td><strong>${c.id}</strong></td>
+                                        <td>${c.employee_name || 'Nieznany'}</td>
+                                        <td>${c.case_number || '-'}</td>
+                                        <td>${c.client_name || '-'}</td>
+                                        <td class="amount">${c.amount} PLN</td>
+                                        <td>${c.created_at.split('T')[0]}</td>
+                                        <td>
+                                            <button class="btn-success" style="padding: 6px 12px; font-size: 0.85rem;" 
+                                                    onclick="paySpecificCommission(${c.id})">
+                                                💳 Wypłać
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<p style="text-align: center; padding: 20px; color: #999;">Brak prowizji do wypłaty</p>'}
+                    
+                    <details style="margin-top: 20px;">
+                        <summary style="cursor: pointer; font-weight: 600;">🔍 Dane JSON</summary>
+                        <pre>${JSON.stringify(r, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+        
+        async function testTopEarners() {
+            showLoading();
+            try {
+                const r = await api.request('/commissions/v2/top-earners?limit=5');
+                
+                results.innerHTML = `
+                    <h3>🏆 Top 5 Zarabiających</h3>
+                    
+                    ${r.top_earners.length > 0 ? `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">Miejsce</th>
+                                    <th>Pracownik</th>
+                                    <th>Email</th>
+                                    <th>Liczba prowizji</th>
+                                    <th>Zarobione</th>
+                                    <th>Wypłacone</th>
+                                    <th>Oczekuje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${r.top_earners.map((e, i) => `
+                                    <tr>
+                                        <td style="text-align: center; font-size: 1.5rem;">
+                                            ${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`}
+                                        </td>
+                                        <td><strong>${e.employee_name}</strong></td>
+                                        <td>${e.email}</td>
+                                        <td style="text-align: center;">${e.commissions_count}</td>
+                                        <td class="amount">${e.total_earned} PLN</td>
+                                        <td style="color: #2ecc71; font-weight: 600;">${e.paid_amount} PLN</td>
+                                        <td style="color: #FFA500; font-weight: 600;">${e.pending_amount} PLN</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<p style="text-align: center; padding: 20px; color: #999;">Brak danych</p>'}
+                    
+                    <details style="margin-top: 20px;">
+                        <summary style="cursor: pointer; font-weight: 600;">🔍 Dane JSON</summary>
+                        <pre>${JSON.stringify(r, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+        
+        async function testPayCommission() {
+            await paySpecificCommission(2);
+        }
+        
+        async function paySpecificCommission(commissionId) {
+            if (!confirm(`💳 Wypłacić prowizję ID: ${commissionId}?\\n\\nZostanie utworzona wypłata w employee_payments.`)) {
+                return;
+            }
+            
+            showLoading();
+            try {
+                const r = await api.request(`/commissions/v2/${commissionId}/pay`, { method: 'POST' });
+                
+                results.innerHTML = `
+                    <div class="alert alert-success">
+                        <h3>✅ Prowizja Wypłacona!</h3>
+                        <p><strong>ID:</strong> ${r.commission_id}</p>
+                        <p><strong>Kwota:</strong> ${r.amount} PLN</p>
+                        <p><strong>Status:</strong> Utworzono wpis w employee_payments</p>
+                    </div>
+                    
+                    <button class="btn-primary" onclick="testPending()" style="margin-top: 15px;">
+                        🔄 Odśwież listę do wypłaty
+                    </button>
+                    <button class="btn-info" onclick="testPayments()" style="margin-top: 15px;">
+                        💳 Zobacz historię wypłat
+                    </button>
+                    
+                    <details style="margin-top: 20px;">
+                        <summary style="cursor: pointer; font-weight: 600;">🔍 Dane JSON</summary>
+                        <pre>${JSON.stringify(r, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+    </script>
+</body>
+</html>

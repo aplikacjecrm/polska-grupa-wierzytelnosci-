@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Approve Endpoint</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; background: #2ecc71; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        button:hover { background: #27ae60; }
+        button.reject { background: #e74c3c; }
+        button.reject:hover { background: #c0392b; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        .success { color: #2ecc71; }
+        .error { color: #e74c3c; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Endpointów Prowizji</h1>
+        
+        <div>
+            <label>Commission ID:</label>
+            <input type="number" id="commissionId" value="41" />
+        </div>
+        
+        <h2>Akcje:</h2>
+        <button onclick="approveCommission()">✅ Zatwierdź</button>
+        <button class="reject" onclick="rejectCommission()">❌ Odrzuć</button>
+        <button onclick="getCommission()" style="background: #3B82F6;">📋 Zobacz Details</button>
+        
+        <h2>Rezultat:</h2>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3500/api';
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            document.getElementById('result').innerHTML = '<p class="error">❌ Brak tokena! Zaloguj się najpierw na głównej stronie.</p>';
+        }
+
+        async function request(endpoint, options = {}) {
+            const response = await fetch(API_URL + endpoint, {
+                ...options,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+            
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                data = { raw: text };
+            }
+            
+            return {
+                status: response.status,
+                ok: response.ok,
+                data
+            };
+        }
+
+        async function approveCommission() {
+            const id = document.getElementById('commissionId').value;
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>⏳ Zatwierdzam prowizję ' + id + '...</p>';
+            
+            try {
+                const res = await request(`/commissions/${id}/approve`, { method: 'POST' });
+                
+                result.innerHTML = `
+                    <p class="${res.ok ? 'success' : 'error'}">${res.ok ? '✅ Sukces!' : '❌ Błąd!'}</p>
+                    <p><strong>Status:</strong> ${res.status}</p>
+                    <pre>${JSON.stringify(res.data, null, 2)}</pre>
+                `;
+            } catch (err) {
+                result.innerHTML = `<p class="error">❌ Błąd: ${err.message}</p>`;
+            }
+        }
+
+        async function rejectCommission() {
+            const id = document.getElementById('commissionId').value;
+            const reason = prompt('Powód odrzucenia:');
+            if (!reason) return;
+            
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>⏳ Odrzucam prowizję ' + id + '...</p>';
+            
+            try {
+                const res = await request(`/commissions/${id}/reject`, { 
+                    method: 'POST',
+                    body: JSON.stringify({ reason })
+                });
+                
+                result.innerHTML = `
+                    <p class="${res.ok ? 'success' : 'error'}">${res.ok ? '✅ Odrzucona!' : '❌ Błąd!'}</p>
+                    <p><strong>Status:</strong> ${res.status}</p>
+                    <pre>${JSON.stringify(res.data, null, 2)}</pre>
+                `;
+            } catch (err) {
+                result.innerHTML = `<p class="error">❌ Błąd: ${err.message}</p>`;
+            }
+        }
+
+        async function getCommission() {
+            const id = document.getElementById('commissionId').value;
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>⏳ Pobieram prowizję ' + id + '...</p>';
+            
+            try {
+                const res = await request(`/commissions/v2/pending`);
+                
+                if (res.ok && res.data.commissions) {
+                    const comm = res.data.commissions.find(c => c.id == id);
+                    
+                    if (comm) {
+                        result.innerHTML = `
+                            <p class="success">✅ Znaleziona!</p>
+                            <pre>${JSON.stringify(comm, null, 2)}</pre>
+                        `;
+                    } else {
+                        result.innerHTML = `<p class="error">❌ Prowizja ID ${id} nie znaleziona w liście pending</p>`;
+                    }
+                } else {
+                    result.innerHTML = `<p class="error">❌ Błąd: ${JSON.stringify(res.data)}</p>`;
+                }
+            } catch (err) {
+                result.innerHTML = `<p class="error">❌ Błąd: ${err.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

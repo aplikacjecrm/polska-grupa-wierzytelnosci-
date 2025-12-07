@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 DEMO - Orzeczenia Sądowe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .article-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-color: #667eea;
+        }
+        
+        .article-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .article-desc {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .decisions-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 DEMO - System Orzeczeń Sądowych</h1>
+        <p class="subtitle">Kliknij na artykuł aby zobaczyć powiązane orzeczenia Sądu Najwyższego</p>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">269</div>
+                <div class="stat-label">⚖️ Orzeczeń SN</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">12,512</div>
+                <div class="stat-label">📚 Artykułów ustaw</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">346</div>
+                <div class="stat-label">🔗 Połączeń</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">13</div>
+                <div class="stat-label">📖 Kodeksów</div>
+            </div>
+        </div>
+        
+        <h2 style="margin: 40px 0 20px 0; color: #333;">🔥 TOP Artykuły z Orzeczeniami:</h2>
+        
+        <div class="articles-grid">
+            <div class="article-card" onclick="showDecisions(1, 'Art. 446 KC - Zadośćuczynienie')">
+                <div class="article-title">Art. 446 KC</div>
+                <div class="article-desc">Zadośćuczynienie za naruszenie dóbr osobistych</div>
+                <span class="decisions-badge">⚖️ 40 orzeczeń</span>
+            </div>
+            
+            <div class="article-card" onclick="showDecisions(2, 'Art. 415 KC - Odpowiedzialność deliktowa')">
+                <div class="article-title">Art. 415 KC</div>
+                <div class="article-desc">Odpowiedzialność za czyn niedozwolony</div>
+                <span class="decisions-badge">⚖️ 36 orzeczeń</span>
+            </div>
+            
+            <div class="article-card" onclick="showDecisions(3, 'Art. 444 KC - Szkoda niemajątkowa')">
+                <div class="article-title">Art. 444 KC</div>
+                <div class="article-desc">Odszkodowanie za uszkodzenie ciała i rozstrój zdrowia</div>
+                <span class="decisions-badge">⚖️ 30 orzeczeń</span>
+            </div>
+            
+            <div class="article-card" onclick="showDecisions(4, 'Art. 361 KC - Związek przyczynowy')">
+                <div class="article-title">Art. 361 KC</div>
+                <div class="article-desc">Normalny związek przyczynowy</div>
+                <span class="decisions-badge">⚖️ 30 orzeczeń</span>
+            </div>
+            
+            <div class="article-card" onclick="showDecisions(5, 'Art. 471 KC - Odpowiedzialność kontraktowa')">
+                <div class="article-title">Art. 471 KC</div>
+                <div class="article-desc">Odpowiedzialność za nienależyte wykonanie zobowiązania</div>
+                <span class="decisions-badge">⚖️ 28 orzeczeń</span>
+            </div>
+            
+            <div class="article-card" onclick="showDecisions(6, 'Art. 233 KPC - Swobodna ocena dowodów')">
+                <div class="article-title">Art. 233 KPC</div>
+                <div class="article-desc">Zasada swobodnej oceny dowodów</div>
+                <span class="decisions-badge">⚖️ 20 orzeczeń</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- API Helper -->
+    <script>
+        const API_BASE = 'http://localhost:3500/api';
+        
+        window.api = {
+            request: async function(endpoint, options = {}) {
+                const url = `${API_BASE}${endpoint}`;
+                const response = await fetch(url, {
+                    method: options.method || 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    body: options.body ? JSON.stringify(options.body) : undefined
+                });
+                return await response.json();
+            }
+        };
+        
+        async function showDecisions(articleId, title) {
+            console.log(`Ładuję orzeczenia dla: ${title}`);
+            
+            // Przykładowy ID artykułu w bazie (musisz to dostosować)
+            // Dla demo użyjemy wyszukiwania po tytule
+            try {
+                const response = await window.api.request(`/court-decisions/article/${articleId}`);
+                if (response && response.success) {
+                    window.showCourtDecisionsForArticle?.(articleId, title);
+                } else {
+                    alert(`Ładuję orzeczenia dla: ${title}\n\nWystartuj backend: node backend/server.js`);
+                }
+            } catch (error) {
+                console.error('Błąd:', error);
+                alert('⚠️ Backend nie działa!\n\nUruchom: node backend/server.js\n\nPort: 3500');
+            }
+        }
+    </script>
+    
+    <!-- Court Decisions Viewer -->
+    <script src="frontend/scripts/court-decisions-viewer.js"></script>
+</body>
+</html>

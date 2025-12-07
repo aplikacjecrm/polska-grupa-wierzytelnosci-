@@ -1,0 +1,86 @@
+/* ========================================
+   PRZEŁĄCZNIK MOTYWÓW
+   ======================================== */
+
+.theme-switcher {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 10px;
+}
+
+.theme-toggle-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: linear-gradient(145deg, 
+        rgba(255, 215, 0, 0.1) 0%, 
+        rgba(255, 215, 0, 0.05) 100%);
+    border: 2px solid rgba(255, 215, 0, 0.2);
+    border-radius: 10px;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.theme-toggle-btn:hover {
+    background: linear-gradient(145deg, 
+        rgba(255, 215, 0, 0.2) 0%, 
+        rgba(255, 215, 0, 0.1) 100%);
+    border-color: rgba(255, 215, 0, 0.4);
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+}
+
+.theme-toggle-btn:active {
+    transform: translateX(5px) scale(0.98);
+}
+
+.theme-icon {
+    font-size: 1.5rem;
+    display: inline-block;
+    animation: rotate 2s ease-in-out infinite;
+}
+
+@keyframes rotate {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(10deg); }
+}
+
+.theme-toggle-btn:hover .theme-icon {
+    animation: spin 0.5s ease-in-out;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.theme-name {
+    flex: 1;
+    text-align: left;
+}
+
+/* Light theme dla przełącznika */
+body[data-theme="light"] .theme-switcher {
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+body[data-theme="light"] .theme-toggle-btn {
+    background: linear-gradient(145deg, 
+        rgba(33, 150, 243, 0.1) 0%, 
+        rgba(33, 150, 243, 0.05) 100%);
+    border-color: rgba(33, 150, 243, 0.2);
+    color: var(--text-dark);
+}
+
+body[data-theme="light"] .theme-toggle-btn:hover {
+    background: linear-gradient(145deg, 
+        rgba(33, 150, 243, 0.2) 0%, 
+        rgba(33, 150, 243, 0.1) 100%);
+    border-color: rgba(33, 150, 243, 0.4);
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
+}

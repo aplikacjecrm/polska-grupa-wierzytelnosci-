@@ -1,0 +1,175 @@
+/* ========================================
+   NOWOCZESNE ZAKŁADKI W STYLU RADIA
+   ======================================== */
+
+.case-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    user-select: none;
+    backdrop-filter: blur(10px);
+}
+
+/* Pierwszy element - zaokrąglenie po lewej */
+.case-tab:first-child {
+    border-radius: 12px 0 0 12px;
+}
+
+/* Ostatni element - zaokrąglenie po prawej */
+.case-tab:last-child {
+    border-radius: 0 12px 12px 0;
+}
+
+/* Pojedynczy element - pełne zaokrąglenie */
+.case-tab:only-child {
+    border-radius: 12px;
+}
+
+/* Hover */
+.case-tab:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 215, 0, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+}
+
+/* Aktywna zakładka - ZŁOTY GRADIENT jak radio button */
+.case-tab.active {
+    background: linear-gradient(145deg, 
+        #FFD700 0%, 
+        #FFC700 50%,
+        #DAA520 100%);
+    border-color: #FFD700;
+    color: #1a1a2e;
+    font-weight: 700;
+    transform: translateY(0);
+    box-shadow: 
+        0 4px 20px rgba(255, 215, 0, 0.4),
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        inset 0 -2px 0 rgba(0,0,0,0.2);
+}
+
+/* Efekt świecenia dla aktywnej */
+.case-tab.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255,255,255,0.3), 
+        transparent);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0%, 100% { left: -100%; }
+    50% { left: 100%; }
+}
+
+/* Ikona w zakładce */
+.case-tab span:first-child {
+    font-size: 1.2rem;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+}
+
+/* Aktywna ikona - białe na złotym */
+.case-tab.active span:first-child {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+/* Animacja kliknięcia */
+.case-tab:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 
+        0 2px 8px rgba(255, 215, 0, 0.3),
+        inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Efekt ripple przy kliknięciu */
+.case-tab::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s, opacity 0.6s;
+    opacity: 0;
+}
+
+.case-tab:active::after {
+    width: 200px;
+    height: 200px;
+    opacity: 1;
+    transition: 0s;
+}
+
+/* ===================================== */
+/* RESPONSIVE - Mniejsze ekrany         */
+/* ===================================== */
+
+/* Laptopy 15-17" (1600px i mniej) */
+@media (max-width: 1600px) {
+    .case-tab {
+        padding: 8px 12px !important;
+        font-size: 0.85rem !important;
+        gap: 6px !important;
+    }
+    .case-tab span:first-child {
+        font-size: 1.1rem !important;
+    }
+}
+
+/* Laptopy 13-14" (1366px i mniej) */
+@media (max-width: 1366px) {
+    .case-tab {
+        padding: 6px 10px !important;
+        font-size: 0.75rem !important;
+        gap: 5px !important;
+    }
+    .case-tab span:first-child {
+        font-size: 1rem !important;
+    }
+}
+
+/* Małe laptopy i tablety (1024px i mniej) */
+@media (max-width: 1024px) {
+    .case-tab {
+        padding: 5px 8px !important;
+        font-size: 0.7rem !important;
+        gap: 4px !important;
+    }
+    .case-tab span:first-child {
+        font-size: 0.9rem !important;
+    }
+}
+
+/* Bardzo małe ekrany (768px i mniej) - ukryj emoji */
+@media (max-width: 768px) {
+    .case-tab span:first-child {
+        display: none !important;
+    }
+    .case-tab {
+        padding: 4px 6px !important;
+        font-size: 0.65rem !important;
+    }
+}

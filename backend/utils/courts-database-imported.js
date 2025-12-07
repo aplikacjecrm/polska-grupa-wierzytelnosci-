@@ -1,0 +1,5058 @@
+/**
+ * BAZA DANYCH SĄDÓW POWSZECHNYCH W POLSCE
+ * Źródło: https://dane.gov.pl/pl/dataset/985,lista-sadow-powszechnych
+ * Data importu: 7.11.2025
+ * Liczba sądów: 329
+ */
+
+const COURTS_DATABASE = {
+  'w_Biaymstoku': {
+    id: 'w_Biaymstoku',
+    name: 'Sąd Rejonowy w Białymstoku',
+    shortName: 'SR w Białymstoku',
+    type: 'rejonowy',
+    city: 'Białystok',
+    address: 'Mickiewicza 103, 15-950 Białystok',
+    phone: '(85) 665 65 10',
+    email: 'boi@bialystok.sr.gov.pl',
+    website: 'https://w-biaymstoku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Bielsku_Podlaskim': {
+    id: 'w_Bielsku_Podlaskim',
+    name: 'Sąd Rejonowy w Bielsku Podlaskim',
+    shortName: 'SR w Bielsku Podlaskim',
+    type: 'rejonowy',
+    city: 'Bielsk Podlaski',
+    address: '3 Maja  7, 17-100 Bielsk Podlaski',
+    phone: '(85) 731 21 65, 731 21 67',
+    email: 'boi@bielsk-podlaski.sr.gov.pl',
+    website: 'https://w-bielsku-podlaskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Sokce': {
+    id: 'w_Sokce',
+    name: 'Sąd Rejonowy w Sokółce',
+    shortName: 'SR w Sokółce',
+    type: 'rejonowy',
+    city: 'Sokółka',
+    address: 'Piłsudskiego 7, 16-100 Sokółka',
+    phone: '(85) 81 12 300',
+    email: 'boi@sokolka.sr.gov.pl',
+    website: 'https://w-sokce.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_omy': {
+    id: 'w_omy',
+    name: 'Sąd Rejonowy w Łomży',
+    shortName: 'SR w Łomży',
+    type: 'rejonowy',
+    city: 'Łomża',
+    address: 'Polowa 1, 18-400 Łomża',
+    phone: '(86) 215 09 22',
+    email: 'boi@lomza.sr.gov.pl',
+    website: 'https://w-omy.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Grajewie': {
+    id: 'w_Grajewie',
+    name: 'Sąd Rejonowy w Grajewie',
+    shortName: 'SR w Grajewie',
+    type: 'rejonowy',
+    city: 'Grajewo',
+    address: 'Kolejowa 1, 19-200  Grajewo',
+    phone: '(86) 272 25 25',
+    email: 'administracja@grajewo.sr.gov.pl',
+    website: 'https://w-grajewie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zambrowie': {
+    id: 'w_Zambrowie',
+    name: 'Sąd Rejonowy w Zambrowie',
+    shortName: 'SR w Zambrowie',
+    type: 'rejonowy',
+    city: 'Zambrów',
+    address: 'Al. Wojska Polskiego 56, 18-300 Zambrów',
+    phone: '(86) 271 31 07',
+    email: 'administracja@zambrow.sr.gov.pl',
+    website: 'https://w-zambrowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Wysokiem_Mazowieckiem': {
+    id: 'w_Wysokiem_Mazowieckiem',
+    name: 'Sąd Rejonowy w Wysokiem Mazowieckiem',
+    shortName: 'SR w Wysokiem Mazowieckiem',
+    type: 'rejonowy',
+    city: 'Wysokie Mazowieckie',
+    address: 'Ludowa 44, 18-200 Wysokie Mazowieckie',
+    phone: '(86) 477 02 30',
+    email: 'administracja@wysmaz.sr.gov.pl',
+    website: 'https://w-wysokiem-mazowieckiem.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Olsztynie': {
+    id: 'w_Olsztynie',
+    name: 'Sąd Rejonowy w Olsztynie',
+    shortName: 'SR w Olsztynie',
+    type: 'rejonowy',
+    city: 'Olsztyn',
+    address: 'Dąbrowszczaków 44, 10-543 Olsztyn',
+    phone: '(89) 52 30 280',
+    email: 'boi.srolsztyn@olsztyn.sr.gov.pl',
+    website: 'https://w-olsztynie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Bartoszycach': {
+    id: 'w_Bartoszycach',
+    name: 'Sąd Rejonowy w Bartoszycach',
+    shortName: 'SR w Bartoszycach',
+    type: 'rejonowy',
+    city: 'Bartoszyce',
+    address: 'Warszawska 7, 11-200 Bartoszyce',
+    phone: '(89) 762 22 96',
+    email: 'boi@bartoszyce.sr.gov.pl',
+    website: 'https://w-bartoszycach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Biskupcu': {
+    id: 'w_Biskupcu',
+    name: 'Sąd Rejonowy w Biskupcu',
+    shortName: 'SR w Biskupcu',
+    type: 'rejonowy',
+    city: 'Biskupiec',
+    address: 'Sądowa 4 i 2, 11-300 Biskupiec',
+    phone: '(89) 715 23 10',
+    email: 'boi@biskupiec.sr.gov.pl',
+    website: 'https://w-biskupcu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Giycku': {
+    id: 'w_Giycku',
+    name: 'Sąd Rejonowy w Giżycku',
+    shortName: 'SR w Giżycku',
+    type: 'rejonowy',
+    city: 'Giżycko',
+    address: 'Warszawska 28, 11-500 Giżycko',
+    phone: '(87) 429 82 21',
+    email: 'punkt.obsługi@gizycko.sr.gov.pl',
+    website: 'https://w-giycku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Ktrzynie': {
+    id: 'w_Ktrzynie',
+    name: 'Sąd Rejonowy w Kętrzynie',
+    shortName: 'SR w Kętrzynie',
+    type: 'rejonowy',
+    city: 'Kętrzyn',
+    address: 'Sikorskiego 66, 11-400  Kętrzyn',
+    phone: '(89) 751 76 06',
+    email: 'boi@ketrzyn.sr.gov.pl',
+    website: 'https://w-ktrzynie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lidzbarku_Warmiskim': {
+    id: 'w_Lidzbarku_Warmiskim',
+    name: 'Sąd Rejonowy w Lidzbarku Warmińskim',
+    shortName: 'SR w Lidzbarku Warmińskim',
+    type: 'rejonowy',
+    city: 'Lidzbark Warmiński',
+    address: 'Bartoszycka 4a, 11-100 Lidzbark Warmiński',
+    phone: '(89) 767 83 00',
+    email: 'podawcze@lidzbarkwarminski.sr.gov.pl',
+    website: 'https://w-lidzbarku-warmiskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Mrgowie': {
+    id: 'w_Mrgowie',
+    name: 'Sąd Rejonowy w Mrągowie',
+    shortName: 'SR w Mrągowie',
+    type: 'rejonowy',
+    city: 'Mrągowo',
+    address: 'Królewiecka 55, 11-700 Mrągowo',
+    phone: '(89) 741 30 87',
+    email: 'boi.mragowo@olsztyn.so.gov.pl',
+    website: 'https://w-mrgowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Nidzicy': {
+    id: 'w_Nidzicy',
+    name: 'Sąd Rejonowy w Nidzicy',
+    shortName: 'SR w Nidzicy',
+    type: 'rejonowy',
+    city: 'Nidzica',
+    address: 'Kościuszki 15 , 13-100 Nidzica',
+    phone: '(89) 521 59 59',
+    email: 'poi@nidzica.sr.gov.pl',
+    website: 'https://w-nidzicy.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Piszu': {
+    id: 'w_Piszu',
+    name: 'Sąd Rejonowy w Piszu',
+    shortName: 'SR w Piszu',
+    type: 'rejonowy',
+    city: 'Pisz',
+    address: 'Warszawska 47, 11-200 Pisz',
+    phone: '(87) 424 13 00',
+    email: 'boi@pisz.sr.gov.pl',
+    website: 'https://w-piszu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Szczytnie': {
+    id: 'w_Szczytnie',
+    name: 'Sąd Rejonowy w Szczytnie',
+    shortName: 'SR w Szczytnie',
+    type: 'rejonowy',
+    city: 'Szczytno',
+    address: 'Sienkiewicza 8, 12-100 Szczytno',
+    phone: '(89) 624 71 13',
+    email: 'obsluga.interesantow@szczytno.sr.gov.pl',
+    website: 'https://w-szczytnie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Ostroce': {
+    id: 'w_Ostroce',
+    name: 'Sąd Rejonowy w Ostrołęce',
+    shortName: 'SR w Ostrołęce',
+    type: 'rejonowy',
+    city: 'Ostrołęka',
+    address: 'Mazowiecka 3, 07-410 Ostrołęka',
+    phone: '(29) 765 44 00, (29) 765 44 01',
+    email: 'boi@ostroleka.sr.gov.pl',
+    website: 'https://w-ostroce.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Ostrowi_Mazowieckiej': {
+    id: 'w_Ostrowi_Mazowieckiej',
+    name: 'Sąd Rejonowy w Ostrowi Mazowieckiej',
+    shortName: 'SR w Ostrowi Mazowieckiej',
+    type: 'rejonowy',
+    city: 'Ostrów Mazowiecka',
+    address: 'Prusa 2, 07-300 Ostrów Mazowiecka',
+    phone: '(29) 746 89 35',
+    email: 'boi@ostrowmaz.sr.gov.pl',
+    website: 'https://w-ostrowi-mazowieckiej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Przasnyszu': {
+    id: 'w_Przasnyszu',
+    name: 'Sąd Rejonowy w Przasnyszu',
+    shortName: 'SR w Przasnyszu',
+    type: 'rejonowy',
+    city: 'Przasnysz',
+    address: 'Świerkowa 7, 06-300 Przasnysz',
+    phone: '(29) 752 13 12',
+    email: 'boi@przasnysz.sr.gov.pl',
+    website: 'https://w-przasnyszu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Putusku': {
+    id: 'w_Putusku',
+    name: 'Sąd Rejonowy w Pułtusku',
+    shortName: 'SR w Pułtusku',
+    type: 'rejonowy',
+    city: 'Pułtusk',
+    address: 'Rynek  37, 06-100 Pułtusk',
+    phone: '(23) 692 99 70',
+    email: 'biuro.podawcze@pultusk.sr.gov.pl',
+    website: 'https://w-putusku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Wyszkowie': {
+    id: 'w_Wyszkowie',
+    name: 'Sąd Rejonowy w Wyszkowie',
+    shortName: 'SR w Wyszkowie',
+    type: 'rejonowy',
+    city: 'Wyszków',
+    address: 'Kościuszki 50, 07-200  Wyszków',
+    phone: '(29) 742 38 01',
+    email: 'boi@wyszkow.sr.gov.pl',
+    website: 'https://w-wyszkowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Suwakach': {
+    id: 'w_Suwakach',
+    name: 'Sąd Rejonowy w Suwałkach',
+    shortName: 'SR w Suwałkach',
+    type: 'rejonowy',
+    city: 'Suwałki',
+    address: 'Waryńskiego 45, 16-400 Suwałki',
+    phone: '(87) 563 54 44',
+    email: 'boi@suwalki.sr.gov.pl',
+    website: 'https://w-suwakach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Augustowie': {
+    id: 'w_Augustowie',
+    name: 'Sąd Rejonowy w Augustowie',
+    shortName: 'SR w Augustowie',
+    type: 'rejonowy',
+    city: 'Augustów',
+    address: 'Młyńska 59 , 16-300  Augustów',
+    phone: '(87) 643 84 30',
+    email: 'poi@augustow.sr.gov.pl',
+    website: 'https://w-augustowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Eku': {
+    id: 'w_Eku',
+    name: 'Sąd Rejonowy w Ełku',
+    shortName: 'SR w Ełku',
+    type: 'rejonowy',
+    city: 'Ełk',
+    address: 'Małeckich 4, 19-300 Ełk',
+    phone: '(87) 629 03 14',
+    email: 'boi@elk.sr.gov.pl',
+    website: 'https://w-eku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Olecku': {
+    id: 'w_Olecku',
+    name: 'Sąd Rejonowy w Olecku',
+    shortName: 'SR w Olecku',
+    type: 'rejonowy',
+    city: 'Olecko',
+    address: 'Osiedle Siejnik I 18, 19-400 Olecko',
+    phone: '(87) 523 06 50',
+    email: 'boi@olecko.sr.gov.pl',
+    website: 'https://w-olecku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Gdasku': {
+    id: 'w_Gdasku',
+    name: 'Sąd Okręgowy w Gdańsku',
+    shortName: 'SO w Gdańsku',
+    type: 'okręgowy',
+    city: 'Gdańsk',
+    address: 'Nowe Ogrody 30/34,                               3 Maja 9A, 80-803   Nowe Ogrody,             80-802           3 Maja Gdańsk',
+    phone: '(58) 32-13-268, (58) 32-13-269,
+(58) 32-13-322, (58) 32-13-129 (Nowe Ogrody);                                               (58) 32-42-813, (58) 32-42-842 (3 Maja)',
+    email: 'informacja@gdansk.so.gov.pl (Nowe Ogrody), informacja3maja@gdansk.so.gov.pl (3 Maja)',
+    website: 'https://w-gdasku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Bydgoszczy': {
+    id: 'w_Bydgoszczy',
+    name: 'Sąd Rejonowy w Bydgoszczy',
+    shortName: 'SR w Bydgoszczy',
+    type: 'rejonowy',
+    city: 'Bydgoszcz',
+    address: 'Wały Jagiellońskie 4, 85-131 Bydgoszcz',
+    phone: '(52) 587 85 00',
+    email: 'boi@bydgoszcz.sr.gov.pl',
+    website: 'https://w-bydgoszczy.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Inowrocawiu': {
+    id: 'w_Inowrocawiu',
+    name: 'Sąd Rejonowy w Inowrocławiu',
+    shortName: 'SR w Inowrocławiu',
+    type: 'rejonowy',
+    city: 'Inowrocław',
+    address: 'Narutowicza 42, 88-100 Inowrocław',
+    phone: '(52) 359 26 20, (52) 359 26 21',
+    email: 'boi@inowroclaw.sr.gov.pl',
+    website: 'https://w-inowrocawiu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Mogilnie': {
+    id: 'w_Mogilnie',
+    name: 'Sąd Rejonowy w Mogilnie',
+    shortName: 'SR w Mogilnie',
+    type: 'rejonowy',
+    city: 'Mogilno',
+    address: 'Sądowa 21, 88-300 Mogilno',
+    phone: '(52) 315 97 00',
+    email: 'administracja@mogilno.sr.gov.pl',
+    website: 'https://w-mogilnie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Nakle_nad_Noteci': {
+    id: 'w_Nakle_nad_Noteci',
+    name: 'Sąd Rejonowy w Nakle nad Notecią',
+    shortName: 'SR w Nakle nad Notecią',
+    type: 'rejonowy',
+    city: 'Nakło nad Notecią',
+    address: 'Sądowa 3, 89-100 Nakło nad Notecią',
+    phone: '(52) 386 78 00',
+    email: 'sad@naklo.sr.gov.pl',
+    website: 'https://w-nakle-nad-noteci.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Szubinie': {
+    id: 'w_Szubinie',
+    name: 'Sąd Rejonowy w Szubinie ',
+    shortName: 'SR w Szubinie ',
+    type: 'rejonowy',
+    city: 'Szubin',
+    address: 'Pl. Wolności 4 , 89-200 Szubin',
+    phone: '(52) 391 01 30',
+    email: 'sad@szubin.sr.gov.pl',
+    website: 'https://w-szubinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_wieciu': {
+    id: 'w_wieciu',
+    name: 'Sąd Rejonowy w Świeciu',
+    shortName: 'SR w Świeciu',
+    type: 'rejonowy',
+    city: 'Świecie',
+    address: 'Sądowa  12, 86-100 Świecie',
+    phone: '(52) 333 28 01',
+    email: 'poi@swiecie.sr.gov.pl',
+    website: 'https://w-wieciu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Tucholi': {
+    id: 'w_Tucholi',
+    name: 'Sąd Rejonowy w Tucholi',
+    shortName: 'SR w Tucholi',
+    type: 'rejonowy',
+    city: 'Tuchola',
+    address: 'Świecka 28, 89-500 Tuchola',
+    phone: '(52) 336 04 00 do 02',
+    email: 'sad@tuchola.sr.gov.pl',
+    website: 'https://w-tucholi.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_ninie': {
+    id: 'w_ninie',
+    name: 'Sąd Rejonowy w Żninie',
+    shortName: 'SR w Żninie',
+    type: 'rejonowy',
+    city: 'Żnin',
+    address: 'Pl. Wolności 17, 88-400 Żnin',
+    phone: '(52) 303 37 12',
+    email: 'administracja@znin.sr.gov.pl',
+    website: 'https://w-ninie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Elblgu': {
+    id: 'w_Elblgu',
+    name: 'Sąd Rejonowy w Elblągu',
+    shortName: 'SR w Elblągu',
+    type: 'rejonowy',
+    city: 'Elbląg',
+    address: 'Pl. Konstytucji 1 (wydziały karne),              Płk. Dąbka 21    (wydziały cywilne), 82-300 Elbląg',
+    phone: '(55) 611 28 00, (55) 611 25 00',
+    email: 'boi@elblag.sr.gov.pl',
+    website: 'https://w-elblgu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Braniewie': {
+    id: 'w_Braniewie',
+    name: 'Sąd Rejonowy w Braniewie',
+    shortName: 'SR w Braniewie',
+    type: 'rejonowy',
+    city: 'Braniewo',
+    address: 'Sądowa 1 , 14-500 Braniewo',
+    phone: '(55) 646 52 52 sprawy karne, windykacja należności sądowych, księgi wieczyste;                                                 (55) 646 52 51 sprawy cywilne, rodzinne i nieletnich.',
+    email: 'boi@braniewo.sr.gov.pl',
+    website: 'https://w-braniewie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Dziadowie': {
+    id: 'w_Dziadowie',
+    name: 'Sąd Rejonowy w Działdowie',
+    shortName: 'SR w Działdowie',
+    type: 'rejonowy',
+    city: 'Działdowo',
+    address: 'Jagiełły 31, 13-200 Działdowo',
+    phone: '(23) 697 07 60',
+    email: 'srdzialdowo@dzialdowo.sr.gov.pl',
+    website: 'https://w-dziadowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Iawie': {
+    id: 'w_Iawie',
+    name: 'Sąd Rejonowy w Iławie',
+    shortName: 'SR w Iławie',
+    type: 'rejonowy',
+    city: 'Iława',
+    address: 'Kopernika 4B, 14-200 Iława',
+    phone: '(89) 644 57 00',
+    email: 'boi@ilawa.sr.gov.pl',
+    website: 'https://w-iawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Nowym_Miecie_Lubawskim': {
+    id: 'w_Nowym_Miecie_Lubawskim',
+    name: 'Sąd Rejonowy w Nowym Mieście Lubawskim',
+    shortName: 'SR w Nowym Mieście Lubawskim',
+    type: 'rejonowy',
+    city: 'Nowe Miasto Lubawskie',
+    address: 'Grunwaldzka 28, 13-300 Nowe Miasto Lubawskie',
+    phone: '(56) 472 63 40, (56) 472 61 28',
+    email: 'boi@nowemiastolubawskie.sr.gov.pl',
+    website: 'https://w-nowym-miecie-lubawskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Ostrdzie': {
+    id: 'w_Ostrdzie',
+    name: 'Sąd Rejonowy w Ostródzie',
+    shortName: 'SR w Ostródzie',
+    type: 'rejonowy',
+    city: 'Ostróda',
+    address: 'Jana III Sobieskiego 12, 14-100 Ostróda',
+    phone: '(89) 642 55 00, (89) 642 55 01',
+    email: 'boi@ostroda.sr.gov.pl',
+    website: 'https://w-ostrdzie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Gdask-Poudnie_Gdasku': {
+    id: 'Gdask-Poudnie_Gdasku',
+    name: 'Sąd Rejonowy Gdańsk-Południe w Gdańsku',
+    shortName: 'SR Gdańsk-Południe w Gdańsku',
+    type: 'rejonowy',
+    city: 'Gdańsk',
+    address: '3 Maja 9a, 80-802 Gdańsk',
+    phone: '(58) 32 42 550  sprawy cywilne, pracy i ubezpieczeń społecznych, karne;
+(58) 32 42 548  sprawy rodzinne;',
+    email: 'boi@gdansk-poludnie.sr.gov.pl',
+    website: 'https://gdask-poudnie-gdasku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Gdask-Pnoc_Gdasku': {
+    id: 'Gdask-Pnoc_Gdasku',
+    name: 'Sąd Rejonowy Gdańsk-Północ w Gdańsku',
+    shortName: 'SR Gdańsk-Północ w Gdańsku',
+    type: 'rejonowy',
+    city: 'Gdańsk',
+    address: 'Piekarnicza 10, 80-126 Gdańsk',
+    phone: '(58) 321 37 00',
+    email: 'informacja.srgdapn@gdansk-polnoc.sr.gov.pl',
+    website: 'https://gdask-pnoc-gdasku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Gdyni': {
+    id: 'w_Gdyni',
+    name: 'Sąd Rejonowy w Gdyni',
+    shortName: 'SR w Gdyni',
+    type: 'rejonowy',
+    city: 'Gdynia',
+    address: 'plac Konstytucji 5, 81-354 Gdynia',
+    phone: '(58) 76 56 231;(58) 76 56 232',
+    email: 'administracja@gdynia.sr.gov.pl',
+    website: 'https://w-gdyni.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kartuzach': {
+    id: 'w_Kartuzach',
+    name: 'Sąd Rejonowy w Kartuzach',
+    shortName: 'SR w Kartuzach',
+    type: 'rejonowy',
+    city: 'Kartuzy',
+    address: 'Kościuszki 1, 83-300 Kartuzy',
+    phone: '(58) 779 68 14, (58) 779 68 15,            (58) 779 68 16',
+    email: 'boi@kartuzy.sr.gov.pl',
+    website: 'https://w-kartuzach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kocierzynie': {
+    id: 'w_Kocierzynie',
+    name: 'Sąd Rejonowy w Kościerzynie',
+    shortName: 'SR w Kościerzynie',
+    type: 'rejonowy',
+    city: 'Kościerzyna',
+    address: 'Dworcowa  2 , 83-400  Kościerzyna',
+    phone: '(58) 772 43 50 sprawy cywilne, rodzinne,
+(58) 772 44 50 sprawy karne',
+    email: 'administracja@koscierzyna.sr.gov.pl',
+    website: 'https://w-kocierzynie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kwidzynie': {
+    id: 'w_Kwidzynie',
+    name: 'Sąd Rejonowy w Kwidzynie',
+    shortName: 'SR w Kwidzynie',
+    type: 'rejonowy',
+    city: 'Kwidzyn',
+    address: 'Pl. Plebiscytowy 1 , 82-500 Kwidzyn',
+    phone: '(55) 262 45 49, (55) 262 45 31',
+    email: 'boi@kwidzyn.sr.gov.pl',
+    website: 'https://w-kwidzynie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Malborku': {
+    id: 'w_Malborku',
+    name: 'Sąd Rejonowy w Malborku',
+    shortName: 'SR w Malborku',
+    type: 'rejonowy',
+    city: 'Malbork',
+    address: '17 Marca 3, 82-200 Malbork',
+    phone: '(55) 647 07 00, (55) 647 07 01',
+    email: 'boi@malbork.sr.gov.pl',
+    website: 'https://w-malborku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Sopocie': {
+    id: 'w_Sopocie',
+    name: 'Sąd Rejonowy w Sopocie',
+    shortName: 'SR w Sopocie',
+    type: 'rejonowy',
+    city: 'Sopot',
+    address: '1 Maja 10, 81-828 Sopot',
+    phone: '(58) 554 98 00',
+    email: 'boi@sopot.sr.gov.pl',
+    website: 'https://w-sopocie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Starogardzie_Gdaskim': {
+    id: 'w_Starogardzie_Gdaskim',
+    name: 'Sąd Rejonowy w Starogardzie Gdańskim',
+    shortName: 'SR w Starogardzie Gdańskim',
+    type: 'rejonowy',
+    city: 'Starogard Gdański',
+    address: 'Kościuszki 30, 83-200 Starogard Gdański',
+    phone: '(58) 777 50 50',
+    email: 'boi@starogard-gd.sr.gov.pl',
+    website: 'https://w-starogardzie-gdaskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Tczewie': {
+    id: 'w_Tczewie',
+    name: 'Sąd Rejonowy w Tczewie',
+    shortName: 'SR w Tczewie',
+    type: 'rejonowy',
+    city: 'Tczew',
+    address: 'al. Zwycięstwa 14, 83-110 Tczew',
+    phone: '(58) 778 50 01 sprawy karne,              (58) 778 50 02 sprawy cywilne, rodzinne i nieletnich,                                             (58) 778 50 03 sprawy ksiąg wieczystych',
+    email: 'boi-cywilne@tczew.sr.gov.pl boi-karne@tczew.sr.gov.pl',
+    website: 'https://w-tczewie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Wejherowie': {
+    id: 'w_Wejherowie',
+    name: 'Sąd Rejonowy w Wejherowie',
+    shortName: 'SR w Wejherowie',
+    type: 'rejonowy',
+    city: 'Wejherowo',
+    address: 'Wniebowstąpienia  4, 84-200 Wejherowo',
+    phone: '(58) 672 89 89 sprawy karne, rodzinne i nieletnich, wykonania orzeczeń,            (58) 672 88 71 sprawy cywilne,         (58) 672 88 80 księgi wieczyste',
+    email: 'informacja@wejherowo.sr.gov.pl',
+    website: 'https://w-wejherowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Supsku': {
+    id: 'w_Supsku',
+    name: 'Sąd Rejonowy  w Słupsku',
+    shortName: 'SR  w Słupsku',
+    type: 'rejonowy',
+    city: 'Słupsk',
+    address: 'Szarych Szeregów 13, 76-200 Słupsk',
+    phone: '(59) 846 92 06, (59) 846 92 07 sprawy cywilne, gospodarcze, pracy i ubezpieczeń, sprawy rodzinne i nieletnich,                                               (59) 846 92 22, (59) 846 92 23  sprawy karne, wykroczeniowe',
+    email: 'boi.cywilne@slupsk.sr.gov.pl boi.karne@slupsk.sr.gov.pl',
+    website: 'https://w-supsku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lborku': {
+    id: 'w_Lborku',
+    name: 'Sąd Rejonowy w Lęborku',
+    shortName: 'SR w Lęborku',
+    type: 'rejonowy',
+    city: 'Lębork',
+    address: 'Pl. Kopernika 4, 84-300 Lębork',
+    phone: '(59) 863 68 60',
+    email: 'boi@lebork.sr.gov.pl',
+    website: 'https://w-lborku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Chojnicach': {
+    id: 'w_Chojnicach',
+    name: 'Sąd Rejonowy w Chojnicach',
+    shortName: 'SR w Chojnicach',
+    type: 'rejonowy',
+    city: 'Chojnice',
+    address: 'Młyńska 30, 89-600 Chojnice',
+    phone: '(52) 395 27 93, (52) 395 27 92,',
+    email: 'boi@chojnice.sr.gov.pl',
+    website: 'https://w-chojnicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Miastku': {
+    id: 'w_Miastku',
+    name: 'Sąd Rejonowy w Miastku',
+    shortName: 'SR w Miastku',
+    type: 'rejonowy',
+    city: 'Miastko',
+    address: 'Armii Krajowej 30, 77-200 Miastko',
+    phone: '(59) 858 71 00',
+    email: 'administracja@miastko.sr.gov.pl',
+    website: 'https://w-miastku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Bytowie': {
+    id: 'w_Bytowie',
+    name: 'Sąd Rejonowy w Bytowie',
+    shortName: 'SR w Bytowie',
+    type: 'rejonowy',
+    city: 'Bytów',
+    address: 'Zamkowa 1, 77-100 Bytów',
+    phone: '(59) 822 79 99',
+    email: 'administracja@bytow.sr.gov.pl',
+    website: 'https://w-bytowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Czuchowie': {
+    id: 'w_Czuchowie',
+    name: 'Sąd Rejonowy w Człuchowie',
+    shortName: 'SR w Człuchowie',
+    type: 'rejonowy',
+    city: 'Człuchów',
+    address: 'Szczecińska 1, 77-300 Człuchów',
+    phone: '(59) 834 69 94',
+    email: 'informacja@czluchow.sr.gov.pl',
+    website: 'https://w-czuchowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Toruniu': {
+    id: 'w_Toruniu',
+    name: 'Sąd Rejonowy  w Toruniu',
+    shortName: 'SR  w Toruniu',
+    type: 'rejonowy',
+    city: 'Toruń',
+    address: 'W. Warneńczyka 1, 87-100 Toruń',
+    phone: '(56) 67 76 000',
+    email: 'boi@torun.sr.gov.pl',
+    website: 'https://w-toruniu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Brodnicy': {
+    id: 'w_Brodnicy',
+    name: 'Sąd Rejonowy w Brodnicy',
+    shortName: 'SR w Brodnicy',
+    type: 'rejonowy',
+    city: 'Brodnica',
+    address: 'Sądowa 5, 87-300 Brodnica',
+    phone: '(56) 494 17 09',
+    email: 'boi@brodnica.sr.gov.pl',
+    website: 'https://w-brodnicy.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Chemnie': {
+    id: 'w_Chemnie',
+    name: 'Sąd Rejonowy w Chełmnie',
+    shortName: 'SR w Chełmnie',
+    type: 'rejonowy',
+    city: 'Chełmno',
+    address: 'Toruńska 3, 86-200 Chełmno',
+    phone: '(56) 677 02 00',
+    email: 'boi@chelmno.sr.gov.pl',
+    website: 'https://w-chemnie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Golubiu_Dobrzyniu': {
+    id: 'w_Golubiu_Dobrzyniu',
+    name: 'Sąd Rejonowy w Golubiu Dobrzyniu',
+    shortName: 'SR w Golubiu Dobrzyniu',
+    type: 'rejonowy',
+    city: 'Golub-Dobrzyń',
+    address: 'Kościelna 23/25, 87-400 Golub-Dobrzyń',
+    phone: '(56) 682 35 01',
+    email: 'sr@golubdobrzyn.sr.gov.pl',
+    website: 'https://w-golubiu-dobrzyniu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Grudzidzu': {
+    id: 'w_Grudzidzu',
+    name: 'Sąd Rejonowy w Grudziądzu',
+    shortName: 'SR w Grudziądzu',
+    type: 'rejonowy',
+    city: 'Grudziądz',
+    address: 'Sikorskiego 19/23, 86-300 Grudziądz',
+    phone: '(56) 450 05 900',
+    email: 'administracja@grudziadz.sr.gov.pl',
+    website: 'https://w-grudzidzu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Wbrzenie': {
+    id: 'w_Wbrzenie',
+    name: 'Sąd Rejonowy w Wąbrzeźnie ',
+    shortName: 'SR w Wąbrzeźnie ',
+    type: 'rejonowy',
+    city: 'Wąbrzeźno',
+    address: 'Wolności 19, 87-200 Wąbrzeźno',
+    phone: '(56) 689 06 00',
+    email: 'srw@wabrzezno.sr.gov.pl',
+    website: 'https://w-wbrzenie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'we_Wocawku': {
+    id: 'we_Wocawku',
+    name: 'Sąd Rejonowy we Włocławku',
+    shortName: 'SR we Włocławku',
+    type: 'rejonowy',
+    city: 'Włocławek',
+    address: 'Kilińskiego 20, 87-800 Włocławek',
+    phone: '(54) 422 26 00',
+    email: 'srwloclawek@wloclawek.sr.gov.pl',
+    website: 'https://we-wocawku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Aleksandrowie_Kujawskim': {
+    id: 'w_Aleksandrowie_Kujawskim',
+    name: 'Sąd Rejonowy w Aleksandrowie Kujawskim',
+    shortName: 'SR w Aleksandrowie Kujawskim',
+    type: 'rejonowy',
+    city: 'Aleksandrów Kujawski',
+    address: 'Narutowicza 16, 87-700 Aleksandrów Kujawski',
+    phone: '(54) 282 24 24',
+    email: 'mail@aleksandrowkuj.sr.gov.pl',
+    website: 'https://w-aleksandrowie-kujawskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lipnie': {
+    id: 'w_Lipnie',
+    name: 'Sąd Rejonowy w Lipnie',
+    shortName: 'SR w Lipnie',
+    type: 'rejonowy',
+    city: 'Lipno',
+    address: 'Piłsudskiego 15/17, 87-600 Lipno',
+    phone: '(54) 287 22 05',
+    email: 'srlipno@lipno.sr.gov.pl',
+    website: 'https://w-lipnie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Radziejowie': {
+    id: 'w_Radziejowie',
+    name: 'Sąd Rejonowy w Radziejowie',
+    shortName: 'SR w Radziejowie',
+    type: 'rejonowy',
+    city: 'Radziejów',
+    address: 'Brzeska 20, 88-200 Radziejów',
+    phone: '(54) 285 36 21, (54) 285 36 22 w.100',
+    email: 'boi@radziejow.sr.gov.pl',
+    website: 'https://w-radziejowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Rypinie': {
+    id: 'w_Rypinie',
+    name: 'Sąd Rejonowy w Rypinie',
+    shortName: 'SR w Rypinie',
+    type: 'rejonowy',
+    city: 'Rypin',
+    address: 'Warszawska 42, 87-500  Rypin',
+    phone: '(54) 280 24 58, (54) 280 24 59, (54) 280 22 92, (54) 280 24 50',
+    email: 'srrypin@rypin.sr.gov.pl',
+    website: 'https://w-rypinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Katowicach': {
+    id: 'w_Katowicach',
+    name: 'Sąd Okręgowy w Katowicach',
+    shortName: 'SO w Katowicach',
+    type: 'okręgowy',
+    city: 'Katowice',
+    address: 'Francuska 38 (sprawy cywilne, pracy i ubezpieczeń społecznych, rodzinne i gospodarcze);                                         Andrzeja 16/18 (sprawy karne), 40-028 Katowice',
+    phone: '(32) 607 06 60',
+    email: 'informacja@katowice.so.gov.pl',
+    website: 'https://w-katowicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Bielsku-Biaej': {
+    id: 'w_Bielsku-Biaej',
+    name: 'Sąd Rejonowy w Bielsku-Białej',
+    shortName: 'SR w Bielsku-Białej',
+    type: 'rejonowy',
+    city: 'Bielsko-Biała',
+    address: 'Mickiewicza 22, 43-300 Bielsko-Biała',
+    phone: '(33) 499 78 26',
+    email: 'informacja@bielsko-biala.sr.gov.pl',
+    website: 'https://w-bielsku-biaej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Cieszynie': {
+    id: 'Cieszynie',
+    name: 'Sąd Rejonowy Cieszynie',
+    shortName: 'SR Cieszynie',
+    type: 'rejonowy',
+    city: 'Cieszyn',
+    address: 'Garncarska 8, 43-400 Cieszyn',
+    phone: '(33) 479 46 06, 479 47 06',
+    email: 'punkt.informacyjny@cieszyn.sr.gov.pl',
+    website: 'https://cieszynie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_ywcu': {
+    id: 'w_ywcu',
+    name: 'Sąd Rejonowy w Żywcu',
+    shortName: 'SR w Żywcu',
+    type: 'rejonowy',
+    city: 'Żywiec',
+    address: 'Kościuszki 39, 34-300 Żywiec',
+    phone: '(33) 475 12 01 sprawy cywilne,         (33) 475 12 02 sprawy karne',
+    email: 'boicywilny@zywiec.sr.gov.pl, boikarny@zywiec.sr.gov.pl',
+    website: 'https://w-ywcu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Czstochowie': {
+    id: 'w_Czstochowie',
+    name: 'Sąd Rejonowy w Częstochowie ',
+    shortName: 'SR w Częstochowie ',
+    type: 'rejonowy',
+    city: 'Częstochowa                  ',
+    address: 'Dąbrowskiego 23/35 (wydziały cywilne, VIII Wydział Gospodarczy), 
+św. Rocha 90        
+, 42-202                          Częstochowa                  ',
+    phone: '(34) 36 84 444 ul. Dąbrowskiego 23/35; 
+(34) 31 60 300 ul. św. Rocha 90',
+    email: 'sad_rejonowy@czestochowa.sr.gov.pl',
+    website: 'https://w-czstochowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lublicu': {
+    id: 'w_Lublicu',
+    name: 'Sąd Rejonowy w Lublińcu',
+    shortName: 'SR w Lublińcu',
+    type: 'rejonowy',
+    city: 'Lubliniec',
+    address: 'Sądowa 3, 42-700 Lubliniec',
+    phone: '(34) 351 51 56, (34) 351-51-54,
+(34) 351-51-30,',
+    email: 'boi@lubliniec.sr.gov.pl',
+    website: 'https://w-lublicu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Myszkowie': {
+    id: 'w_Myszkowie',
+    name: 'Sąd Rejonowy w Myszkowie',
+    shortName: 'SR w Myszkowie',
+    type: 'rejonowy',
+    city: 'Myszków',
+    address: 'Kwiatkowskiego 2, 42-300 Myszków',
+    phone: '(34) 315 98 00, 315 98 01, 315 98 02',
+    email: 'boi@myszkow.sr.gov.pl',
+    website: 'https://w-myszkowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Gliwicach': {
+    id: 'w_Gliwicach',
+    name: 'Sąd Rejonowy w Gliwicach',
+    shortName: 'SR w Gliwicach',
+    type: 'rejonowy',
+    city: 'Gliwice',
+    address: 'Powstańców Warszawy 23, 44-101 Gliwice',
+    phone: '(32) 33 87 795, (32)  33 87 500,          (32) 33 87 460, (32)  33 87 756, (32) 33 87 600, (32) 33 87 663',
+    email: 'boi@gliwice.sr.gov.pl',
+    website: 'https://w-gliwicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Rudzie_lskiej': {
+    id: 'w_Rudzie_lskiej',
+    name: 'Sąd Rejonowy w Rudzie Śląskiej',
+    shortName: 'SR w Rudzie Śląskiej',
+    type: 'rejonowy',
+    city: 'Ruda Śląska',
+    address: 'Bukowa 5A  , 41-700 Ruda Śląska',
+    phone: '(32) 438 11 05, (32) 438 11 06,           (32) 438 11 07',
+    email: 'boi@ruda-slaska.sr.gov.pl',
+    website: 'https://w-rudzie-lskiej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Tarnowskich_Grach': {
+    id: 'w_Tarnowskich_Grach',
+    name: 'Sąd Rejonowy w Tarnowskich Górach',
+    shortName: 'SR w Tarnowskich Górach',
+    type: 'rejonowy',
+    city: 'Tarnowiskie Góry',
+    address: 'Opolska 17, 42-600 Tarnowiskie Góry',
+    phone: '(32) 381 83 10, (32) 381 83 64',
+    email: 'boi@tgory.sr.gov.pl',
+    website: 'https://w-tarnowskich-grach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zabrzu': {
+    id: 'w_Zabrzu',
+    name: 'Sąd Rejonowy w Zabrzu',
+    shortName: 'SR w Zabrzu',
+    type: 'rejonowy',
+    city: 'Zabrze',
+    address: '3 Maja 21, 41-800 Zabrze',
+    phone: '(32) 37 35 831,
+(32) 37 35 832,
+(32) 37 35 833',
+    email: 'informacja@zabrze.sr.gov.pl',
+    website: 'https://w-zabrzu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Rybniku': {
+    id: 'w_Rybniku',
+    name: 'Sąd Rejonowy w Rybniku',
+    shortName: 'SR w Rybniku',
+    type: 'rejonowy',
+    city: 'Rybnik',
+    address: 'Pl. Kopernika 2 (Biuro Podawcze, Czytelnia, Biuro Obsługi Ineteresantów, I Cywilny, III Karny, IV Rodzinny i Nieletnich),                                        Rynek 13 (V Pracy i Ubezpieczeń Społecznych, VI Gospodarczy, I i II Zespół Kuratorskiej Służby Sądowej), Zamkowa 3(VII Ksiąg Wieczystych) , 44-200 Rybnik',
+    phone: '(32) 43 93 107, (32) 43 93 108, (32) 43 93 193',
+    email: 'biuro.podawcze@rybnik.sr.gov.pl',
+    website: 'https://w-rybniku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Jastrzbiu-Zdroju': {
+    id: 'w_Jastrzbiu-Zdroju',
+    name: 'Sąd Rejonowy w Jastrzębiu-Zdroju',
+    shortName: 'SR w Jastrzębiu-Zdroju',
+    type: 'rejonowy',
+    city: 'Jastrzębie-Zdrój',
+    address: 'Stanisława Staszica 3, 44-330 Jastrzębie-Zdrój',
+    phone: '(32) 47 87 400, (32)  47 87 411',
+    email: 'jastrzebie@jastrzebie.sr.gov.pl',
+    website: 'https://w-jastrzbiu-zdroju.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Raciborzu': {
+    id: 'w_Raciborzu',
+    name: 'Sąd Rejonowy w Raciborzu',
+    shortName: 'SR w Raciborzu',
+    type: 'rejonowy',
+    city: 'Racibórz',
+    address: 'Nowa 29, 47-400 Racibórz',
+    phone: '(32) 45 94 622, (32) 45 94 600',
+    email: 'administracja@raciborz.sr.gov.pl',
+    website: 'https://w-raciborzu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Wodzisawiu_lskim': {
+    id: 'w_Wodzisawiu_lskim',
+    name: 'Sąd Rejonowy w Wodzisławiu Śląskim',
+    shortName: 'SR w Wodzisławiu Śląskim',
+    type: 'rejonowy',
+    city: 'Wodzisław Śląski',
+    address: 'Sądowa 3 (sprawy cywilne i karne);    26 Marca 44 (sprawy rodzinne i nieletnich, księgi wieczyste), 44-300 Wodzisław Śląski',
+    phone: '(32) 459 14 19 sprawy cywilne i karne, (32) 459 14 30 sprawy rodzinne i nieletnich,                                               (32) 459 14 44 księgi wieczyste',
+    email: 'wodzisław@wodzislaw.sr.gov.pl',
+    website: 'https://w-wodzisawiu-lskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_orach': {
+    id: 'w_orach',
+    name: 'Sąd Rejonowy w Żorach',
+    shortName: 'SR w Żorach',
+    type: 'rejonowy',
+    city: 'Żory',
+    address: 'Al. Jana Pawła II 15, 44-240 Żory',
+    phone: '(32) 475 96 00',
+    email: 'sad@zory.sr.gov.pl',
+    website: 'https://w-orach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Bytomiu': {
+    id: 'w_Bytomiu',
+    name: 'Sąd Rejonowy w Bytomiu ',
+    shortName: 'SR w Bytomiu ',
+    type: 'rejonowy',
+    city: 'Bytom',
+    address: 'Piekarska  1, 41-902 Bytom',
+    phone: '(32) 38 89 od 101 do 103',
+    email: 'informacja@bytom.sr.gov.pl',
+    website: 'https://w-bytomiu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Chorzowie': {
+    id: 'w_Chorzowie',
+    name: 'Sąd Rejonowy w Chorzowie',
+    shortName: 'SR w Chorzowie',
+    type: 'rejonowy',
+    city: 'Chorzów',
+    address: 'dr Józefa Rostka 2, 41-500 Chorzów',
+    phone: '(32) 349 94 45',
+    email: 'boi@chorzow.sr.gov.pl',
+    website: 'https://w-chorzowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Katowice-Wschd_Katowicach': {
+    id: 'Katowice-Wschd_Katowicach',
+    name: 'Sąd Rejonowy Katowice-Wschód w Katowicach',
+    shortName: 'SR Katowice-Wschód w Katowicach',
+    type: 'rejonowy',
+    city: 'Katowice',
+    address: 'Lompy 14,                                        Francuska 70A (BOI), 40-040,                    40-028  Katowice',
+    phone: '(32) 604 79 87,  604 79 88',
+    email: 'poi@katowice-wschod.sr.gov.pl',
+    website: 'https://katowice-wschd-katowicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Katowice-Zachd_Katowicach': {
+    id: 'Katowice-Zachd_Katowicach',
+    name: 'Sąd Rejonowy Katowice-Zachód w Katowicach ',
+    shortName: 'SR Katowice-Zachód w Katowicach ',
+    type: 'rejonowy',
+    city: 'Katowice',
+    address: 'Pl. Wolności 10 (pion karny),                  ul. Warszawska 45 (pion cywilny), 40-078,                          40-010 Katowice',
+    phone: '(32) 604 77 31 pion karny,                    (32) 604 75 81 pion cywilny',
+    email: 'boi.karny@katowice-zachod.sr.gov.pl,  boi.cywilny@katowice-zachod.sr.gov.pl',
+    website: 'https://katowice-zachd-katowicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Mikoowie': {
+    id: 'w_Mikoowie',
+    name: 'Sąd Rejonowy w Mikołowie',
+    shortName: 'SR w Mikołowie',
+    type: 'rejonowy',
+    city: 'Mikołów',
+    address: 'Ks.Kard.St. Wyszyńskiego 12/14, 43-190 Mikołów',
+    phone: '(32) 784 61 00 sprawy karne, rodzinne;
+(32) 784 62 00 sprawy cywilne, prawa pracy;
+(32) 784 62 14 księgi wieczyste',
+    email: 'informacja@mikolow.sr.gov.pl',
+    website: 'https://w-mikoowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Mysowicach': {
+    id: 'w_Mysowicach',
+    name: 'Sąd Rejonowy w Mysłowicach',
+    shortName: 'SR w Mysłowicach',
+    type: 'rejonowy',
+    city: 'Mysłowice',
+    address: 'Krakowska 2, 41-400 Mysłowice',
+    phone: '(32) 317 41 29',
+    email: 'poi@myslowice.sr.gov.pl',
+    website: 'https://w-mysowicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Pszczynie': {
+    id: 'w_Pszczynie',
+    name: 'Sąd Rejonowy w Pszczynie',
+    shortName: 'SR w Pszczynie',
+    type: 'rejonowy',
+    city: 'Pszczyna',
+    address: ' ks. bp. Bogedaina 14, 43-200 Pszczyna',
+    phone: '(32) 449 41 00',
+    email: 'informacja@pszczyna.sr.gov.pl',
+    website: 'https://w-pszczynie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Siemianowicach_lskich': {
+    id: 'w_Siemianowicach_lskich',
+    name: 'Sąd Rejonowy w Siemianowicach Śląskich',
+    shortName: 'SR w Siemianowicach Śląskich',
+    type: 'rejonowy',
+    city: 'Siemianowice Śląskie',
+    address: 'Chorzowska 14, 41-100 Siemianowice Śląskie',
+    phone: '(32) 766 43 10',
+    email: 'boi@siemianowice.sr.gov.pl',
+    website: 'https://w-siemianowicach-lskich.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Tychach': {
+    id: 'w_Tychach',
+    name: 'Sąd Rejonowy w Tychach',
+    shortName: 'SR w Tychach',
+    type: 'rejonowy',
+    city: 'Tychy',
+    address: 'Budowlanych 33, 43-100 Tychy',
+    phone: '(32) 323 31 04, (32) 323 31 05, (32) 323 31 06',
+    email: 'informacja@tychy.sr.gov.pl',
+    website: 'https://w-tychach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Sosnowcu': {
+    id: 'w_Sosnowcu',
+    name: 'Sąd Rejonowy w Sosnowcu',
+    shortName: 'SR w Sosnowcu',
+    type: 'rejonowy',
+    city: 'Sosnowiec',
+    address: 'Kombajnistów 78,                                   Kaliska 7, 41-200 Sosnowiec',
+    phone: '(32) 296 18 04 - ul. Kaliska 7;                                (32) 296 15 05 - ul. Kombajnistów 78',
+    email: 'informacja@sosnowiec.sr.gov.pl',
+    website: 'https://w-sosnowcu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Bdzinie': {
+    id: 'w_Bdzinie',
+    name: 'Sąd Rejonowy w Będzinie',
+    shortName: 'SR w Będzinie',
+    type: 'rejonowy',
+    city: 'Będzin',
+    address: 'Jana Sączewskiego 23 , 42-500 Będzin',
+    phone: '(32) 368 81 88',
+    email: 'boi@bedzin.sr.gov.pl',
+    website: 'https://w-bdzinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Czeladzi': {
+    id: 'w_Czeladzi',
+    name: 'Sąd Rejonowy w Czeladzi',
+    shortName: 'SR w Czeladzi',
+    type: 'rejonowy',
+    city: 'Czeladź ',
+    address: 'Kombatantów 4, 41-250 Czeladź ',
+    phone: '(32) 36 80 503',
+    email: 'boi@czeladz.sr.gov.pl',
+    website: 'https://w-czeladzi.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Dbrowie_Grniczej': {
+    id: 'w_Dbrowie_Grniczej',
+    name: 'Sąd Rejonowy w Dąbrowie Górniczej',
+    shortName: 'SR w Dąbrowie Górniczej',
+    type: 'rejonowy',
+    city: 'Dąbrowa Górnicza',
+    address: 'Graniczna 23, 41-300 Dąbrowa Górnicza',
+    phone: '(32) 295 94 50',
+    email: 'boi@dabrowag.sr.gov.pl',
+    website: 'https://w-dbrowie-grniczej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Jaworznie': {
+    id: 'w_Jaworznie',
+    name: 'Sąd Rejonowy w Jaworznie',
+    shortName: 'SR w Jaworznie',
+    type: 'rejonowy',
+    city: 'Jaworzno',
+    address: 'Grunwaldzka 28, 43-600 Jaworzno',
+    phone: '(32) 758 62 00, 75 86 157, 75 86 244',
+    email: 'boi@jaworzno.sr.gov.pl',
+    website: 'https://w-jaworznie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zawierciu': {
+    id: 'w_Zawierciu',
+    name: 'Sąd Rejonowy w Zawierciu',
+    shortName: 'SR w Zawierciu',
+    type: 'rejonowy',
+    city: 'Zawiercie',
+    address: 'Leśna 4                     , 42-400 Zawiercie',
+    phone: '(32) 649 79 06',
+    email: 'boi@zawiercie.sr.gov.pl',
+    website: 'https://w-zawierciu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Krakowie': {
+    id: 'w_Krakowie',
+    name: 'Sąd Okręgowy w Krakowie',
+    shortName: 'SO w Krakowie',
+    type: 'okręgowy',
+    city: 'Kraków',
+    address: 'Przy Rondzie 7, 31-547 Kraków',
+    phone: '(12) 619 50 86, (12) 619 57 70',
+    email: 'informacja@krakow.so.gov.pl',
+    website: 'https://w-krakowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kielcach': {
+    id: 'w_Kielcach',
+    name: 'Sąd Rejonowy w Kielcach',
+    shortName: 'SR w Kielcach',
+    type: 'rejonowy',
+    city: 'Kielce',
+    address: 'Warszawska 44 , 25-312 Kielce',
+    phone: '(41) 349 56 00',
+    email: 'boi@kielce.sr.gov.pl',
+    website: 'https://w-kielcach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Busku-Zdroju': {
+    id: 'w_Busku-Zdroju',
+    name: 'Sąd Rejonowy w Busku-Zdroju',
+    shortName: 'SR w Busku-Zdroju',
+    type: 'rejonowy',
+    city: 'Busko-Zdrój',
+    address: 'Kościuszki 5, 28-100  Busko-Zdrój',
+    phone: '(41) 246 28 07',
+    email: 'boi@busko.sr.gov.pl',
+    website: 'https://w-busku-zdroju.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Jdrzejowie': {
+    id: 'w_Jdrzejowie',
+    name: 'Sąd Rejonowy w Jędrzejowie',
+    shortName: 'SR w Jędrzejowie',
+    type: 'rejonowy',
+    city: 'Jędrzejów',
+    address: '11 Listopada 74, 28-300 Jędrzejów',
+    phone: '(41) 386 43  64',
+    email: 'boi@jedrzejow.sr.gov.pl',
+    website: 'https://w-jdrzejowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Koskich': {
+    id: 'w_Koskich',
+    name: 'Sąd Rejonowy w Końskich',
+    shortName: 'SR w Końskich',
+    type: 'rejonowy',
+    city: 'Końskie',
+    address: 'Odrowąża 5, 26-200 Końskie',
+    phone: '(41) 372 27 02, (41) 372-27-02 wew. 268',
+    email: 'boi@konskie.sr.gov.pl',
+    website: 'https://w-koskich.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Opatowie': {
+    id: 'w_Opatowie',
+    name: 'Sąd Rejonowy w Opatowie',
+    shortName: 'SR w Opatowie',
+    type: 'rejonowy',
+    city: 'Opatów',
+    address: 'Pl. Obrońców Pokoju 18, 27-500  Opatów',
+    phone: '(15)  86 82 799 wew. 100,101;           (15)  86 82 788 wew. 100,101',
+    email: 'boi@opatow.sr.gov.pl',
+    website: 'https://w-opatowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Ostrowcu_witokrzyskim': {
+    id: 'w_Ostrowcu_witokrzyskim',
+    name: 'Sąd Rejonowy w Ostrowcu Świętokrzyskim',
+    shortName: 'SR w Ostrowcu Świętokrzyskim',
+    type: 'rejonowy',
+    city: 'Ostrowiec Świątokrzyski',
+    address: 'Kościuszki 1, 27-400 Ostrowiec Świątokrzyski',
+    phone: '(41) 246 20 94, 246 20 95',
+    email: 'poi@ostrowiec.sr.gov.pl',
+    website: 'https://w-ostrowcu-witokrzyskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Piczowie': {
+    id: 'w_Piczowie',
+    name: 'Sąd Rejonowy w Pińczowie',
+    shortName: 'SR w Pińczowie',
+    type: 'rejonowy',
+    city: 'Pińczów',
+    address: '3 Maja 12a (główna siedziba),                                           1 Maja 10 ( II Wydział Karny)                , 28-400 Pińczów',
+    phone: '(41) 246 22 01 - 3 Maja 12a;                 12 286-32-83 - 1 Maja 10',
+    email: 'administracja@pinczow.sr.gov.pl',
+    website: 'https://w-piczowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Sandomierzu': {
+    id: 'w_Sandomierzu',
+    name: 'Sąd Rejonowy w Sandomierzu',
+    shortName: 'SR w Sandomierzu',
+    type: 'rejonowy',
+    city: 'Sandomierz',
+    address: 'Kościuszki 2a, 27-600 Sandomierz',
+    phone: '(15) 832 30 62 do 64',
+    email: 'administracja@sandomierz.sr.gov.pl',
+    website: 'https://w-sandomierzu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Skarysku-Kamiennej': {
+    id: 'w_Skarysku-Kamiennej',
+    name: 'Sąd Rejonowy w Skarżysku-Kamiennej',
+    shortName: 'SR w Skarżysku-Kamiennej',
+    type: 'rejonowy',
+    city: 'Skarżysko-Kamienna',
+    address: 'Krasińskiego 11, 26-110 Skarżysko-Kamienna',
+    phone: '(41) 252 03 60',
+    email: 'sad@skarzysko.sr.gov.pl',
+    website: 'https://w-skarysku-kamiennej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Starachowicach': {
+    id: 'w_Starachowicach',
+    name: 'Sąd Rejonowy w Starachowicach',
+    shortName: 'SR w Starachowicach',
+    type: 'rejonowy',
+    city: 'Starachowice',
+    address: 'Staszica 12 , 27-200 Starachowice',
+    phone: '(41) 274 13 12, (41) 274 13 13',
+    email: 'boi@starachowice.sr.gov.pl',
+    website: 'https://w-starachowicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Staszowie': {
+    id: 'w_Staszowie',
+    name: 'Sąd Rejonowy w Staszowie',
+    shortName: 'SR w Staszowie',
+    type: 'rejonowy',
+    city: 'Staszów',
+    address: 'Kościuszki 2, 28-200  Staszów',
+    phone: '(15) 864-82-00, (12) 286 32 83',
+    email: 'boi@staszow.sr.gov.pl',
+    website: 'https://w-staszowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'we_Woszczowie': {
+    id: 'we_Woszczowie',
+    name: 'Sąd Rejonowy we Włoszczowie',
+    shortName: 'SR we Włoszczowie',
+    type: 'rejonowy',
+    city: 'Włoszczowa',
+    address: 'Kusocińskiego 11, 29-100 Włoszczowa',
+    phone: '(12) 286 32 83, (41) 394 31 07',
+    email: 'boi@wloszczowa.sr.gov.pl',
+    website: 'https://we-woszczowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Krakowa-Krowodrzy_Krakowie': {
+    id: 'dla_Krakowa-Krowodrzy_Krakowie',
+    name: 'Sąd Rejonowy dla Krakowa-Krowodrzy w Krakowie',
+    shortName: 'SR dla Krakowa-Krowodrzy w Krakowie',
+    type: 'rejonowy',
+    city: 'Kraków',
+    address: 'Przy Rondzie 7, 31-547 Kraków',
+    phone: '(12) 619-50-86, (12) 619-57-70',
+    email: 'sad@krakow-krowodrza.sr.gov.pl',
+    website: 'https://dla-krakowa-krowodrzy-krakowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Krakowa-Nowej_Huty_Krakowie': {
+    id: 'dla_Krakowa-Nowej_Huty_Krakowie',
+    name: 'Sąd Rejonowy dla Krakowa-Nowej Huty w Krakowie',
+    shortName: 'SR dla Krakowa-Nowej Huty w Krakowie',
+    type: 'rejonowy',
+    city: 'Kraków',
+    address: 'Przy Rondzie 7, 31-547 Kraków',
+    phone: '(12) 286 32 83',
+    email: 'kontakt@krakow-nowahuta.sr.gov.pl',
+    website: 'https://dla-krakowa-nowej-huty-krakowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Krakowa-Podgrza_Krakowie': {
+    id: 'dla_Krakowa-Podgrza_Krakowie',
+    name: 'Sąd Rejonowy dla Krakowa-Podgórza w Krakowie',
+    shortName: 'SR dla Krakowa-Podgórza w Krakowie',
+    type: 'rejonowy',
+    city: 'Kraków',
+    address: 'Przy Rondzie 7, 31-547 Kraków',
+    phone: '(12) 286 32 83  sprawy cywilne, karne, rodzinne;                                                (12) 619 59 99 sprawy wieczystoksięgowe',
+    email: 'kontakt@krakow-podgorze.sr.gov.pl',
+    website: 'https://dla-krakowa-podgrza-krakowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Krakowa-rdmiecia_Krakowie': {
+    id: 'dla_Krakowa-rdmiecia_Krakowie',
+    name: 'Sąd Rejonowy dla Krakowa-Śródmieścia w Krakowie',
+    shortName: 'SR dla Krakowa-Śródmieścia w Krakowie',
+    type: 'rejonowy',
+    city: 'Kraków',
+    address: 'Przy Rondzie 7, 31-547 Kraków',
+    phone: '(12) 286 32 83 wydziały procesowe                                        (12)  349 20 66 wydziały rejestrowe',
+    email: 'oa@krakow-sr.sr.gov.pl',
+    website: 'https://dla-krakowa-rdmiecia-krakowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Chrzanowie': {
+    id: 'w_Chrzanowie',
+    name: 'Sąd Rejonowy w Chrzanowie',
+    shortName: 'SR w Chrzanowie',
+    type: 'rejonowy',
+    city: 'Chrzanów',
+    address: 'al. Henryka 23, 32-500 Chrzanów',
+    phone: '(32) 649 40 68',
+    email: 'boi@chrzanow.sr.gov.pl',
+    website: 'https://w-chrzanowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Miechowie': {
+    id: 'w_Miechowie',
+    name: 'Sąd Rejonowy w Miechowie',
+    shortName: 'SR w Miechowie',
+    type: 'rejonowy',
+    city: 'Miechów',
+    address: 'Pl. Kościuszki 3a, 32-200 Miechów',
+    phone: '(41) 382 50 68, (12) 619  50 86',
+    email: 'boi@miechow.sr.gov.pl',
+    website: 'https://w-miechowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Mylenicach': {
+    id: 'w_Mylenicach',
+    name: 'Sąd Rejonowy w Myślenicach',
+    shortName: 'SR w Myślenicach',
+    type: 'rejonowy',
+    city: 'Myślenice',
+    address: 'Piłsudskiego 7, 32-400 Myślenice',
+    phone: '(12) 373 51 20',
+    email: 'informacja@myslenice.sr.gov.pl',
+    website: 'https://w-mylenicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Olkuszu': {
+    id: 'w_Olkuszu',
+    name: 'Sąd Rejonowy w Olkuszu',
+    shortName: 'SR w Olkuszu',
+    type: 'rejonowy',
+    city: 'Olkusz',
+    address: 'Króla Kazimierza Wielkiego 45, 32-300 Olkusz',
+    phone: '(12) 286 32 83',
+    email: 'boi@olkusz.sr.gov.pl',
+    website: 'https://w-olkuszu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Owicimiu': {
+    id: 'w_Owicimiu',
+    name: 'Sąd Rejonowy w Oświęcimiu ',
+    shortName: 'SR w Oświęcimiu ',
+    type: 'rejonowy',
+    city: 'Oświęcim',
+    address: 'Rynek Główny 14, 32-600 Oświęcim',
+    phone: '(12) 286 32 83',
+    email: 'boi@oswiecim.sr.gov.pl',
+    website: 'https://w-owicimiu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Suchej_Beskidzkiej': {
+    id: 'w_Suchej_Beskidzkiej',
+    name: 'Sąd Rejonowy w Suchej Beskidzkiej',
+    shortName: 'SR w Suchej Beskidzkiej',
+    type: 'rejonowy',
+    city: 'Sucha Beskidzka',
+    address: 'Mickiewicza 11, 34-200 Sucha Beskidzka',
+    phone: '(33) 874 24 40, (12) 619 50 86',
+    email: 'poi@suchab.sr.gov.pl',
+    website: 'https://w-suchej-beskidzkiej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Wadowicach': {
+    id: 'w_Wadowicach',
+    name: 'Sąd Rejonowy w Wadowicach ',
+    shortName: 'SR w Wadowicach ',
+    type: 'rejonowy',
+    city: 'Wadowice',
+    address: 'Żwirki i Wigury 9, 34-100 Wadowice',
+    phone: '(12) 286 32 83',
+    email: 'boi@wadowice.sr.gov.pl',
+    website: 'https://w-wadowicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Wieliczce': {
+    id: 'w_Wieliczce',
+    name: 'Sąd Rejonowy w Wieliczce ',
+    shortName: 'SR w Wieliczce ',
+    type: 'rejonowy',
+    city: 'Wieliczka',
+    address: 'Janińska 25, 32-020 Wieliczka',
+    phone: '(12) 347 30 10',
+    email: 'informacja@wieliczka.sr.gov.pl',
+    website: 'https://w-wieliczce.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Nowym_Sczu': {
+    id: 'w_Nowym_Sczu',
+    name: 'Sąd Rejonowy w Nowym Sączu',
+    shortName: 'SR w Nowym Sączu',
+    type: 'rejonowy',
+    city: 'Nowy Sącz,            Muszyna',
+    address: 'dr Juliana Smolika 1,                     Anoniego Kity 18,                        Antoniego Kity 18 a (wydziały zamiejscowe), 33-300,             33-370  Nowy Sącz,            Muszyna',
+    phone: '(18) 531 73 95 - Nowy Sącz,                   (12) 28-63-283 - BOI Muszyna',
+    email: 'boi@nowysacz.sr.gov.pl',
+    website: 'https://w-nowym-sczu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Gorlicach': {
+    id: 'w_Gorlicach',
+    name: 'Sąd Rejonowy w Gorlicach',
+    shortName: 'SR w Gorlicach',
+    type: 'rejonowy',
+    city: 'Gorlice',
+    address: 'Biecka 5, 38-300 Gorlice',
+    phone: '(18) 355 11 22',
+    email: 'boi@gorlice.sr.gov.pl',
+    website: 'https://w-gorlicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Limanowej': {
+    id: 'w_Limanowej',
+    name: 'Sąd Rejonowy w Limanowej',
+    shortName: 'SR w Limanowej',
+    type: 'rejonowy',
+    city: 'Limanowa',
+    address: 'Marka 19, 34-600 Limanowa',
+    phone: '(18) 330 05 80',
+    email: 'boi@limanowa.sr.gov.pl',
+    website: 'https://w-limanowej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Nowym_Targu': {
+    id: 'w_Nowym_Targu',
+    name: 'Sąd Rejonowy w Nowym Targu',
+    shortName: 'SR w Nowym Targu',
+    type: 'rejonowy',
+    city: 'Nowy Targ',
+    address: 'Sądowa 6, 34-400 Nowy Targ',
+    phone: '(18) 261 26 86',
+    email: 'boi@nowytarg.sr.gov.pl',
+    website: 'https://w-nowym-targu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zakopanem': {
+    id: 'w_Zakopanem',
+    name: 'Sąd Rejonowy w Zakopanem ',
+    shortName: 'SR w Zakopanem ',
+    type: 'rejonowy',
+    city: 'Zakopane',
+    address: 'Gimnazjalna 13, 34-500 Zakopane',
+    phone: '(18) 202 46 85',
+    email: 'boi@zakopane.sr.gov.pl',
+    website: 'https://w-zakopanem.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Tarnowie': {
+    id: 'w_Tarnowie',
+    name: 'Sąd Rejonowy w Tarnowie',
+    shortName: 'SR w Tarnowie',
+    type: 'rejonowy',
+    city: 'Tarnów',
+    address: 'Dąbrowskiego 27, 33-100 Tarnów',
+    phone: '(14) 688 74 47',
+    email: 'informacja@tarnow.so.gov.pl',
+    website: 'https://w-tarnowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Brzesku': {
+    id: 'w_Brzesku',
+    name: 'Sąd Rejonowy w Brzesku',
+    shortName: 'SR w Brzesku',
+    type: 'rejonowy',
+    city: 'Brzesko',
+    address: 'Kościuszki 20, 32-800 Brzesko',
+    phone: '(14) 664 61 01',
+    email: 'boi@brzesko.sr.gov.pl',
+    website: 'https://w-brzesku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Dbrowie_Tarnowskiej': {
+    id: 'w_Dbrowie_Tarnowskiej',
+    name: 'Sąd Rejonowy w Dąbrowie Tarnowskiej',
+    shortName: 'SR w Dąbrowie Tarnowskiej',
+    type: 'rejonowy',
+    city: 'Dąbrowa Tarnowska',
+    address: 'Bojki 2, 33-200 Dąbrowa Tarnowska',
+    phone: '(14) 644 41 00',
+    email: 'informacja@dabrowatar.sr.gov.pl',
+    website: 'https://w-dbrowie-tarnowskiej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Bochni': {
+    id: 'w_Bochni',
+    name: 'Sąd Rejonowy w Bochni',
+    shortName: 'SR w Bochni',
+    type: 'rejonowy',
+    city: 'Bochnia',
+    address: 'Kościuszki 4 , 32-700  Bochnia',
+    phone: '(14) 615 21 00',
+    email: 'boi@bochnia.sr.gov.pl',
+    website: 'https://w-bochni.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lublinie': {
+    id: 'w_Lublinie',
+    name: 'Sąd Okręgowy w Lublinie',
+    shortName: 'SO w Lublinie',
+    type: 'okręgowy',
+    city: 'Lublin',
+    address: 'Krakowskie Przedmieście 43, 20-076 Lublin',
+    phone: '(81) 460 10 14',
+    email: 'boi@lublin.so.gov.pl',
+    website: 'https://w-lublinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Biaej_Podlaskiej': {
+    id: 'w_Biaej_Podlaskiej',
+    name: 'Sąd Rejonowy w Białej Podlaskiej',
+    shortName: 'SR w Białej Podlaskiej',
+    type: 'rejonowy',
+    city: 'Biała Podlaska',
+    address: 'Brzeska 20-22, 21-500 Biała Podlaska',
+    phone: '(83) 311 10 95',
+    email: 'boi@bialapodlaska.sr.gov.pl',
+    website: 'https://w-biaej-podlaskiej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Chemie': {
+    id: 'w_Chemie',
+    name: 'Sąd Rejonowy w Chełmie',
+    shortName: 'SR w Chełmie',
+    type: 'rejonowy',
+    city: 'Chełm',
+    address: 'Al. Żołnierzy I Armii Wojska Polskiego 16, 22-100 Chełm',
+    phone: '(82) 562-25-07, (82) 562 25 06',
+    email: 'boi@chelm.sr.gov.pl',
+    website: 'https://w-chemie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kraniku': {
+    id: 'w_Kraniku',
+    name: 'Sąd Rejonowy w Kraśniku',
+    shortName: 'SR w Kraśniku',
+    type: 'rejonowy',
+    city: 'Kraśnik',
+    address: 'Lubelska 81 (Biuro Podawcze, BOI, Czytelnia akt);                           Fabryczna 6 - (V Wydział Ksiąg Wieczystych)                            Kościuszki 26 (I i II Zespół Kuratorskiej Służby Sądowej), 23-200 Kraśnik',
+    phone: '(81) 562 90 00, BOI (81) 562 90 01, Czytelnia akt (81) 562 90 03,                     V Wydział Ksiąg Wieczystych (81) 825 75 20; (81) 825 33 50 I i II ZKSS',
+    email: 'boi@krasnik.sr.gov.pl, krasnik@krasnik.sr.gov.pl',
+    website: 'https://w-kraniku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lubartowie': {
+    id: 'w_Lubartowie',
+    name: 'Sąd Rejonowy w  Lubartowie',
+    shortName: 'SR w  Lubartowie',
+    type: 'rejonowy',
+    city: 'Lubartów',
+    address: 'Lubelska 57, 21-100 Lubartów',
+    phone: '(81) 852 68 00',
+    email: 'sekretariat@lubartow.sr.gov.pl',
+    website: 'https://w-lubartowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Lublin-Wschd_Lublinie_z_siedzib_widniku': {
+    id: 'Lublin-Wschd_Lublinie_z_siedzib_widniku',
+    name: 'Sąd Rejonowy Lublin-Wschód w Lublinie z siedzibą w Świdniku',
+    shortName: 'SR Lublin-Wschód w Lublinie z siedzibą w Świdniku',
+    type: 'rejonowy',
+    city: 'Świdnik',
+    address: 'Kardynała Stefana Wyszyńskiego 18, 21-040 Świdnik',
+    phone: '(81) 464 87 22',
+    email: 'boi@lublin-wschod.sr.gov.pl',
+    website: 'https://lublin-wschd-lublinie-z-siedzib-widniku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Lublin-Zachd_Lublinie': {
+    id: 'Lublin-Zachd_Lublinie',
+    name: 'Sąd Rejonowy Lublin-Zachód w Lublinie',
+    shortName: 'SR Lublin-Zachód w Lublinie',
+    type: 'rejonowy',
+    city: 'Lublin',
+    address: 'Krakowskie Przedmieście 76 (główna siedziba sądu, BOI dla VII Wydziału Pracy i Ubezpieczeń Społecznych, IX Wydziału Karnego);                                                                                                     Krakowskie Przedmieście 78 (Biuro Podawcze, III Wydział  Karny, IV Wydział Karny);                                                                          Konrada Wallenroda 4d (Biuro Podawcze, BOI dla Wydziałów: I Cywilny, V Rodzinny i Nieletnich, VIII Cywilny,X Ksiąg Wieczystych; Punkt Informacyjny KRK);                                                               Boczna Lubomelskiej 13 (VI Wydział Cywilny (e-sąd)), 20-950 Lublin',
+    phone: '(81) 478 16 07 ul. Krakowskie Przedmieście 76;                                   (81) 47 75 113 ul. Konrada Wallenroda 4 d                                                             (81) 535 07 56 ul. Boczna Lubomelskiej 13;',
+    email: 'sek@lublin-zachod.sr.gov.pl',
+    website: 'https://lublin-zachd-lublinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Opolu_Lubelskim': {
+    id: 'w_Opolu_Lubelskim',
+    name: 'Sąd Rejonowy w Opolu Lubelskim',
+    shortName: 'SR w Opolu Lubelskim',
+    type: 'rejonowy',
+    city: 'Opole Lubelskie',
+    address: 'Stary Rynek 46 , 24-300  Opole Lubelskie',
+    phone: '(81) 53 666 60',
+    email: 'administracyjny@opolelubelskie.sr.gov.pl',
+    website: 'https://w-opolu-lubelskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Puawach': {
+    id: 'w_Puawach',
+    name: 'Sąd Rejonowy w Puławach',
+    shortName: 'SR w Puławach',
+    type: 'rejonowy',
+    city: 'Puławy',
+    address: 'Lubelska 7, 24-100 Puławy',
+    phone: '(81) 888 55 85',
+    email: 'biuro@pulawy.sr.gov.pl',
+    website: 'https://w-puawach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Radzyniu_Podlaskim': {
+    id: 'w_Radzyniu_Podlaskim',
+    name: 'Sąd Rejonowy w Radzyniu Podlaskim',
+    shortName: 'SR w Radzyniu Podlaskim',
+    type: 'rejonowy',
+    city: 'Radzyń Podlaski',
+    address: 'Stefana Kardynała Wyszyńskiego 5, 21-300 Radzyń Podlaski',
+    phone: '(83) 313 30 01 sprawy karne                        (83) 313 30 02 sprawy cywilne, rodzinne i nieletnich;                                              (83) 313 30 40 wydział ksiąg wieczystych',
+    email: 'boi@radzyn.sr.gov.pl',
+    website: 'https://w-radzyniu-podlaskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Rykach': {
+    id: 'w_Rykach',
+    name: 'Sąd Rejonowy w Rykach',
+    shortName: 'SR w Rykach',
+    type: 'rejonowy',
+    city: 'Ryki',
+    address: 'Kościuszki 15, 08-500 Ryki',
+    phone: '(81) 865 60 51',
+    email: 'sekretariat@ryki.sr.gov.pl',
+    website: 'https://w-rykach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'we_Wodawie': {
+    id: 'we_Wodawie',
+    name: 'Sąd Rejonowy we Włodawie',
+    shortName: 'SR we Włodawie',
+    type: 'rejonowy',
+    city: 'Włodawa',
+    address: 'Sejmowa 7  , 22-200 Włodawa',
+    phone: '(82) 591 74 17',
+    email: 'sekretariat@wlodawa.sr.gov.pl',
+    website: 'https://we-wodawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Radomiu': {
+    id: 'w_Radomiu',
+    name: 'Sąd Rejonowy w Radomiu',
+    shortName: 'SR w Radomiu',
+    type: 'rejonowy',
+    city: 'Radom',
+    address: 'Warszawska 1, 26-610 Radom',
+    phone: '(48) 36 80 od 442 do 445',
+    email: 'boi@radom.sr.gov.pl',
+    website: 'https://w-radomiu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Grjcu': {
+    id: 'w_Grjcu',
+    name: 'Sąd Rejonowy w Grójcu',
+    shortName: 'SR w Grójcu',
+    type: 'rejonowy',
+    city: 'Grójec,                 Białobrzegi',
+    address: 'Sportowa 14,                              Kościelna 110 (VIII Zamiejscowy Wydział Ksiąg Wieczystych), 05-600,                 26-800 Grójec,                 Białobrzegi',
+    phone: '(48)  664 83 00',
+    email: 'poi@grojec.sr.gov.pl',
+    website: 'https://w-grjcu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kozienicach': {
+    id: 'w_Kozienicach',
+    name: 'Sąd Rejonowy w Kozienicach',
+    shortName: 'SR w Kozienicach',
+    type: 'rejonowy',
+    city: 'Kozienice',
+    address: 'Konstytucji 3 Maja 22, 26-900 Kozienice',
+    phone: '(48) 614 29 13',
+    email: 'biuro@kozienice.sr.gov.pl',
+    website: 'https://w-kozienicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lipsku': {
+    id: 'w_Lipsku',
+    name: 'Sąd Rejonowy w Lipsku',
+    shortName: 'SR w Lipsku',
+    type: 'rejonowy',
+    city: 'Lipsko',
+    address: 'Partyzantów 1, 27-300 Lipsko',
+    phone: '(48) 378 44 60',
+    email: 'sr@lipsko.sr.gov.pl',
+    website: 'https://w-lipsku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Przysusze': {
+    id: 'w_Przysusze',
+    name: 'Sąd Rejonowy w Przysusze',
+    shortName: 'SR w Przysusze',
+    type: 'rejonowy',
+    city: 'Przysucha',
+    address: 'Al. Jana Pawła II 11, 26-400 Przysucha',
+    phone: '(48) 675 03 70',
+    email: 'administracja@przysucha.sr.gov.pl',
+    website: 'https://w-przysusze.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Szydowcu': {
+    id: 'w_Szydowcu',
+    name: 'Sąd Rejonowy w Szydłowcu',
+    shortName: 'SR w Szydłowcu',
+    type: 'rejonowy',
+    city: 'Szydłowiec',
+    address: 'Pl. Marii Konopnickiej 7, 26-500 Szydłowiec',
+    phone: '(48) 617 87 00',
+    email: 'administracja@szydlowiec.sr.gov.pl',
+    website: 'https://w-szydowcu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zwoleniu': {
+    id: 'w_Zwoleniu',
+    name: 'Sąd Rejonowy w Zwoleniu',
+    shortName: 'SR w Zwoleniu',
+    type: 'rejonowy',
+    city: 'Zwoleń',
+    address: 'Moniuszki 6, 26-700 Zwoleń',
+    phone: '(48) 676 30 51',
+    email: 'biuro.podawcze@zwolen.sr.gov.pl',
+    website: 'https://w-zwoleniu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Siedlcach': {
+    id: 'w_Siedlcach',
+    name: 'Sąd Rejonowy w Siedlcach',
+    shortName: 'SR w Siedlcach',
+    type: 'rejonowy',
+    city: 'Siedlce',
+    address: 'Kazimierzowska 31A, 08-110 Siedlce',
+    phone: '(25) 640 07 01',
+    email: 'boi@siedlce.sr.gov.pl',
+    website: 'https://w-siedlcach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Garwolinie': {
+    id: 'w_Garwolinie',
+    name: 'Sąd Rejonowy w Garwolinie',
+    shortName: 'SR w Garwolinie',
+    type: 'rejonowy',
+    city: 'Garwolin',
+    address: 'Al. Legionów 46, 08-400 Garwolin',
+    phone: '(25) 684 17 00 wew. 700 lub 705',
+    email: 'boi@garwolin.sr.gov.pl',
+    website: 'https://w-garwolinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_ukowie': {
+    id: 'w_ukowie',
+    name: 'Sąd Rejonowy w Łukowie',
+    shortName: 'SR w Łukowie',
+    type: 'rejonowy',
+    city: 'Łuków',
+    address: 'Staropijarska 1 (wydział ksiąg wieczystych, karny);       Kwiatkowskiego 3 (wydział cywilny, rodzinny), 21-400 Łuków',
+    phone: '(25) 798 23 51, (25) 798 23 48,',
+    email: 'biuro.podawcze@lukow.sr.gov.pl',
+    website: 'https://w-ukowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Misku_Mazowieckim': {
+    id: 'w_Misku_Mazowieckim',
+    name: 'Sąd Rejonowy w Mińsku Mazowieckim',
+    shortName: 'SR w Mińsku Mazowieckim',
+    type: 'rejonowy',
+    city: 'Mińsk Mazowiecki',
+    address: 'Okrzei 14, 05-300 Mińsk Mazowiecki',
+    phone: '(25) 756-49 od 00 do 05',
+    email: 'boi@minsk-mazowiecki.sr.gov.pl',
+    website: 'https://w-misku-mazowieckim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Wgrowie': {
+    id: 'w_Wgrowie',
+    name: 'Sąd Rejonowy w Węgrowie',
+    shortName: 'SR w Węgrowie',
+    type: 'rejonowy',
+    city: 'Węgrów',
+    address: 'Przemysłowa 20, 07-100 Węgrów',
+    phone: '(25) 792 22 31',
+    email: 'boi@wegrow.sr.gov.pl',
+    website: 'https://w-wgrowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Sokoowie_Podlaskim': {
+    id: 'w_Sokoowie_Podlaskim',
+    name: 'Sąd Rejonowy w Sokołowie Podlaskim',
+    shortName: 'SR w Sokołowie Podlaskim',
+    type: 'rejonowy',
+    city: 'Sokołów Podlaski',
+    address: 'ks Bosco 3, 08-300 Sokołów Podlaski',
+    phone: '(25) 787 23 22',
+    email: 'biuro.podawcze@sokolow-podlaski.sr.gov.pl',
+    website: 'https://w-sokoowie-podlaskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zamociu': {
+    id: 'w_Zamociu',
+    name: 'Sąd Rejonowy w Zamościu',
+    shortName: 'SR w Zamościu',
+    type: 'rejonowy',
+    city: 'Zamość',
+    address: 'Prymasa Stefana Wyszyńskiego 11, 22-400 Zamość',
+    phone: '(84) 631 65 00',
+    email: 'boi@zamosc.sr.gov.pl',
+    website: 'https://w-zamociu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Bigoraju': {
+    id: 'w_Bigoraju',
+    name: 'Sąd Rejonowy w Biłgoraju',
+    shortName: 'SR w Biłgoraju',
+    type: 'rejonowy',
+    city: 'Biłgoraj',
+    address: 'Kościuszki  29, 23-400 Biłgoraj',
+    phone: '(84) 68 50 901 sprawy cywilne, rodzinne i nieletnich;                                                      (84) 68 50 902 sprawy karne',
+    email: 'administracja@bilgoraj.sr.gov.pl',
+    website: 'https://w-bigoraju.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Hrubieszowie': {
+    id: 'w_Hrubieszowie',
+    name: 'Sąd Rejonowy w Hrubieszowie',
+    shortName: 'SR w Hrubieszowie',
+    type: 'rejonowy',
+    city: 'Hrubieszów',
+    address: 'Dobrzańskiego "Hubala" 7, 22-500 Hrubieszów',
+    phone: '(84) 696 40 42',
+    email: 'administracja@hrubieszow.sr.gov.pl',
+    website: 'https://w-hrubieszowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Janowie_Lubelskim': {
+    id: 'w_Janowie_Lubelskim',
+    name: 'Sąd Rejonowy w Janowie Lubelskim ',
+    shortName: 'SR w Janowie Lubelskim ',
+    type: 'rejonowy',
+    city: 'Janów Lubelski',
+    address: 'Zamoyskiego 94, 23-300 Janów Lubelski',
+    phone: '(15) 872 00 50, 872 04 49',
+    email: 'administracja@janowlubelski.sr.gov.pl',
+    website: 'https://w-janowie-lubelskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Krasnymstawie': {
+    id: 'w_Krasnymstawie',
+    name: 'Sąd Rejonowy w Krasnymstawie',
+    shortName: 'SR w Krasnymstawie',
+    type: 'rejonowy',
+    city: 'Krasnystaw',
+    address: 'Poniatowskiego 31, 22-300 Krasnystaw',
+    phone: '(82) 576 28 od 02 do 05, (82) 560 13 00',
+    email: 'boi@krasnystaw.sr.gov.pl',
+    website: 'https://w-krasnymstawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Tomaszowie_Lubelskim': {
+    id: 'w_Tomaszowie_Lubelskim',
+    name: 'Sąd Rejonowy w Tomaszowie Lubelskim',
+    shortName: 'SR w Tomaszowie Lubelskim',
+    type: 'rejonowy',
+    city: 'Tomaszów Lubelski',
+    address: 'Lwowska 55, 22-600 Tomaszów Lubelski',
+    phone: '(84) 665 74 55 – sprawy karne;
+(84) 665 74 89 – sprawy cywilne;
+(84) 665 74 46 – sprawy rodzinne i nieletnich;
+(84) 665 74 35 – sprawy wieczystoksięgowe',
+    email: 'boi@tomaszowlub.sr.gov.pl',
+    website: 'https://w-tomaszowie-lubelskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_odzi': {
+    id: 'w_odzi',
+    name: 'Sąd Okręgowy w Łodzi',
+    shortName: 'SO w Łodzi',
+    type: 'okręgowy',
+    city: 'Łódź',
+    address: 'Pl. Dąbrowskiego 5, 90-921 Łódź',
+    phone: '(42) 685 04 00',
+    email: 'boi@lodz.so.gov.pl',
+    website: 'https://w-odzi.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kaliszu': {
+    id: 'w_Kaliszu',
+    name: 'Sąd Rejonowy w Kaliszu',
+    shortName: 'SR w Kaliszu',
+    type: 'rejonowy',
+    city: 'Kalisz',
+    address: 'Al. Wolności 13, 62-800 Kalisz',
+    phone: '(62) 765 78 61',
+    email: 'boi@kalisz.sr.gov.pl',
+    website: 'https://w-kaliszu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Ostrowie_Wielkopolskim': {
+    id: 'w_Ostrowie_Wielkopolskim',
+    name: 'Sąd Rejonowy w Ostrowie Wielkopolskim',
+    shortName: 'SR w Ostrowie Wielkopolskim',
+    type: 'rejonowy',
+    city: 'Ostrów Wielkopolski',
+    address: 'Sądowa 2, 63-400 Ostrów Wielkopolski',
+    phone: '(62) 592 61 79',
+    email: 'poi@ostrow.sr.gov.pl',
+    website: 'https://w-ostrowie-wielkopolskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Jarocinie': {
+    id: 'w_Jarocinie',
+    name: 'Sąd Rejonowy w Jarocinie',
+    shortName: 'SR w Jarocinie',
+    type: 'rejonowy',
+    city: 'Jarocin',
+    address: 'Al. Niepodległości 15, 63-200 Jarocin',
+    phone: '(62) 505 29 60',
+    email: 'administracja@jarocin.sr.gov.pl',
+    website: 'https://w-jarocinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Pleszewie': {
+    id: 'w_Pleszewie',
+    name: 'Sąd Rejonowy w Pleszewie',
+    shortName: 'SR w Pleszewie',
+    type: 'rejonowy',
+    city: 'Pleszew',
+    address: 'Malińska 21, 63-300 Pleszew',
+    phone: '(62) 742 06 98',
+    email: 'administracja@pleszew.sr.gov.pl',
+    website: 'https://w-pleszewie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kpnie': {
+    id: 'w_Kpnie',
+    name: 'Sąd Rejonowy w Kępnie',
+    shortName: 'SR w Kępnie',
+    type: 'rejonowy',
+    city: 'Kępno',
+    address: 'Al. Marcinkowskiego 10, 63-600 Kępno',
+    phone: '(62) 782 72 50',
+    email: 'administracja@kepno.sr.gov.pl',
+    website: 'https://w-kpnie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Ostrzeszowie': {
+    id: 'w_Ostrzeszowie',
+    name: 'Sąd Rejonowy w Ostrzeszowie',
+    shortName: 'SR w Ostrzeszowie',
+    type: 'rejonowy',
+    city: 'Ostrzeszów',
+    address: 'Zamkowa 9 A, 63-500 Ostrzeszów',
+    phone: '(62) 732 27 10',
+    email: 'administracja@ostrzeszow.sr.gov.pl',
+    website: 'https://w-ostrzeszowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Krotoszynie': {
+    id: 'w_Krotoszynie',
+    name: 'Sąd Rejonowy w Krotoszynie',
+    shortName: 'SR w Krotoszynie',
+    type: 'rejonowy',
+    city: 'Krotoszyn',
+    address: 'Sienkiewicza 11, 63-700 Krotoszyn',
+    phone: '(62) 725 11 00',
+    email: 'administracja@krotoszyn.sr.gov.pl',
+    website: 'https://w-krotoszynie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kutnie': {
+    id: 'w_Kutnie',
+    name: 'Sąd Rejonowy w Kutnie',
+    shortName: 'SR w Kutnie',
+    type: 'rejonowy',
+    city: 'Kutno',
+    address: 'Spokojna 2, 99-300 Kutno',
+    phone: '(24) 251 13 50',
+    email: 'boi@kutno.sr.gov.pl',
+    website: 'https://w-kutnie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_owiczu': {
+    id: 'w_owiczu',
+    name: 'Sąd Rejonowy w Łowiczu',
+    shortName: 'SR w Łowiczu',
+    type: 'rejonowy',
+    city: 'Łowicz',
+    address: 'Kaliska 1/3, 99-400 Łowicz',
+    phone: '(46) 830 43 10',
+    email: 'boi@lowicz.sr.gov.pl',
+    website: 'https://w-owiczu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_czycy': {
+    id: 'w_czycy',
+    name: 'Sąd Rejonowy w Łęczycy',
+    shortName: 'SR w Łęczycy',
+    type: 'rejonowy',
+    city: 'Łęczyca',
+    address: 'Konopnickiej 16, 99-100 Łęczyca',
+    phone: '(24) 721 12 82',
+    email: 'boi.leczyca@leczyca.sr.gov.pl',
+    website: 'https://w-czycy.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Pabianicach': {
+    id: 'w_Pabianicach',
+    name: 'Sąd Rejonowy w Pabianicach',
+    shortName: 'SR w Pabianicach',
+    type: 'rejonowy',
+    city: 'Pabianice',
+    address: 'Partyzancka 105/127, 95-200 Pabianice',
+    phone: '(42) 225 51 83',
+    email: 'boi@pabianice.sr.gov.pl',
+    website: 'https://w-pabianicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Skierniewicach': {
+    id: 'w_Skierniewicach',
+    name: 'Sąd Rejonowy w Skierniewicach',
+    shortName: 'SR w Skierniewicach',
+    type: 'rejonowy',
+    city: 'Skierniewice',
+    address: 'Reymonta 12/14, 96-100 Skierniewice',
+    phone: '(46) 834 49 40',
+    email: 'boi@skierniewice.sr.gov.pl',
+    website: 'https://w-skierniewicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zgierzu': {
+    id: 'w_Zgierzu',
+    name: 'Sąd Rejonowy w Zgierzu',
+    shortName: 'SR w Zgierzu',
+    type: 'rejonowy',
+    city: 'Zgierz',
+    address: 'Sokołowska 6, 95-100 Zgierz',
+    phone: '(42) 715 75 00, (42) 715 76 06, (42) 715 76 07, (42) 715 76 08, 664 413 025',
+    email: 'boi@zgierz.sr.gov.pl',
+    website: 'https://w-zgierzu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_odzi-rdmiecia_odzi': {
+    id: 'dla_odzi-rdmiecia_odzi',
+    name: 'Sąd Rejonowy dla Łodzi-Śródmieścia w Łodzi',
+    shortName: 'SR dla Łodzi-Śródmieścia w Łodzi',
+    type: 'rejonowy',
+    city: 'Łódź',
+    address: 'Al. Kościuszki 107/109 (BOI dla wydziałów: I, II, IV, V, VI,VII, VIII);                              Kopcińskiego 56 (BOI dla wydziałów: III, X, XII, XIII, XVIII);                                     Pomorska 37 (BOI dla wydziałów: XIV, XV, XX)., 90-928;                               90-032;           90-203 Łódź',
+    phone: '(42) 201 20 00',
+    email: 'boi@lodz.sr.gov.pl',
+    website: 'https://dla-odzi-rdmiecia-odzi.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Brzezinach': {
+    id: 'w_Brzezinach',
+    name: 'Sąd Rejonowy w Brzezinach',
+    shortName: 'SR w Brzezinach',
+    type: 'rejonowy',
+    city: 'Brzeziny',
+    address: 'Waryńskiego 32, 95-060 Brzeziny',
+    phone: '(46) 875 21 41, 875 21 51',
+    email: 'boi@brzeziny.sr.gov.pl',
+    website: 'https://w-brzezinach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_odzi-Widzewa_odzi': {
+    id: 'dla_odzi-Widzewa_odzi',
+    name: 'Sąd Rejonowy dla Łodzi-Widzewa w Łodzi',
+    shortName: 'SR dla Łodzi-Widzewa w Łodzi',
+    type: 'rejonowy',
+    city: 'Łódź',
+    address: 'Al. Piłsudskiego 143 (BOI dla wydziału III, IV, VIII);                                   Kopcińskiego 56 (BOI dla wydziału I, II, V). , 92-332,                       90-032 Łódź',
+    phone: '(42) 677-47-47 al.Piłsudskiego,            (42) 677-95-64 ul. Kopcińskiego',
+    email: 'boi.pilsudskiego@widzew.sr.gov.pl, boi.kopcinskiego@widzew.sr.gov.pl',
+    website: 'https://dla-odzi-widzewa-odzi.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Rawie_Mazowieckiej': {
+    id: 'w_Rawie_Mazowieckiej',
+    name: 'Sąd Rejonowy w Rawie Mazowieckiej ',
+    shortName: 'SR w Rawie Mazowieckiej ',
+    type: 'rejonowy',
+    city: 'Rawa Mazowiecka',
+    address: 'Kościuszki 17, 96-200 Rawa Mazowiecka',
+    phone: '(46) 813 19 15',
+    email: 'boi@rawa.sr.gov.pl',
+    website: 'https://w-rawie-mazowieckiej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Piotrkowie_Trybunalskim': {
+    id: 'w_Piotrkowie_Trybunalskim',
+    name: 'Sąd Rejonowy w Piotrkowie Trybunalskim ',
+    shortName: 'SR w Piotrkowie Trybunalskim ',
+    type: 'rejonowy',
+    city: 'Piotrków Trybunalski',
+    address: 'Słowackiego 5, 97-300 Piotrków Trybunalski',
+    phone: '(44) 649 42 00',
+    email: 'boi@piotrkow-tryb.sr.gov.pl',
+    website: 'https://w-piotrkowie-trybunalskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Bechatowie': {
+    id: 'w_Bechatowie',
+    name: 'Sąd Rejonowy w Bełchatowie',
+    shortName: 'SR w Bełchatowie',
+    type: 'rejonowy',
+    city: 'Bełchatów',
+    address: 'Pabianicka 32, 97-400 Bełchatów',
+    phone: '(44) 635 76 06',
+    email: 'boi@belchatow.sr.gov.pl',
+    website: 'https://w-bechatowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Opocznie': {
+    id: 'w_Opocznie',
+    name: 'Sąd Rejonowy w Opocznie',
+    shortName: 'SR w Opocznie',
+    type: 'rejonowy',
+    city: 'Opoczno',
+    address: 'Biernackiego 20, 26-300 Opoczno',
+    phone: '(44) 755 71 07',
+    email: 'informacja@opoczno.sr.gov.pl',
+    website: 'https://w-opocznie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Radomsku': {
+    id: 'w_Radomsku',
+    name: 'Sąd Rejonowy w Radomsku ',
+    shortName: 'SR w Radomsku ',
+    type: 'rejonowy',
+    city: 'Radomsko',
+    address: 'Tysiąclecia 3, 97-500 Radomsko',
+    phone: '(44) 6858123, (44) 6858112',
+    email: 'poczta@radomsko.sr.gov.pl',
+    website: 'https://w-radomsku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Tomaszowie_Mazowieckim': {
+    id: 'w_Tomaszowie_Mazowieckim',
+    name: 'Sąd Rejonowy w Tomaszowie Mazowieckim',
+    shortName: 'SR w Tomaszowie Mazowieckim',
+    type: 'rejonowy',
+    city: 'Tomaszów Mazowiecki',
+    address: 'Prezydenta I. Mościckiego 9, 97-200 Tomaszów Mazowiecki',
+    phone: '(44) 725 75 08, 725 75 09',
+    email: 'boi@tomaszow-maz.sr.gov.pl',
+    website: 'https://w-tomaszowie-mazowieckim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Pocku': {
+    id: 'w_Pocku',
+    name: 'Sąd Rejonowy w Płocku',
+    shortName: 'SR w Płocku',
+    type: 'rejonowy',
+    city: 'Płock',
+    address: ' 8 Pułku Artylerii Lekkiej 6, 09-402 Płock',
+    phone: '(24) 269 74 76',
+    email: 'boi@plock.sr.gov.pl',
+    website: 'https://w-pocku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Ciechanowie': {
+    id: 'w_Ciechanowie',
+    name: 'Sąd Rejonowy w Ciechanowie ',
+    shortName: 'SR w Ciechanowie ',
+    type: 'rejonowy',
+    city: 'Ciechanów',
+    address: 'Mikołajczyka 5 (Biuro Podawcze, BOI, II Wydział Karny, VI Wydział Ksiąg Wieczystych, VIII Wydział Wykonywania Orzeczeń);                                                         Mikołajczyka 6 (I Wydział Cywilny, III Wydział Rodzinny i Nieletnich, IV Wydział Pracy)., 06-400 Ciechanów',
+    phone: '(23) 674 17 71',
+    email: 'informacja@ciechanow.sr.gov.pl',
+    website: 'https://w-ciechanowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Gostyninie': {
+    id: 'w_Gostyninie',
+    name: 'Sąd Rejonowy w Gostyninie',
+    shortName: 'SR w Gostyninie',
+    type: 'rejonowy',
+    city: 'Gostynin',
+    address: '3 Maja 43, 09-500 Gostynin',
+    phone: '(24) 352 08 31',
+    email: 'administracja@gostynin.sr.gov.pl',
+    website: 'https://w-gostyninie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Mawie': {
+    id: 'w_Mawie',
+    name: 'Sąd Rejonowy w Mławie ',
+    shortName: 'SR w Mławie ',
+    type: 'rejonowy',
+    city: 'Mława',
+    address: 'Reymonta 3, 06-500 Mława',
+    phone: '(23) 654 89 06',
+    email: 'boi@mlawa.sr.gov.pl',
+    website: 'https://w-mawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Sochaczewie': {
+    id: 'w_Sochaczewie',
+    name: 'Sąd Rejonowy w Sochaczewie',
+    shortName: 'SR w Sochaczewie',
+    type: 'rejonowy',
+    city: 'Sochaczew',
+    address: '1 Maja 7, 96-500 Sochaczew',
+    phone: '(46) 862 32 64 w.300, 326',
+    email: 'biuro.podawcze@sochaczew.sr.gov.pl',
+    website: 'https://w-sochaczewie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Posku': {
+    id: 'w_Posku',
+    name: 'Sąd Rejonowy w Płońsku',
+    shortName: 'SR w Płońsku',
+    type: 'rejonowy',
+    city: 'Płońsk',
+    address: 'Sienkiewicza 9a, 09-100 Płońsk',
+    phone: '(23) 661 37 10',
+    email: 'boi@plonsk.sr.gov.pl',
+    website: 'https://w-posku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Sierpcu': {
+    id: 'w_Sierpcu',
+    name: 'Sąd Rejonowy w Sierpcu',
+    shortName: 'SR w Sierpcu',
+    type: 'rejonowy',
+    city: 'Sierpc',
+    address: 'Wiosny Ludów 1, 09-200 Sierpc',
+    phone: '(24) 275 22 93',
+    email: 'administracja@sierpc.sr.gov.pl',
+    website: 'https://w-sierpcu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_yrardowie': {
+    id: 'w_yrardowie',
+    name: 'Sąd Rejonowy w Żyrardowie',
+    shortName: 'SR w Żyrardowie',
+    type: 'rejonowy',
+    city: 'Żyrardów',
+    address: 'al. Partyzantów 3, 96-300 Żyrardów',
+    phone: '(46) 854 31 41',
+    email: 'boi@zyrardow.sr.gov.pl',
+    website: 'https://w-yrardowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Sieradzu': {
+    id: 'w_Sieradzu',
+    name: 'Sąd Rejonowy w Sieradzu ',
+    shortName: 'SR w Sieradzu ',
+    type: 'rejonowy',
+    city: 'Sieradz',
+    address: 'al. Zwycięstwa 1, 98-200 Sieradz',
+    phone: '(43) 826 66 00',
+    email: 'boi@sieradz.sr.gov.pl',
+    website: 'https://w-sieradzu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_asku': {
+    id: 'w_asku',
+    name: 'Sąd Rejonowy w Łasku',
+    shortName: 'SR w Łasku',
+    type: 'rejonowy',
+    city: 'Łask',
+    address: 'Kolejowa 12, 98-100 Łask',
+    phone: '(43) 676 85 00',
+    email: 'administracja@lask.sr.gov.pl',
+    website: 'https://w-asku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Wieluniu': {
+    id: 'w_Wieluniu',
+    name: 'Sąd Rejonowy w Wieluniu',
+    shortName: 'SR w Wieluniu',
+    type: 'rejonowy',
+    city: 'Wieluń',
+    address: 'Pl. Jagielloński 1, 98-300 Wieluń',
+    phone: '(43) 842 01 00',
+    email: 'administracja@wielun.sr.gov.pl',
+    website: 'https://w-wieluniu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zduskiej_Woli': {
+    id: 'w_Zduskiej_Woli',
+    name: 'Sąd Rejonowy w Zduńskiej Woli',
+    shortName: 'SR w Zduńskiej Woli',
+    type: 'rejonowy',
+    city: 'Zduńska Wola',
+    address: 'Żeromskiego 19, 98-220 Zduńska Wola',
+    phone: '(43) 824 18 18',
+    email: 'boi@zdwola.sr.gov.pl',
+    website: 'https://w-zduskiej-woli.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Poznaniu': {
+    id: 'w_Poznaniu',
+    name: 'Sąd Okręgowy w Poznaniu',
+    shortName: 'SO w Poznaniu',
+    type: 'okręgowy',
+    city: 'Poznań',
+    address: 'Hejmowskiego 2, 61-736 Poznań',
+    phone: '(61) 628 30 00',
+    email: 'informacja@poznan.so.gov.pl',
+    website: 'https://w-poznaniu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Koninie': {
+    id: 'w_Koninie',
+    name: 'Sąd Rejonowy w Koninie',
+    shortName: 'SR w Koninie',
+    type: 'rejonowy',
+    city: 'Konin',
+    address: 'Fryderyka Chopina 28, 62-510 Konin',
+    phone: '(63) 240 47 46',
+    email: 'boi@konin.sr.gov.pl',
+    website: 'https://w-koninie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kole': {
+    id: 'w_Kole',
+    name: 'Sąd Rejonowy w Kole',
+    shortName: 'SR w Kole',
+    type: 'rejonowy',
+    city: 'Koło',
+    address: 'Włocławska 4, 62-600 Koło',
+    phone: '(63) 228 29 17',
+    email: 'bp@kolo.sr.gov.pl',
+    website: 'https://w-kole.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Supcy': {
+    id: 'w_Supcy',
+    name: 'Sąd Rejonowy w Słupcy',
+    shortName: 'SR w Słupcy',
+    type: 'rejonowy',
+    city: 'Słupca',
+    address: 'Armii Krajowej 2, 62-400 Słupca',
+    phone: '(63) 228 27 00',
+    email: 'administracja@slupca.sr.gov.pl',
+    website: 'https://w-supcy.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Turku': {
+    id: 'w_Turku',
+    name: 'Sąd Rejonowy w Turku',
+    shortName: 'SR w Turku',
+    type: 'rejonowy',
+    city: 'Turek',
+    address: 'Legionów Polskich 4, 62-700 Turek',
+    phone: '(63) 240 72 00',
+    email: 'bp@turek.sr.gov.pl',
+    website: 'https://w-turku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Chodziey': {
+    id: 'w_Chodziey',
+    name: 'Sąd Rejonowy w Chodzieży',
+    shortName: 'SR w Chodzieży',
+    type: 'rejonowy',
+    city: 'Chodzież',
+    address: 'Krasińskiego 10, 64-800 Chodzież',
+    phone: '(67) 356 77 00',
+    email: 'boi@chodziez.sr.gov.pl',
+    website: 'https://w-chodziey.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Gnienie': {
+    id: 'w_Gnienie',
+    name: 'Sąd Rejonowy w Gnieźnie ',
+    shortName: 'SR w Gnieźnie ',
+    type: 'rejonowy',
+    city: 'Gniezno',
+    address: 'Franciszkańska 9/10, 62-200  Gniezno',
+    phone: '(61) 423 93 00',
+    email: 'boi@gniezno.sr.gov.pl',
+    website: 'https://w-gnienie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Gostyniu': {
+    id: 'w_Gostyniu',
+    name: 'Sąd Rejonowy w Gostyniu ',
+    shortName: 'SR w Gostyniu ',
+    type: 'rejonowy',
+    city: 'Gostyń',
+    address: 'Sądowa 1, 63-800 Gostyń',
+    phone: '(65) 521 44 08, 521 44 09',
+    email: 'administracja@gostyn.sr.gov.pl',
+    website: 'https://w-gostyniu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Grodzisku_Wielkopolskim': {
+    id: 'w_Grodzisku_Wielkopolskim',
+    name: 'Sąd Rejonowy w Grodzisku Wielkopolskim',
+    shortName: 'SR w Grodzisku Wielkopolskim',
+    type: 'rejonowy',
+    city: 'Grodzisk Wielkopolski',
+    address: 'Żwirki i Wigury nr 3, 62-065 Grodzisk Wielkopolski',
+    phone: '(61) 628 48 08',
+    email: 'administracja@grodziskwlkp.sr.gov.pl',
+    website: 'https://w-grodzisku-wielkopolskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kocianie': {
+    id: 'w_Kocianie',
+    name: 'Sąd Rejonowy w Kościanie',
+    shortName: 'SR w Kościanie',
+    type: 'rejonowy',
+    city: 'Kościan',
+    address: 'Pl. Niezłomnych 2, 64-000 Kościan',
+    phone: '(65) 521 45 46',
+    email: 'administracja@koscian.sr.gov.pl',
+    website: 'https://w-kocianie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lesznie': {
+    id: 'w_Lesznie',
+    name: 'Sąd Rejonowy w Lesznie',
+    shortName: 'SR w Lesznie',
+    type: 'rejonowy',
+    city: 'Leszno',
+    address: 'Dąbrowskiego 2, 64-100 Leszno',
+    phone: '(65) 525 94 03',
+    email: 'boi@leszno.sr.gov.pl',
+    website: 'https://w-lesznie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Nowym_Tomylu': {
+    id: 'w_Nowym_Tomylu',
+    name: 'Sąd Rejonowy w Nowym Tomyślu',
+    shortName: 'SR w Nowym Tomyślu',
+    type: 'rejonowy',
+    city: 'Nowy Tomyśl',
+    address: 'Pl. Niepodległości 31, 64-300 Nowy Tomyśl',
+    phone: '(61) 628 49 66',
+    email: 'administracja@nowytomysl.sr.gov.pl',
+    website: 'https://w-nowym-tomylu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Obornikach': {
+    id: 'w_Obornikach',
+    name: 'Sąd Rejonowy w Obornikach',
+    shortName: 'SR w Obornikach',
+    type: 'rejonowy',
+    city: 'Oborniki',
+    address: 'Piłsudskiego 47, 64-600  Oborniki',
+    phone: '(61) 628 48 77',
+    email: 'adm@oborniki.sr.gov.pl',
+    website: 'https://w-obornikach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Pile': {
+    id: 'w_Pile',
+    name: 'Sąd Rejonowy w Pile',
+    shortName: 'SR w Pile',
+    type: 'rejonowy',
+    city: 'Piła',
+    address: 'al.Powstańców Wielkopolskich 79, 64-920 Piła',
+    phone: '(67) 352 29 28',
+    email: 'info@pila.sr.gov.pl',
+    website: 'https://w-pile.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Pozna-Grunwald_i_Jeyce_Poznaniu': {
+    id: 'Pozna-Grunwald_i_Jeyce_Poznaniu',
+    name: 'Sąd Rejonowy Poznań-Grunwald i Jeżyce w Poznaniu',
+    shortName: 'SR Poznań-Grunwald i Jeżyce w Poznaniu',
+    type: 'rejonowy',
+    city: 'Poznań',
+    address: 'Kamiennogórska 26, 60-179 Poznań',
+    phone: '(61) 628 97 00',
+    email: 'boi@poznan-grunwald.sr.gov.pl',
+    website: 'https://pozna-grunwald-i-jeyce-poznaniu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Pozna-Nowe_Miasto_i_Wilda_Poznaniu': {
+    id: 'Pozna-Nowe_Miasto_i_Wilda_Poznaniu',
+    name: 'Sąd Rejonowy Poznań-Nowe Miasto i Wilda w Poznaniu',
+    shortName: 'SR Poznań-Nowe Miasto i Wilda w Poznaniu',
+    type: 'rejonowy',
+    city: 'Poznań',
+    address: 'Al. Marcinkowskiego 32 (sprawy cywilne, karne oraz rodzinne i nieletnich);                                   Chlebowa 4/8 (sprawy gospodarcze rejestru zastawów oraz krajowego rejestru sądowego) , 61-745;                                                        61-003  Poznań',
+    phone: '(61) 640 90 00',
+    email: 'boi@poznan-nowemiasto.sr.gov.pl',
+    website: 'https://pozna-nowe-miasto-i-wilda-poznaniu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Pozna-Stare_Miasto_Poznaniu': {
+    id: 'Pozna-Stare_Miasto_Poznaniu',
+    name: 'Sąd Rejonowy Poznań-Stare Miasto w Poznaniu',
+    shortName: 'SR Poznań-Stare Miasto w Poznaniu',
+    type: 'rejonowy',
+    city: 'Poznań',
+    address: 'Młyńska 1a, 61-729 Poznań',
+    phone: '(61) 666 08 50',
+    email: 'boi@poznan-staremiasto.sr.gov.pl',
+    website: 'https://pozna-stare-miasto-poznaniu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Rawiczu': {
+    id: 'w_Rawiczu',
+    name: 'Sąd Rejonowy w Rawiczu',
+    shortName: 'SR w Rawiczu',
+    type: 'rejonowy',
+    city: 'Rawicz',
+    address: 'Ignacego Buszy nr 1, 63-900 Rawicz',
+    phone: '(65) 521 44 51',
+    email: 'administracja@rawicz.sr. gov.pl',
+    website: 'https://w-rawiczu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Szamotuach': {
+    id: 'w_Szamotuach',
+    name: 'Sąd Rejonowy w Szamotułach',
+    shortName: 'SR w Szamotułach',
+    type: 'rejonowy',
+    city: 'Szamotuły,          Międzychód',
+    address: 'Al. 1 Maja 5A,                           Sikorskiego 22 (wydział zamiejscowy), 64-500,           64-400 Szamotuły,          Międzychód',
+    phone: '(61) 667 47 00 - Szamotuły,                   (95) 748 40 16 -Międzychód',
+    email: 'boi@szamotuly.sr.gov.pl',
+    website: 'https://w-szamotuach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_remie': {
+    id: 'w_remie',
+    name: 'Sąd Rejonowy w Śremie',
+    shortName: 'SR w Śremie',
+    type: 'rejonowy',
+    city: 'Śrem',
+    address: 'Franciszkańska 4, 63-100 Śrem',
+    phone: '(61) 282 14 10',
+    email: 'administracja@srem.sr.gov.pl',
+    website: 'https://w-remie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_rodzie_Wielkopolskiej': {
+    id: 'w_rodzie_Wielkopolskiej',
+    name: 'Sąd Rejonowy w Środzie Wielkopolskiej',
+    shortName: 'SR w Środzie Wielkopolskiej',
+    type: 'rejonowy',
+    city: 'Środa Wielkopolska',
+    address: 'Stary Rynek 6, 63-000 Środa Wielkopolska',
+    phone: '(61) 62 84 302',
+    email: 'administracja@srodawlkp.sr.gov.pl',
+    website: 'https://w-rodzie-wielkopolskiej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Trzciance': {
+    id: 'w_Trzciance',
+    name: 'Sąd Rejonowy w Trzciance',
+    shortName: 'SR w Trzciance',
+    type: 'rejonowy',
+    city: 'Trzcianka',
+    address: 'Staszica 1, 64-980 Trzcianka',
+    phone: '(67) 352 89 00',
+    email: 'biuropodawcze@trzcianka.sr.gov.pl',
+    website: 'https://w-trzciance.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Wgrowcu': {
+    id: 'w_Wgrowcu',
+    name: 'Sąd Rejonowy w Wągrowcu ',
+    shortName: 'SR w Wągrowcu ',
+    type: 'rejonowy',
+    city: 'Wągrowiec',
+    address: 'Kościuszki 18 , 62-100 Wągrowiec',
+    phone: '(67) 268 12 00',
+    email: 'boi@wagrowiec.sr.gov.pl',
+    website: 'https://w-wgrowcu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Wolsztynie': {
+    id: 'w_Wolsztynie',
+    name: 'Sąd Rejonowy w Wolsztynie',
+    shortName: 'SR w Wolsztynie',
+    type: 'rejonowy',
+    city: 'Wolsztyn',
+    address: 'Mickiewicza 2, 64-200 Wolsztyn',
+    phone: '(68) 420 23 01',
+    email: 'administracja@wolsztyn.sr.gov.pl',
+    website: 'https://w-wolsztynie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'we_Wrzeni': {
+    id: 'we_Wrzeni',
+    name: 'Sąd Rejonowy we Wrześni',
+    shortName: 'SR we Wrześni',
+    type: 'rejonowy',
+    city: 'Września',
+    address: 'Jana Pawła II 10, 62-300 Września',
+    phone: '(61) 436 90 01',
+    email: 'administracja@wrzesnia.sr.gov.pl',
+    website: 'https://we-wrzeni.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zotowie': {
+    id: 'w_Zotowie',
+    name: 'Sąd Rejonowy w Złotowie ',
+    shortName: 'SR w Złotowie ',
+    type: 'rejonowy',
+    city: 'Złotów',
+    address: 'Konopnickiej 15, 77-400 Złotów',
+    phone: '(67) 264 28 00',
+    email: 'administracja@zlotow.sr.gov.pl',
+    website: 'https://w-zotowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zielonej_Grze': {
+    id: 'w_Zielonej_Grze',
+    name: 'Sąd Rejonowy w Zielonej Górze',
+    shortName: 'SR w Zielonej Górze',
+    type: 'rejonowy',
+    city: 'Zielona Góra',
+    address: 'Plac Słowiański 2 (Wydziały: I cywilny, II karny, VI ksiąg wieczystych, IX egzekucyjny); 
+Plac Słowiański  5 (Wydział VII Karny);  
+Plac Słowiański 12 (Wydział IV Pracy i Ubezpieczeń Społecznych, III Wydział Rodzinny i Nieletnich, V Wydział Gospodarczy); 
+Kożuchowska 8 (Wydział Gospodarczy KRS)., 65-069 Zielona Góra',
+    phone: '(68) 322 03 78',
+    email: 'informacja@zielona-gora.sr.gov.pl',
+    website: 'https://w-zielonej-grze.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kronie_Odrzaskim': {
+    id: 'w_Kronie_Odrzaskim',
+    name: 'Sąd Rejonowy w Krośnie Odrzańskim',
+    shortName: 'SR w Krośnie Odrzańskim',
+    type: 'rejonowy',
+    city: 'Krosno Odrzańskie,    Gubin',
+    address: 'Piastów 10 L,                           Piastowska 16 (wydziały zamiejscowe), 66-600,              66-620 Krosno Odrzańskie,    Gubin',
+    phone: '(68) 383 99 10 - Krosno Odrzańskie, 
+501 077 134 - Gubin IV Zamiejscowy Wydział Karny 
+507 768 158 - Gubin VI Zamiejscowy Wydział Ksiąg Wieczystych',
+    email: 'biuro.podawcze@krosno-odrz.sr.gov.pl',
+    website: 'https://w-kronie-odrzaskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Nowej_Soli': {
+    id: 'w_Nowej_Soli',
+    name: 'Sąd Rejonowy w Nowej Soli',
+    shortName: 'SR w Nowej Soli',
+    type: 'rejonowy',
+    city: 'Nowa Sól',
+    address: 'Piłsudskiego 24 , 67-100  Nowa Sól',
+    phone: '(68) 355 88 00',
+    email: 'sekretariat@nowa-sol.sr.gov.pl',
+    website: 'https://w-nowej-soli.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_wiebodzinie': {
+    id: 'w_wiebodzinie',
+    name: 'Sąd Rejonowy w Świebodzinie',
+    shortName: 'SR w Świebodzinie',
+    type: 'rejonowy',
+    city: 'Świebodzin,                          Sulechów',
+    address: 'Park Chopina 3 (wydziały: I Wydział Cywilny, II Wydział Karny, III Wydział Rodzinny i Nieletnich, IV Wydział Pracy);  
+ul. Wałowa 11 (V Wydział Ksiąg Wieczystych); 
+al. Niepodległości 9 (wydziały zamiejscowe: VI Wydział Karny, VII Wydział Ksiąg Wieczystych).
+, 66-200,                  66-100 Świebodzin,                          Sulechów',
+    phone: '(68) 381 94 64',
+    email: 'boi@swiebodzin.sr.gov.pl',
+    website: 'https://w-wiebodzinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'we_Wschowie': {
+    id: 'we_Wschowie',
+    name: 'Sąd Rejonowy we Wschowie',
+    shortName: 'SR we Wschowie',
+    type: 'rejonowy',
+    city: 'Wschowa',
+    address: 'Plac Kosynierów 1C, 67-400  Wschowa',
+    phone: '(65) 540 15 01',
+    email: 'podawcze@wschowa.sr.gov.pl',
+    website: 'https://we-wschowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_aganiu': {
+    id: 'w_aganiu',
+    name: 'Sąd Rejonowy w Żaganiu',
+    shortName: 'SR w Żaganiu',
+    type: 'rejonowy',
+    city: 'Żagań',
+    address: 'Szprotawska 3 (wydziały: I Wydział Cywilny, II Wydział Karny, IV Wydział Pracy, V Wydział Ksiąg Wieczystych); Szprotowska 1 (III Wydział Rodzinny i Nieletnich)., 68-100 Żagań',
+    phone: '(68) 478 49 36',
+    email: 'boi@zagan.sr.gov.pl',
+    website: 'https://w-aganiu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_arach': {
+    id: 'w_arach',
+    name: 'Sąd Rejonowy w Żarach',
+    shortName: 'SR w Żarach',
+    type: 'rejonowy',
+    city: 'Żary',
+    address: 'Spokojna 20, 68-200 Żary',
+    phone: '(68) 363 53 42',
+    email: 'sekretariat@zary.sr.gov.pl',
+    website: 'https://w-arach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Rzeszowie': {
+    id: 'w_Rzeszowie',
+    name: 'Sąd Rejonowy w Rzeszowie',
+    shortName: 'SR w Rzeszowie',
+    type: 'rejonowy',
+    city: 'Rzeszów',
+    address: 'Kustronia 4, 35-303 Rzeszów',
+    phone: '(17) 715 24 00',
+    email: 'boi@rzeszow.sr.gov.pl',
+    website: 'https://w-rzeszowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Przemylu': {
+    id: 'w_Przemylu',
+    name: 'Sąd Rejonowy w Przemyślu',
+    shortName: 'SR w Przemyślu',
+    type: 'rejonowy',
+    city: 'Przemyśl',
+    address: 'Mickiewicza 14, 37-700 Przemyśl',
+    phone: '(16) 675 73 33',
+    email: 'boi@przemysl.sr.gov.pl',
+    website: 'https://w-przemylu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Jarosawiu': {
+    id: 'w_Jarosawiu',
+    name: 'Sąd Rejonowy w Jarosławiu',
+    shortName: 'SR w Jarosławiu',
+    type: 'rejonowy',
+    city: 'Jarosław',
+    address: 'Jana Pawła II 11 (wydział cywilny, wydział pracy, wydział ksiąg wieczystych, oddział finansowy, administracyjny, Prezes,Dyrektor);                    Czarnieckiego 4 (BOI, wydział karny, wydział rodzinny,zespół kuratorskiej służby sądowej). , 37-500 Jarosław',
+    phone: '(16) 624 01 02',
+    email: 'boi@jaroslaw.sr.gov.pl',
+    website: 'https://w-jarosawiu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Przeworsku': {
+    id: 'w_Przeworsku',
+    name: 'Sąd Rejonowy w Przeworsku',
+    shortName: 'SR w Przeworsku',
+    type: 'rejonowy',
+    city: 'Przeworsk',
+    address: 'Lwowska 9, 37-200 Przeworsk',
+    phone: '(16) 649 08 10',
+    email: 'boi@przeworsk.sr.gov.pl',
+    website: 'https://w-przeworsku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lubaczowie': {
+    id: 'w_Lubaczowie',
+    name: 'Sąd Rejonowy w Lubaczowie',
+    shortName: 'SR w Lubaczowie',
+    type: 'rejonowy',
+    city: 'Lubaczów',
+    address: 'Mickiewicza 24, 37-600 Lubaczów',
+    phone: '(16) 632 50 64',
+    email: 'sad@lubaczow.sr.gov.pl',
+    website: 'https://w-lubaczowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kronie': {
+    id: 'w_Kronie',
+    name: 'Sąd Rejonowy w Krośnie',
+    shortName: 'SR w Krośnie',
+    type: 'rejonowy',
+    city: 'Krosno',
+    address: 'Sienkiewicza  12, 38-400 Krosno',
+    phone: '(13) 437 56 36',
+    email: 'boi@krosno.sr.gov.pl',
+    website: 'https://w-kronie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Brzozowie': {
+    id: 'w_Brzozowie',
+    name: 'Sąd Rejonowy w Brzozowie',
+    shortName: 'SR w Brzozowie',
+    type: 'rejonowy',
+    city: 'Brzozów',
+    address: '3 Maja 2a, 36-200 Brzozów',
+    phone: '(13) 433 83 11',
+    email: 'boi@brzozow.sr.gov.pl',
+    website: 'https://w-brzozowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Jale': {
+    id: 'w_Jale',
+    name: 'Sąd Rejonowy w Jaśle',
+    shortName: 'SR w Jaśle',
+    type: 'rejonowy',
+    city: 'Jasło',
+    address: 'Armii Krajowej 3, 38-200 Jasło',
+    phone: '(13) 446 20 80',
+    email: 'administracja@jaslo.sr.gov.pl',
+    website: 'https://w-jale.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lesku': {
+    id: 'w_Lesku',
+    name: 'Sąd Rejonowy w Lesku',
+    shortName: 'SR w Lesku',
+    type: 'rejonowy',
+    city: 'Lesko',
+    address: 'Pl. Konstytucji 3 Maja 9, 38-600 Lesko',
+    phone: '(13) 468 98 00',
+    email: 'administracja@lesko.sr.gov.pl',
+    website: 'https://w-lesku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Sanoku': {
+    id: 'w_Sanoku',
+    name: 'Sąd Rejonowy w Sanoku',
+    shortName: 'SR w Sanoku',
+    type: 'rejonowy',
+    city: 'Sanok',
+    address: 'Kościuszki 5, 38-500 Sanok',
+    phone: '(13) 465 67 87',
+    email: 'boi@sanok.sr.gov.pl',
+    website: 'https://w-sanoku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Ropczycach': {
+    id: 'w_Ropczycach',
+    name: 'Sąd Rejonowy w Ropczycach',
+    shortName: 'SR w Ropczycach',
+    type: 'rejonowy',
+    city: 'Ropczyce',
+    address: 'Słowackiego 7, 39-100 Ropczyce',
+    phone: '(17) 222 03 00',
+    email: 'sekretariat@ropczyce.sr.gov.pl',
+    website: 'https://w-ropczycach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Leajsku': {
+    id: 'w_Leajsku',
+    name: 'Sąd Rejonowy w Leżajsku',
+    shortName: 'SR w Leżajsku',
+    type: 'rejonowy',
+    city: 'Leżajsk',
+    address: 'Mickiewicza 47 , 37-300 Leżajsk',
+    phone: '(17) 240 53 00',
+    email: 'sekretariat@lezajsk.sr.gov.pl',
+    website: 'https://w-leajsku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_acucie': {
+    id: 'w_acucie',
+    name: 'Sąd Rejonowy w Łańcucie',
+    shortName: 'SR w Łańcucie',
+    type: 'rejonowy',
+    city: 'Łańcut',
+    address: 'Grunwaldzka 10 , 37-100 Łańcut',
+    phone: '(17) 224 23 31, (17) 224 23 00',
+    email: 'boi@lancut.sr.gov.pl,  sekretariat@lancut.sr.gov.pl',
+    website: 'https://w-acucie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Dbicy': {
+    id: 'w_Dbicy',
+    name: 'Sąd Rejonowy w Dębicy',
+    shortName: 'SR w Dębicy',
+    type: 'rejonowy',
+    city: 'Dębica',
+    address: 'Słoneczna 3, 39-200 Dębica',
+    phone: '(14) 680 76 70',
+    email: 'boi@debica.sr.gov.pl',
+    website: 'https://w-dbicy.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Strzyowie': {
+    id: 'w_Strzyowie',
+    name: 'Sąd Rejonowy w Strzyżowie',
+    shortName: 'SR w Strzyżowie',
+    type: 'rejonowy',
+    city: 'Strzyżów',
+    address: '3 Maja 14, 38-100 Strzyżów',
+    phone: '(17) 276 81 00',
+    email: 'sekretariat@strzyzow.sr.gov.pl',
+    website: 'https://w-strzyowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Tarnobrzegu': {
+    id: 'w_Tarnobrzegu',
+    name: 'Sąd Rejonowy w Tarnobrzegu',
+    shortName: 'SR w Tarnobrzegu',
+    type: 'rejonowy',
+    city: 'Tarnobrzeg',
+    address: 'Sienkiewicza 27, 39-400 Tarnobrzeg',
+    phone: '(15) 688 25 15',
+    email: 'boi@tarnobrzeg.sr.gov.pl',
+    website: 'https://w-tarnobrzegu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Nisku': {
+    id: 'w_Nisku',
+    name: 'Sąd Rejonowy w Nisku',
+    shortName: 'SR w Nisku',
+    type: 'rejonowy',
+    city: 'Nisko',
+    address: 'Gisgesa 1, 37-400 Nisko',
+    phone: '(15) 843 62 14',
+    email: 'administracja@nisko.sr.gov.pl',
+    website: 'https://w-nisku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Mielcu': {
+    id: 'w_Mielcu',
+    name: 'Sąd Rejonowy w Mielcu',
+    shortName: 'SR w Mielcu',
+    type: 'rejonowy',
+    city: 'Mielec',
+    address: 'Kościuszki 15, 39-300 Mielec',
+    phone: '(17) 582 04 00',
+    email: 'administracja@mielec.sr.gov.pl',
+    website: 'https://w-mielcu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Stalowej_Woli': {
+    id: 'w_Stalowej_Woli',
+    name: 'Sąd Rejonowy w Stalowej Woli',
+    shortName: 'SR w Stalowej Woli',
+    type: 'rejonowy',
+    city: 'Stalowa Wola',
+    address: 'Popiełuszki 16, 37-450 Stalowa Wola',
+    phone: '(15) 643 45 50, 643 45 51',
+    email: 'administracja@stalowawola.sr.gov.pl',
+    website: 'https://w-stalowej-woli.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kolbuszowej': {
+    id: 'w_Kolbuszowej',
+    name: 'Sąd Rejonowy w Kolbuszowej',
+    shortName: 'SR w Kolbuszowej',
+    type: 'rejonowy',
+    city: 'Kolbuszowa',
+    address: 'Tyszkiewiczów 4, 36-100 Kolbuszowa',
+    phone: '(17) 227 72 00',
+    email: 'biuro.podawcze@kolbuszowa.sr.gov.pl',
+    website: 'https://w-kolbuszowej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Szczecinie': {
+    id: 'w_Szczecinie',
+    name: 'Sąd Okręgowy w Szczecinie',
+    shortName: 'SO w Szczecinie',
+    type: 'okręgowy',
+    city: 'Szczecin',
+    address: 'Kaszubska 42 (wydział karny, karny odwoławczy, penitencjarny);           Małopolska 17 (wydział pracy i ubezpieczeń, gospodarczy, cywilny rodzinny);                                             Piotra Skargi 19 (wydział cywilny i cywilny odwoławczy)., 70-227 Szczecin',
+    phone: '(91) 448 00 02 - ul. Kaszubska 42;             (91) 48 30 100 - ul. Małopolska 17; 
+(91) 44 55 920 - ul. P. Skargi 19',
+    email: 'boi@szczecin.so.gov.pl - ul. Kaszubska 42
+boi2@szczecin.so.gov.pl - ul. Małopolska 17
+boi3@szczecin.so.gov.pl - ul. P. Skargi 19',
+    website: 'https://w-szczecinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Gryficach': {
+    id: 'w_Gryficach',
+    name: 'Sąd Rejonowy w Gryficach',
+    shortName: 'SR w Gryficach',
+    type: 'rejonowy',
+    city: 'Gryfice',
+    address: 'Wysoka Brama 2, 72-300 Gryfice',
+    phone: '(91) 386 68 01',
+    email: 'sr.gryfice@gryfice.sr.gov.pl',
+    website: 'https://w-gryficach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Szczecin-Prawobrzee_i_Zachd_Szczecinie': {
+    id: 'Szczecin-Prawobrzee_i_Zachd_Szczecinie',
+    name: 'Sąd Rejonowy Szczecin-Prawobrzeże i Zachód w Szczecinie',
+    shortName: 'SR Szczecin-Prawobrzeże i Zachód w Szczecinie',
+    type: 'rejonowy',
+    city: 'Szczecin,                    Police',
+    address: 'Pl. Żołnierza Polskiego 16,         Korczaka 16 (wydziały zamiejscowe) , 70-551,                   72-010  Szczecin,                    Police',
+    phone: '(91) 46 03 500 - Szczecin,                       (91) 4316 826 (846) - Police XI Zam. Wydział Ksiąg Wieczystych,                    (91) 4316 821 - Police VII Zamiejscowy Wydział Karny',
+    email: 'boi@szczecin-pz.sr.gov.pl',
+    website: 'https://szczecin-prawobrzee-i-zachd-szczecinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Szczecin-Centrum_Szczecinie': {
+    id: 'Szczecin-Centrum_Szczecinie',
+    name: 'Sąd Rejonowy Szczecin-Centrum w Szczecinie',
+    shortName: 'SR Szczecin-Centrum w Szczecinie',
+    type: 'rejonowy',
+    city: 'Szczecin',
+    address: 'Kaszubska 42, 70-227 Szczecin',
+    phone: '(91) 48 55 515',
+    email: 'boi@szczecin-centrum.sr.gov.pl',
+    website: 'https://szczecin-centrum-szczecinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_winoujciu': {
+    id: 'w_winoujciu',
+    name: 'Sąd Rejonowy w Świnoujściu',
+    shortName: 'SR w Świnoujściu',
+    type: 'rejonowy',
+    city: 'Świnoujście',
+    address: 'Paderewskiego 6, 72-600 Świnoujście',
+    phone: '(91) 326 28 70',
+    email: 'boi@swinoujscie.sr.gov.pl',
+    website: 'https://w-winoujciu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Stargardzie': {
+    id: 'w_Stargardzie',
+    name: 'Sąd Rejonowy w Stargardzie',
+    shortName: 'SR w Stargardzie',
+    type: 'rejonowy',
+    city: 'Stargard;                 Pyrzyce',
+    address: 'Wojska Polskiego 17-19 (wydział rodzinny i nieletnich, pracy);         Stefana Okrzei 8 (wydzial cywilny, karny);
+Staromiejska 3 Pyrzyce (wydział Kany, wydział ksiąg wieczystych), 73-110;                74-200  Stargard;                 Pyrzyce',
+    phone: '(91) 395 33 00 - ul. Wojska Polskiego 17-19 (wydział rodzinny i nieletnich, wydział pracy, wydział ksiąg wieczystych);
+(91) 395 32 02 - ul. Okrzei 8
+(91) 570 35 55 - wydział karny Pyrzyce
+(91) 570 36 60 - wydział ksiąg wieczystych Pyrzyce',
+    email: 'boi@stargard.sr.gov.pl',
+    website: 'https://w-stargardzie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Myliborzu': {
+    id: 'w_Myliborzu',
+    name: 'Sąd Rejonowy w Myśliborzu',
+    shortName: 'SR w Myśliborzu',
+    type: 'rejonowy',
+    city: 'Myślibórz',
+    address: 'Niedziałkowskiego 6, 74-300 Myślibórz',
+    phone: '(95) 747 34 46',
+    email: 'sr.mysliborz@mysliborz.sr.gov.pl',
+    website: 'https://w-myliborzu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Goleniowie': {
+    id: 'w_Goleniowie',
+    name: 'Sąd Rejonowy w Goleniowie',
+    shortName: 'SR w Goleniowie',
+    type: 'rejonowy',
+    city: 'Goleniów',
+    address: 'Konstytucji 3 Maja 45 (sprawy karne i pracy);                                                        Kilińskiego 8 (sprawy cywilne i rodzinne), 72-100 Goleniów',
+    phone: '(91) 480 76 46 - ul. Konstytucji 3 Maja; (91) 480 77 48 - ul. Kilińskiego',
+    email: 'boi@goleniow.sr.gov.pl',
+    website: 'https://w-goleniowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Gryfinie': {
+    id: 'w_Gryfinie',
+    name: 'Sąd Rejonowy w Gryfinie',
+    shortName: 'SR w Gryfinie',
+    type: 'rejonowy',
+    city: 'Gryfino',
+    address: 'Grunwaldzka 2, 74-100 Gryfino',
+    phone: '(91) 420 03 07',
+    email: 'informacja@gryfino.sr.gov.pl',
+    website: 'https://w-gryfinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_obzie': {
+    id: 'w_obzie',
+    name: 'Sąd Rejonowy w Łobzie',
+    shortName: 'SR w Łobzie',
+    type: 'rejonowy',
+    city: 'Łobez',
+    address: 'Niepodległości 15, 73-150 Łobez',
+    phone: '(91) 397 06 31',
+    email: 'katarzyna.sobipan@lobez.sr.gov.pl',
+    website: 'https://w-obzie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kamieniu_Pomorskim': {
+    id: 'w_Kamieniu_Pomorskim',
+    name: 'Sąd Rejonowy w Kamieniu Pomorskim',
+    shortName: 'SR w Kamieniu Pomorskim',
+    type: 'rejonowy',
+    city: 'Kamień Pomorski',
+    address: 'Kościuszki 13, 72-400 Kamień Pomorski',
+    phone: '(91) 382 57 80',
+    email: 'sekretariat@kamien.sr.gov.pl',
+    website: 'https://w-kamieniu-pomorskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Choszcznie': {
+    id: 'w_Choszcznie',
+    name: 'Sąd Rejonowy w Choszcznie',
+    shortName: 'SR w Choszcznie',
+    type: 'rejonowy',
+    city: 'Choszczno',
+    address: 'Wolności 14, 73-200 Choszczno',
+    phone: '(95) 765 70 69',
+    email: 'sekretariat@choszczno.sr.gov.pl',
+    website: 'https://w-choszcznie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Koszalinie': {
+    id: 'w_Koszalinie',
+    name: 'Sąd Rejonowy w Koszalinie',
+    shortName: 'SR w Koszalinie',
+    type: 'rejonowy',
+    city: 'Koszalin',
+    address: 'Andersa 34B, 75-626 Koszalin',
+    phone: '(94) 317 02 21, 342 86 28',
+    email: 'informacja@koszalin.sr.gov.pl',
+    website: 'https://w-koszalinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Koobrzegu': {
+    id: 'w_Koobrzegu',
+    name: 'Sąd Rejonowy w Kołobrzegu',
+    shortName: 'SR w Kołobrzegu',
+    type: 'rejonowy',
+    city: 'Kołobrzeg',
+    address: 'Katedralna 13, 78-100 Kołobrzeg',
+    phone: '(94) 357 51 37, (94) 357 51 42',
+    email: 'poi@kolobrzeg.sr.gov.pl',
+    website: 'https://w-koobrzegu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Waczu': {
+    id: 'w_Waczu',
+    name: 'Sąd Rejonowy w Wałczu',
+    shortName: 'SR w Wałczu',
+    type: 'rejonowy',
+    city: 'Wałcz',
+    address: 'Sądowa 2, 78-600 Wałcz',
+    phone: '(67) 250 19 46',
+    email: 'boi@walcz.sr.gov.pl',
+    website: 'https://w-waczu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Biaogardzie': {
+    id: 'w_Biaogardzie',
+    name: 'Sąd Rejonowy w Białogardzie',
+    shortName: 'SR w Białogardzie',
+    type: 'rejonowy',
+    city: 'Białogard',
+    address: 'Lipowa 1 , 78-200 Białogard',
+    phone: '(94) 312 01 10',
+    email: 'o.administracyjny@bialogard.sr.gov.pl',
+    website: 'https://w-biaogardzie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Drawsku_Pomorskim': {
+    id: 'w_Drawsku_Pomorskim',
+    name: 'Sąd Rejonowy w Drawsku Pomorskim',
+    shortName: 'SR w Drawsku Pomorskim',
+    type: 'rejonowy',
+    city: 'Drawsko Pomorskie',
+    address: 'Złocieniecka 5, 78-500 Drawsko Pomorskie',
+    phone: '(94) 363 64 60',
+    email: 'poi@drawsko-pom.sr.gov.pl',
+    website: 'https://w-drawsku-pomorskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Szczecinku': {
+    id: 'w_Szczecinku',
+    name: 'Sąd Rejonowy w Szczecinku',
+    shortName: 'SR w Szczecinku',
+    type: 'rejonowy',
+    city: 'Szczecinek',
+    address: 'Bohaterów Warszawy 42 , 78-400 Szczecinek',
+    phone: '(94) 373 08 00',
+    email: 'boi@szczecinek.sr.gov.pl',
+    website: 'https://w-szczecinku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Sawnie': {
+    id: 'w_Sawnie',
+    name: 'Sąd Rejonowy w Sławnie',
+    shortName: 'SR w Sławnie',
+    type: 'rejonowy',
+    city: 'Sławno',
+    address: 'I Pułku Ułanów 20, 76-100  Sławno',
+    phone: '(59) 810 67 46',
+    email: 'biuropodawcze@slawno.sr.gov.pl',
+    website: 'https://w-sawnie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Gorzowie_Wielkopolskim': {
+    id: 'w_Gorzowie_Wielkopolskim',
+    name: 'Sąd Rejonowy w Gorzowie Wielkopolskim',
+    shortName: 'SR w Gorzowie Wielkopolskim',
+    type: 'rejonowy',
+    city: 'Gorzów Wielkopolski',
+    address: 'Chopina 52 blok 10 i 15, 66-400 Gorzów Wielkopolski',
+    phone: '(95) 725 65 04, 
+(95) 725 65 01,  
+(95) 725 65 03,
+(95) 725 68 00, 
+(95) 725 68 07 BOI Księgi Wieczyste',
+    email: 'boi@gorzow-wlkp.sr.gov.pl',
+    website: 'https://w-gorzowie-wielkopolskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Subicach': {
+    id: 'w_Subicach',
+    name: 'Sąd Rejonowy w Słubicach',
+    shortName: 'SR w Słubicach',
+    type: 'rejonowy',
+    city: 'Słubice',
+    address: 'Bohaterów Warszawy 3B, 69-100 Słubice',
+    phone: '(95) 750 70 03',
+    email: 'sekretariat@slubice.sr.gov.pl',
+    website: 'https://w-subicach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Strzelcach_Krajeskich': {
+    id: 'w_Strzelcach_Krajeskich',
+    name: 'Sąd Rejonowy w Strzelcach Krajeńskich',
+    shortName: 'SR w Strzelcach Krajeńskich',
+    type: 'rejonowy',
+    city: 'Strzelce Krajeńskie',
+    address: 'Rynek 2-3, 66-500 Strzelce Krajeńskie',
+    phone: '(95) 763 21 55',
+    email: 'informacja@strzelce-kraj.sr.gov.pl',
+    website: 'https://w-strzelcach-krajeskich.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Sulcinie': {
+    id: 'w_Sulcinie',
+    name: 'Sąd Rejonowy w Sulęcinie',
+    shortName: 'SR w Sulęcinie',
+    type: 'rejonowy',
+    city: 'Sulęcin',
+    address: 'Kościuszki 30, 69-200 Sulęcin',
+    phone: '(95) 755 48 24, 755 48 25, 755 48 26',
+    email: 'boi@sulecin.sr.gov.pl',
+    website: 'https://w-sulcinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Midzyrzeczu': {
+    id: 'w_Midzyrzeczu',
+    name: 'Sąd Rejonowy w Międzyrzeczu',
+    shortName: 'SR w Międzyrzeczu',
+    type: 'rejonowy',
+    city: 'Międzyrzecz',
+    address: 'Wojska Polskiego 1, 66-300 Międzyrzecz',
+    phone: '(95) 742 40 09',
+    email: 'info@miedzyrzecz.sr.gov.pl',
+    website: 'https://w-midzyrzeczu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Warszawie': {
+    id: 'w_Warszawie',
+    name: 'Sąd Okręgowy w Warszawie',
+    shortName: 'SO w Warszawie',
+    type: 'okręgowy',
+    city: 'Warszawa',
+    address: 'al. "Solidarności" 127 (sprawy cywilne, karne, rodzinne oraz sprawy dotyczące egzekucji alimentów z zagranicy);                                                  Płocka 9 (sprawy ubezpieczeń społecznych, pracy i  cywilne odwoławcze); 
+Płocka 5a (sprawy rodzinne);                   Czerniakowska 100 (sprawy gospodarcze);
+Przyokopowa 33 (sprawy cywilne dotyczące umów kredytu denominowanego lub indeksowanego do walut obcych)., 00-898 al. Solidarności;     
+01-231 ul. Płocka; 
+00-454 Czerniakowska;
+01-208 ul. Przyokopowa Warszawa',
+    phone: '(22) 440 80 00 al. Solidarności;               (22) 440 50 00 ul. Płocka;                      (22) 440 07 27 ul. Czerniakowska
+(22) 440 71 71 ul. Przyokopowa',
+    email: 'boi@warszawa.so.gov.pl, boi.plocka@warszawa.so.gov.pl,    boi.gosp@warszawa.so.gov.pl',
+    website: 'https://w-warszawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_mst_Warszawy_Warszawie': {
+    id: 'dla_mst_Warszawy_Warszawie',
+    name: 'Sąd Rejonowy dla m.st. Warszawy w Warszawie',
+    shortName: 'SR dla m.st. Warszawy w Warszawie',
+    type: 'rejonowy',
+    city: 'Warszawa',
+    address: 'Marszałkowska 82 (dla wydziałów I, II, V, VI, VII);                               Czerniakowska 100 (dla wydziałów XI, XII, XIII, XIV);                        Czerniakowska 100 A (dla wydziałów VIII, IX, XV, XVI, XVII, XVIII, XIX)., 00-517 Warszawa',
+    phone: '(22) 553 97 71 Marszałkowska 82;       (22) 44 00 687 Czerniakowska 100;     (22) 33 41 388 Czerniakowska 100 A',
+    email: 'boi_marszałkowska@warszawa.sr.gov.pl, boi_czerniakowska@warszawa.sr.gov.pl, boi_krsczerniakowska@warszawa.sr.gov.pl',
+    website: 'https://dla-mst-warszawy-warszawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Warszawy-rdmiecia_Warszawie': {
+    id: 'dla_Warszawy-rdmiecia_Warszawie',
+    name: 'Sąd Rejonowy dla Warszawy-Śródmieścia w Warszawie',
+    shortName: 'SR dla Warszawy-Śródmieścia w Warszawie',
+    type: 'rejonowy',
+    city: 'Warszawa',
+    address: 'Marszałkowska 82, 00-517 Warszawa',
+    phone: '(22) 553 91 90',
+    email: 'boi@warszawa-srodmiescie.sr.gov.pl',
+    website: 'https://dla-warszawy-rdmiecia-warszawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Warszawy-oliborza_Warszawie': {
+    id: 'dla_Warszawy-oliborza_Warszawie',
+    name: 'Sąd Rejonowy dla Warszawy-Żoliborza w Warszawie',
+    shortName: 'SR dla Warszawy-Żoliborza w Warszawie',
+    type: 'rejonowy',
+    city: 'Warszawa',
+    address: 'Kocjana 3, 01-473 Warszawa',
+    phone: '(22) 328 60 30',
+    email: 'boi@warszawa-zoliborz.sr.gov.pl',
+    website: 'https://dla-warszawy-oliborza-warszawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Warszawy-Mokotowa_Warszawie': {
+    id: 'dla_Warszawy-Mokotowa_Warszawie',
+    name: 'Sąd Rejonowy dla Warszawy-Mokotowa w Warszawie',
+    shortName: 'SR dla Warszawy-Mokotowa w Warszawie',
+    type: 'rejonowy',
+    city: 'Warszawa',
+    address: 'Ogrodowa 51 A (III, VIII, XIV Karny i XII Wykonywania Orzeczeń);
+al. Solidarności 58 (VI, VII, IX, X, XIII Wydział Ksiąg Wieczystych);
+Chłodna 64 (XV Wydział Ksiąg Wieczystych); 
+Chałubińskiego 8 (I,II,XVI Wydział Cywilny, V Wydział Rodzinny i Nieletnich);    , 00-873 ul. Ogrodowa 51a, 00-240 al. Solidarności 58, 00-891 ul. Chłodna 64, 00-613 ul. Chałubińskiego Warszawa',
+    phone: 'ul. Ogrodowa 51 A: (22) 501 97 20,                             (22) 501 97 21, (22) 501 97 22, (22) 501 97 23;                                                       al. Solidarności 58:  VI - (22) 531 43 33, VII - (22) 531 42 31, 32  IX - (22) 831 64 86, 531 42 40, 41;  X - (22) 531 42 64, 65; XIII - (22) 531 42 70;                                 ul. Chłodna 64: (22) 531 43 08, (22) 531 42 80;                                                     ul. Chałubińskiego 8:(22) 539-14-00.',
+    email: 'boi@mokotow.sr.gov.pl - sprawy karne;                                                         boi2@mokotow.sr.gov.pl-sprawy cywilne oraz rodzinne i nieletnich',
+    website: 'https://dla-warszawy-mokotowa-warszawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Warszawy-Woli_Warszawie': {
+    id: 'dla_Warszawy-Woli_Warszawie',
+    name: 'Sąd Rejonowy dla Warszawy-Woli w Warszawie',
+    shortName: 'SR dla Warszawy-Woli w Warszawie',
+    type: 'rejonowy',
+    city: 'Warszawa',
+    address: 'Kocjana 3 , 01-473  Warszawa',
+    phone: '(22) 328 60 20, 328 60 21, 328 60 22',
+    email: 'boi@warszawa-wola.sr.gov.pl',
+    website: 'https://dla-warszawy-woli-warszawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Grodzisku_Mazowieckim': {
+    id: 'w_Grodzisku_Mazowieckim',
+    name: 'Sąd Rejonowy w Grodzisku Mazowieckim',
+    shortName: 'SR w Grodzisku Mazowieckim',
+    type: 'rejonowy',
+    city: 'Grodzisk Mazowiecki',
+    address: 'Bartniaka 21/23;                              Kościuszki 14 (I Wydział Cywilny
+II Zespół Kuratorskiej Służby Sądowej dla Dorosłych)., 05-825 Grodzisk Mazowiecki',
+    phone: '(22) 77-09-200 sprawy sądowe;                            (22) 77-09-270 księgi wieczyste',
+    email: 'boi@grodzisk.sr.gov.pl;   ksiegi.wieczyste@grodzisk.sr.gov.pl',
+    website: 'https://w-grodzisku-mazowieckim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Piasecznie': {
+    id: 'w_Piasecznie',
+    name: 'Sąd Rejonowy w Piasecznie',
+    shortName: 'SR w Piasecznie',
+    type: 'rejonowy',
+    city: 'Piaseczno',
+    address: 'Kościuszki 14, 05-500 Piaseczno',
+    phone: '(22) 703 78 97, 703 79 04',
+    email: 'boi@piaseczno.sr.gov.pl',
+    website: 'https://w-piasecznie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Pruszkowie': {
+    id: 'w_Pruszkowie',
+    name: 'Sąd Rejonowy w Pruszkowie',
+    shortName: 'SR w Pruszkowie',
+    type: 'rejonowy',
+    city: 'Pruszków',
+    address: 'Kraszewskiego 22, 05-800 Pruszków',
+    phone: '(22) 7334 000, (22) 7334 100 - sprawy sądowe, (22) 728 11 88 - księgi wieczyste',
+    email: 'boi@pruszkow.sr.gov.pl',
+    website: 'https://w-pruszkowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'Warszawa-Praga_Warszawie': {
+    id: 'Warszawa-Praga_Warszawie',
+    name: 'Sąd Okręgowy Warszawa-Praga w Warszawie',
+    shortName: 'SO Warszawa-Praga w Warszawie',
+    type: 'okręgowy',
+    city: 'Warszawa',
+    address: 'Poligonowa 3, 04-051 Warszawa',
+    phone: '(22) 417 72 72',
+    email: 'kontakt@warszawapraga.so.gov.pl',
+    website: 'https://warszawa-praga-warszawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Legionowie': {
+    id: 'w_Legionowie',
+    name: 'Sąd Rejonowy w Legionowie',
+    shortName: 'SR w Legionowie',
+    type: 'rejonowy',
+    city: 'Legionowo',
+    address: 'Sobieskiego 47, 05-120 Legionowo',
+    phone: '(22) 782 35 10',
+    email: 'administracja@legionowo.sr.gov.pl',
+    website: 'https://w-legionowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Nowym_Dworze_Mazowieckim': {
+    id: 'w_Nowym_Dworze_Mazowieckim',
+    name: 'Sąd Rejonowy w Nowym Dworze Mazowieckim',
+    shortName: 'SR w Nowym Dworze Mazowieckim',
+    type: 'rejonowy',
+    city: 'Nowy Dwór Mazowiecki',
+    address: 'Słowackiego 19 (sprawy cywilne, karne, rodzinne i nieletnich),                             Chemików 1b (sprawy wieczystoksięgowe), 05-100  Nowy Dwór Mazowiecki',
+    phone: '(22)  732 50 02 ul. Słowackiego 19 sprawy cywilne, karne, rodzinne i nieletnich;                                              (22) 775 31 23 ul. Chemików 1b sprawy wieczystoksięgowe',
+    email: 'boi@nowydwormaz.sr.gov.pl',
+    website: 'https://w-nowym-dworze-mazowieckim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Otwocku': {
+    id: 'w_Otwocku',
+    name: 'Sąd Rejonowy w Otwocku',
+    shortName: 'SR w Otwocku',
+    type: 'rejonowy',
+    city: 'Otwock',
+    address: 'Armii Krajowej 2, 05-400 Otwock',
+    phone: '(22) 778 20 50',
+    email: 'boi@otwock.sr.gov.pl',
+    website: 'https://w-otwocku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Warszawy_Pragi-Poudnie_Warszawie': {
+    id: 'dla_Warszawy_Pragi-Poudnie_Warszawie',
+    name: 'Sąd Rejonowy dla Warszawy Pragi-Południe w Warszawie ',
+    shortName: 'SR dla Warszawy Pragi-Południe w Warszawie ',
+    type: 'rejonowy',
+    city: 'Warszawa',
+    address: 'Terespolska 15a, 03-813 Warszawa',
+    phone: '(22) 509 11 61',
+    email: 'boi2@warszawa-pragapoludnie.sr.gov.pl',
+    website: 'https://dla-warszawy-pragi-poudnie-warszawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Warszawy_Pragi-Pnoc_Warszawie': {
+    id: 'dla_Warszawy_Pragi-Pnoc_Warszawie',
+    name: 'Sąd Rejonowy dla Warszawy Pragi-Północ w Warszawie',
+    shortName: 'SR dla Warszawy Pragi-Północ w Warszawie',
+    type: 'rejonowy',
+    city: 'Warszawa',
+    address: 'Terespolska 15a, 03-813 Warszawa',
+    phone: '(22) 509 11 58',
+    email: 'boi@warszawapraga-pln.sr.gov.pl',
+    website: 'https://dla-warszawy-pragi-pnoc-warszawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Woominie': {
+    id: 'w_Woominie',
+    name: 'Sąd Rejonowy w Wołominie',
+    shortName: 'SR w Wołominie',
+    type: 'rejonowy',
+    city: 'Wołomin',
+    address: 'Prądzyńskiego 3A, 05-200  Wołomin',
+    phone: '(22) 776 21 44',
+    email: 'boi@wolomin.sr.gov.pl',
+    website: 'https://w-woominie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'we_Wrocawiu': {
+    id: 'we_Wrocawiu',
+    name: 'Sąd Okręgowy we Wrocławiu',
+    shortName: 'SO we Wrocławiu',
+    type: 'okręgowy',
+    city: 'Wrocław',
+    address: 'Sądowa 1, 50-046 Wrocław',
+    phone: '(71) 74 82 000',
+    email: 'punkt.informacyjny@wroclaw.so.gov.pl',
+    website: 'https://we-wrocawiu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Jeleniej_Grze': {
+    id: 'w_Jeleniej_Grze',
+    name: 'Sąd Rejonowy w Jeleniej Górze',
+    shortName: 'SR w Jeleniej Górze',
+    type: 'rejonowy',
+    city: 'Jelenia Góra',
+    address: 'Mickiewicza 21, 58-500 Jelenia Góra',
+    phone: '(75) 671 28 30',
+    email: 'poi@jelenia-gora.sr.gov.pl',
+    website: 'https://w-jeleniej-grze.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lubaniu': {
+    id: 'w_Lubaniu',
+    name: 'Sąd Rejonowy w Lubaniu',
+    shortName: 'SR w Lubaniu',
+    type: 'rejonowy',
+    city: 'Lubań',
+    address: 'Pl. 3 Maja 12, 59-800 Lubań',
+    phone: '(75) 646 46 21',
+    email: 'p.informacyjny@luban.sr.gov.pl',
+    website: 'https://w-lubaniu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lwwku_lskim': {
+    id: 'w_Lwwku_lskim',
+    name: 'Sąd Rejonowy w Lwówku Śląskim',
+    shortName: 'SR w Lwówku Śląskim',
+    type: 'rejonowy',
+    city: 'Lwówek Śląski',
+    address: 'Jaśkiewicza 12 (wydział cywilny i karny);                                                    Al. Wojska Polskiego 7 (wydział rodzinny i nieletnich, ksiąg wieczystych), 59-600 Lwówek Śląski',
+    phone: '(75) 646 94 50',
+    email: 'adm@lwowekslaski.sr.gov.pl',
+    website: 'https://w-lwwku-lskim.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zgorzelcu': {
+    id: 'w_Zgorzelcu',
+    name: 'Sąd Rejonowy w Zgorzelcu',
+    shortName: 'SR w Zgorzelcu',
+    type: 'rejonowy',
+    city: 'Zgorzelec',
+    address: 'Poniatowskiego 2 (wydział karny);       Armii Krajowej 104 (wydział cywilny, rodzinny i nieletnich)., 59-900 Zgorzelec',
+    phone: '(75) 645 69 31',
+    email: 'boi@zgorzelec.sr.gov.pl',
+    website: 'https://w-zgorzelcu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kamiennej_Grze': {
+    id: 'w_Kamiennej_Grze',
+    name: 'Sąd Rejonowy w Kamiennej Górze',
+    shortName: 'SR w Kamiennej Górze',
+    type: 'rejonowy',
+    city: 'Kamienna Góra',
+    address: 'Wojska Polskiego 36, 58-400 Kamienna Góra',
+    phone: '(75) 671 24 01',
+    email: 'bp@kamienna-gora.sr.gov.pl',
+    website: 'https://w-kamiennej-grze.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Bolesawcu': {
+    id: 'w_Bolesawcu',
+    name: 'Sąd Rejonowy w Bolesławcu',
+    shortName: 'SR w Bolesławcu',
+    type: 'rejonowy',
+    city: 'Bolesławiec',
+    address: 'Sądowa 1, 59-700 Bolesławiec',
+    phone: '(75) 64 69 500 lub 545;',
+    email: 'boi@boleslawiec.sr.gov.pl',
+    website: 'https://w-bolesawcu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Legnicy': {
+    id: 'w_Legnicy',
+    name: 'Sąd Rejonowy w Legnicy',
+    shortName: 'SR w Legnicy',
+    type: 'rejonowy',
+    city: 'Legnica',
+    address: 'Złotoryjska 19 (wydział karny, gospodarczy);                                    Andersa 12-13 (wydział rodzinny i nieletnich, pracy i ubezpieczeń społecznych, ksiąg wieczystych); Kościuszki 1-3 (wydział cywilny)., 59-220 Legnica',
+    phone: '(76) 754 47 40',
+    email: 'boi@legnica.sr.gov.pl',
+    website: 'https://w-legnicy.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Gogowie': {
+    id: 'w_Gogowie',
+    name: 'Sąd Rejonowy w Głogowie',
+    shortName: 'SR w Głogowie',
+    type: 'rejonowy',
+    city: 'Głogów',
+    address: 'Kutrzeby 2, 67-200 Głogów',
+    phone: '(76) 754 52 40',
+    email: 'boi@glogow.sr.gov.pl',
+    website: 'https://w-gogowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Jaworze': {
+    id: 'w_Jaworze',
+    name: 'Sąd Rejonowy w Jaworze',
+    shortName: 'SR w Jaworze',
+    type: 'rejonowy',
+    city: 'Jawor',
+    address: 'Klasztorna 5, 59-400 Jawor',
+    phone: '(76) 754 40 01',
+    email: 'sr.jawor@jawor.gov.pl',
+    website: 'https://w-jaworze.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Lubinie': {
+    id: 'w_Lubinie',
+    name: 'Sąd Rejonowy w Lubinie',
+    shortName: 'SR w Lubinie',
+    type: 'rejonowy',
+    city: 'Lubin',
+    address: 'Wrocławska 3, 59-300 Lubin',
+    phone: '(76) 754 42 10',
+    email: 'boi@lubin.sr.gov.pl',
+    website: 'https://w-lubinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zotoryi': {
+    id: 'w_Zotoryi',
+    name: 'Sąd Rejonowy w Złotoryi',
+    shortName: 'SR w Złotoryi',
+    type: 'rejonowy',
+    city: 'Złotoryja',
+    address: 'Kolejowa 3, 59-500 Złotoryja',
+    phone: '(76) 745 90 10',
+    email: 'k.kocuj@zlotoryja.sr.gov.pl',
+    website: 'https://w-zotoryi.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Opolu': {
+    id: 'w_Opolu',
+    name: 'Sąd Rejonowy w Opolu',
+    shortName: 'SR w Opolu',
+    type: 'rejonowy',
+    city: 'Opole',
+    address: 'Ozimska 60a , 45-368  Opole',
+    phone: '(77) 54 15 400 do 403',
+    email: 'sr@opole.sr.gov.pl',
+    website: 'https://w-opolu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Strzelcach_Opolskich': {
+    id: 'w_Strzelcach_Opolskich',
+    name: 'Sąd Rejonowy w Strzelcach Opolskich ',
+    shortName: 'SR w Strzelcach Opolskich ',
+    type: 'rejonowy',
+    city: 'Strzelce Opolskie',
+    address: 'Opolska 11, 47-100 Strzelce Opolskie',
+    phone: '(77) 463 11 87, 463 11 88',
+    email: 'boi@strzelce.sr.gov.pl',
+    website: 'https://w-strzelcach-opolskich.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kdzierzynie-Kolu': {
+    id: 'w_Kdzierzynie-Kolu',
+    name: 'Sąd Rejonowy w Kędzierzynie-Koźlu',
+    shortName: 'SR w Kędzierzynie-Koźlu',
+    type: 'rejonowy',
+    city: 'Kędzierzyn-Koźle',
+    address: 'Sądowa 6, 47-200 Kędzierzyn-Koźle',
+    phone: '(77) 405 30 01',
+    email: 'podawcze@kozle.sr.gov.pl',
+    website: 'https://w-kdzierzynie-kolu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Olenie': {
+    id: 'w_Olenie',
+    name: 'Sąd Rejonowy w Oleśnie ',
+    shortName: 'SR w Oleśnie ',
+    type: 'rejonowy',
+    city: 'Olesno',
+    address: 'Sądowa 3, 46-300 Olesno',
+    phone: '(34) 359 69 00',
+    email: 'administracja@olesno.sr.gov.pl',
+    website: 'https://w-olenie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kluczborku': {
+    id: 'w_Kluczborku',
+    name: 'Sąd Rejonowy w Kluczborku',
+    shortName: 'SR w Kluczborku',
+    type: 'rejonowy',
+    city: 'Kluczbork',
+    address: 'Katowicka 2, 46-200  Kluczbork',
+    phone: '(77) 447 16 69',
+    email: 'boi@kluczbork.sr.gov.pl',
+    website: 'https://w-kluczborku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Gubczycach': {
+    id: 'w_Gubczycach',
+    name: 'Sąd Rejonowy w Głubczycach',
+    shortName: 'SR w Głubczycach',
+    type: 'rejonowy',
+    city: 'Głubczyce',
+    address: 'Kochanowskiego 1, 48-100 Głubczyce',
+    phone: '(77) 471 06 01',
+    email: 'boi@glubczyce.sr.gov.pl',
+    website: 'https://w-gubczycach.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Nysie': {
+    id: 'w_Nysie',
+    name: 'Sąd Rejonowy w Nysie',
+    shortName: 'SR w Nysie',
+    type: 'rejonowy',
+    city: 'Nysa',
+    address: 'Plac Kościelny 6, 48-300 Nysa',
+    phone: '(77) 448 35 00',
+    email: 'boi@nysa.sr.gov.pl',
+    website: 'https://w-nysie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Prudniku': {
+    id: 'w_Prudniku',
+    name: 'Sąd Rejonowy w Prudniku ',
+    shortName: 'SR w Prudniku ',
+    type: 'rejonowy',
+    city: 'Prudnik',
+    address: 'Kościuszki 5, 48-200  Prudnik',
+    phone: '(77) 443 86 03',
+    email: 'boi@prudnik.sr.gov.pl',
+    website: 'https://w-prudniku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Brzegu': {
+    id: 'w_Brzegu',
+    name: 'Sąd Rejonowy w Brzegu',
+    shortName: 'SR w Brzegu',
+    type: 'rejonowy',
+    city: 'Brzeg',
+    address: 'Chrobrego 31, 49-300  Brzeg',
+    phone: '(77) 444 23 31, 444 23 32',
+    email: 'boi@brzeg.sr.gov.pl',
+    website: 'https://w-brzegu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_widnicy': {
+    id: 'w_widnicy',
+    name: 'Sąd Rejonowy w Świdnicy ',
+    shortName: 'SR w Świdnicy ',
+    type: 'rejonowy',
+    city: 'Świdnica',
+    address: 'Okulickiego 2-4, 58-100 Świdnica',
+    phone: '(74) 851 84 60',
+    email: 'boi@swidnica.sr.gov.pl',
+    website: 'https://w-widnicy.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Dzieroniowie': {
+    id: 'w_Dzieroniowie',
+    name: 'Sąd Rejonowy w Dzierżoniowie',
+    shortName: 'SR w Dzierżoniowie',
+    type: 'rejonowy',
+    city: 'Dzierżoniów',
+    address: 'Świdnicka 51, 58-200 Dzierżoniów',
+    phone: '(74) 633 41 00',
+    email: 'informacja@dzierzoniow.sr.gov.pl',
+    website: 'https://w-dzieroniowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Kodzku': {
+    id: 'w_Kodzku',
+    name: 'Sąd Rejonowy w Kłodzku',
+    shortName: 'SR w Kłodzku',
+    type: 'rejonowy',
+    city: 'Kłodzko',
+    address: 'Bohaterów Getta 15, 57-300 Kłodzko',
+    phone: '(74) 865 13 17',
+    email: 'biuro@klodzko.sr.gov.pl',
+    website: 'https://w-kodzku.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Wabrzychu': {
+    id: 'w_Wabrzychu',
+    name: 'Sąd Rejonowy w Wałbrzychu',
+    shortName: 'SR w Wałbrzychu',
+    type: 'rejonowy',
+    city: 'Wałbrzych',
+    address: 'Słowackiego 10, 11, 11a (BOI), 58-300 Wałbrzych',
+    phone: '(74) 843 03 00, (74) 843 03 52',
+    email: 'informacja@walbrzych.sr.gov.pl',
+    website: 'https://w-wabrzychu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Zbkowicach_lskich': {
+    id: 'w_Zbkowicach_lskich',
+    name: 'Sąd Rejonowy w Ząbkowicach Śląskich',
+    shortName: 'SR w Ząbkowicach Śląskich',
+    type: 'rejonowy',
+    city: 'Ząbkowice Śląskie',
+    address: 'Świerkowa 1, 57-200 Ząbkowice Śląskie',
+    phone: '(74) 816 51 00',
+    email: 'administracja@zabkowice.sr.gov.pl',
+    website: 'https://w-zbkowicach-lskich.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Woowie': {
+    id: 'w_Woowie',
+    name: 'Sąd Rejonowy w Wołowie',
+    shortName: 'SR w Wołowie',
+    type: 'rejonowy',
+    city: 'Wołów',
+    address: 'Reja 11, 56-100 Wołów',
+    phone: '(71) 756 61 49',
+    email: 'biuro.podawcze@wolow.sr.gov.pl',
+    website: 'https://w-woowie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Miliczu': {
+    id: 'w_Miliczu',
+    name: 'Sąd Rejonowy w Miliczu',
+    shortName: 'SR w Miliczu',
+    type: 'rejonowy',
+    city: 'Milicz',
+    address: 'Piłsudskiego 10, 56-300 Milicz',
+    phone: '(71) 749 90 00',
+    email: 'biuro.podawcze@milicz.sr.gov.pl',
+    website: 'https://w-miliczu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Strzelinie': {
+    id: 'w_Strzelinie',
+    name: 'Sąd Rejonowy w Strzelinie',
+    shortName: 'SR w Strzelinie',
+    type: 'rejonowy',
+    city: 'Strzelin',
+    address: 'Bolka I Świdnickiego 7, 57-100 Strzelin',
+    phone: '(71) 749 91 00',
+    email: 'biuro.podawcze@strzelin.sr.gov.pl',
+    website: 'https://w-strzelinie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Wrocawia-Fabrycznej_we_Wrocawiu': {
+    id: 'dla_Wrocawia-Fabrycznej_we_Wrocawiu',
+    name: 'Sąd Rejonowy dla Wrocławia-Fabrycznej we Wrocławiu',
+    shortName: 'SR dla Wrocławia-Fabrycznej we Wrocławiu',
+    type: 'rejonowy',
+    city: 'Wrocław',
+    address: 'Świebodzka 5 (wydziały I, II, III, XI, XII, XIV, Biuro Podawcze,BOI);               Poznańska 16 (wydziały VI,VIII, IX, Biuro Podawcze, BOI);                                       Poznańska 20 (wydziały IV, V, VII, XV).
+, 50-046;              53-630;              53-630 Wrocław',
+    phone: '(71) 748 90 48',
+    email: 'boi@wroclaw-fabryczna.sr.gov.pl',
+    website: 'https://dla-wrocawia-fabrycznej-we-wrocawiu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Wrocawia-Krzykw_we_Wrocawiu': {
+    id: 'dla_Wrocawia-Krzykw_we_Wrocawiu',
+    name: 'Sąd Rejonowy dla Wrocławia-Krzyków we Wrocławiu',
+    shortName: 'SR dla Wrocławia-Krzyków we Wrocławiu',
+    type: 'rejonowy',
+    city: 'Wrocław',
+    address: 'Podwale 30 (I,II Wydział Cywilny, V, VII Wydział Karny);                                           Joannitów 14 (III Wydział Rodzinny i Nieletnich, VI Wydział Cywilny);               Komandorska 16 (IV Wydział Ksiąg Wieczystych)., 50-040;              50-525;            50-022  Wrocław',
+    phone: 'Podwale 30 (71) 74 96 300;                       Komandorska 16 (71) 74-96-520',
+    email: 'boi@wroclaw-krzyki.sr.gov.pl',
+    website: 'https://dla-wrocawia-krzykw-we-wrocawiu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'dla_Wrocawia-rdmiecia_we_Wrocawiu': {
+    id: 'dla_Wrocawia-rdmiecia_we_Wrocawiu',
+    name: 'Sąd Rejonowy dla Wrocławia-Śródmieścia we Wrocławiu',
+    shortName: 'SR dla Wrocławia-Śródmieścia we Wrocławiu',
+    type: 'rejonowy',
+    city: 'Wrocław',
+    address: 'Podwale 30 , 50-040 Wrocław',
+    phone: '(71) 74 81 000',
+    email: 'boi@wroclaw-srodmiescie.sr.gov.pl',
+    website: 'https://dla-wrocawia-rdmiecia-we-wrocawiu.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Oawie': {
+    id: 'w_Oawie',
+    name: 'Sąd Rejonowy w Oławie',
+    shortName: 'SR w Oławie',
+    type: 'rejonowy',
+    city: 'Oława',
+    address: '11 Listopada 12;                                        3 maja 26 (wydział ksiąg wieczystych), 55-200 Oława',
+    phone: '(71) 74 99 200;                                             ul. 3 maja 26 (71) 74 99 250',
+    email: 'punkt.informacyjny@olawa.sr.gov.pl',
+    website: 'https://w-oawie.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Olenicy': {
+    id: 'w_Olenicy',
+    name: 'Sąd Rejonowy w Oleśnicy',
+    shortName: 'SR w Oleśnicy',
+    type: 'rejonowy',
+    city: 'Oleśnica',
+    address: '3 Maja 48/49, 56-400 Oleśnica',
+    phone: '(71) 75 66 301',
+    email: 'biuro.podawcze@olesnica.sr.gov.pl',
+    website: 'https://w-olenicy.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_Trzebnicy': {
+    id: 'w_Trzebnicy',
+    name: 'Sąd Rejonowy w Trzebnicy',
+    shortName: 'SR w Trzebnicy',
+    type: 'rejonowy',
+    city: 'Trzebnica',
+    address: 'Parkowa  4, 55-100 Trzebnica',
+    phone: '(71) 756 62 86',
+    email: 'boi@trzebnica.sr.gov.pl',
+    website: 'https://w-trzebnicy.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  },
+
+  'w_rodzie_lskiej': {
+    id: 'w_rodzie_lskiej',
+    name: 'Sąd Rejonowy w Środzie Śląskiej',
+    shortName: 'SR w Środzie Śląskiej',
+    type: 'rejonowy',
+    city: 'Środa Śląska',
+    address: 'św. Andrzeja 3, 55-300 Środa Śląska',
+    phone: '(71) 396 02 48',
+    email: 'boi@srodaslaska.sr.gov.pl',
+    website: 'https://w-rodzie-lskiej.sr.gov.pl',
+    coordinates: null, // TODO: Geocoding
+    departments: [],
+    suggestedFor: ['civil', 'criminal', 'family', 'labor', 'commercial']
+  }
+};
+
+// ============================================================
+// FUNKCJE POMOCNICZE
+// ============================================================
+
+/**
+ * Pobierz sąd po ID
+ */
+function getCourtById(courtId) {
+  return COURTS_DATABASE[courtId] || null;
+}
+
+/**
+ * Pobierz wszystkie sądy danego typu
+ */
+function getCourtsByType(type) {
+  return Object.values(COURTS_DATABASE).filter(court => court.type === type);
+}
+
+/**
+ * Pobierz wszystkie sądy w mieście
+ */
+function getCourtsByCity(city) {
+  return Object.values(COURTS_DATABASE).filter(court => 
+    court.city.toLowerCase().includes(city.toLowerCase())
+  );
+}
+
+/**
+ * Wyszukaj sądy po nazwie
+ */
+function searchCourts(query) {
+  const lowerQuery = query.toLowerCase();
+  return Object.values(COURTS_DATABASE).filter(court =>
+    court.name.toLowerCase().includes(lowerQuery) ||
+    court.city.toLowerCase().includes(lowerQuery) ||
+    court.address.toLowerCase().includes(lowerQuery)
+  );
+}
+
+/**
+ * Pobierz listę wszystkich sądów
+ */
+function getAllCourts() {
+  return Object.values(COURTS_DATABASE);
+}
+
+/**
+ * Pobierz listę miast z sądami
+ */
+function getCitiesWithCourts() {
+  const cities = new Set();
+  Object.values(COURTS_DATABASE).forEach(court => {
+    if (court.city) cities.add(court.city);
+  });
+  return Array.from(cities).sort();
+}
+
+// ============================================================
+// EKSPORT
+// ============================================================
+
+module.exports = {
+  COURTS_DATABASE,
+  getCourtById,
+  getCourtsByType,
+  getCourtsByCity,
+  searchCourts,
+  getAllCourts,
+  getCitiesWithCourts
+};

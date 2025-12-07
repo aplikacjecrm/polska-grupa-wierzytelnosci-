@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Police API</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>🧪 Test Police API Fetch</h1>
+    <button onclick="testFetch()">Test Fetch</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testFetch() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = '⏳ Testowanie...\n\n';
+            
+            // 1. Sprawdź token
+            const token = localStorage.getItem('token');
+            resultDiv.textContent += `1️⃣ Token w localStorage: ${token ? 'EXISTS ✅' : 'MISSING ❌'}\n`;
+            if (token) {
+                resultDiv.textContent += `   Length: ${token.length}\n`;
+                resultDiv.textContent += `   First 20 chars: ${token.substring(0, 20)}...\n\n`;
+            }
+            
+            // 2. Test fetch bez tokenu
+            resultDiv.textContent += '2️⃣ Test bez tokenu:\n';
+            try {
+                const response1 = await fetch('/api/police/search?q=warszawa');
+                resultDiv.textContent += `   Status: ${response1.status}\n`;
+                const data1 = await response1.json();
+                resultDiv.textContent += `   Response: ${JSON.stringify(data1).substring(0, 100)}\n\n`;
+            } catch (error) {
+                resultDiv.textContent += `   ❌ Error: ${error.message}\n\n`;
+            }
+            
+            // 3. Test fetch z tokenem
+            if (token) {
+                resultDiv.textContent += '3️⃣ Test z tokenem:\n';
+                try {
+                    const response2 = await fetch('/api/police/search?q=warszawa', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    resultDiv.textContent += `   Status: ${response2.status}\n`;
+                    const data2 = await response2.json();
+                    resultDiv.textContent += `   Response: ${JSON.stringify(data2).substring(0, 200)}\n\n`;
+                    
+                    if (response2.ok && Array.isArray(data2)) {
+                        resultDiv.textContent += `   ✅ SUCCESS! Znaleziono ${data2.length} komend\n`;
+                        if (data2.length > 0) {
+                            resultDiv.textContent += `   Przykład: ${data2[0].name}\n`;
+                        }
+                    }
+                } catch (error) {
+                    resultDiv.textContent += `   ❌ Error: ${error.message}\n\n`;
+                }
+            }
+            
+            // 4. Test prosecutors dla porównania
+            if (token) {
+                resultDiv.textContent += '4️⃣ Test prosecutors (dla porównania):\n';
+                try {
+                    const response3 = await fetch('/api/prosecutors/search?q=warszawa', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    resultDiv.textContent += `   Status: ${response3.status}\n`;
+                    const data3 = await response3.json();
+                    resultDiv.textContent += `   Response: ${JSON.stringify(data3).substring(0, 200)}\n`;
+                } catch (error) {
+                    resultDiv.textContent += `   ❌ Error: ${error.message}\n`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

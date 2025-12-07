@@ -1,0 +1,146 @@
+/* MODAL CASCADE - Każdy kolejny modal jest mniejszy */
+
+/* Pierwszy modal - 95% (z wyjątkiem .fullscreen i #caseModal) */
+.modal-overlay:nth-of-type(1) .modal-content:not(.fullscreen),
+.modal-overlay:nth-of-type(1) .modal:not(.fullscreen):not(#caseModal) {
+    width: 95% !important;
+    max-width: 95vw !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+}
+
+/* #caseModal CAŁKOWICIE WYKLUCZONY z cascade */
+#caseModal.modal,
+#caseModal .modal-content {
+    width: auto !important;
+    max-width: none !important;
+    transform: none !important;
+    animation: none !important;
+}
+
+/* Drugi modal - 90% */
+.modal-overlay:nth-of-type(2) .modal-content,
+.modal-overlay:nth-of-type(2) .modal {
+    width: 90% !important;
+    max-width: 90vw !important;
+    transform: translate(-50%, -50%) scale(0.98) !important;
+    z-index: 10001 !important;
+}
+
+/* Trzeci modal - 85% */
+.modal-overlay:nth-of-type(3) .modal-content,
+.modal-overlay:nth-of-type(3) .modal {
+    width: 85% !important;
+    max-width: 85vw !important;
+    transform: translate(-50%, -50%) scale(0.96) !important;
+    z-index: 10002 !important;
+}
+
+/* Czwarty modal - 80% */
+.modal-overlay:nth-of-type(4) .modal-content,
+.modal-overlay:nth-of-type(4) .modal {
+    width: 80% !important;
+    max-width: 80vw !important;
+    transform: translate(-50%, -50%) scale(0.94) !important;
+    z-index: 10003 !important;
+}
+
+/* Piąty modal - 75% */
+.modal-overlay:nth-of-type(5) .modal-content,
+.modal-overlay:nth-of-type(5) .modal {
+    width: 75% !important;
+    max-width: 75vw !important;
+    transform: translate(-50%, -50%) scale(0.92) !important;
+    z-index: 10004 !important;
+}
+
+/* Szósty i kolejne - 70% */
+.modal-overlay:nth-of-type(n+6) .modal-content,
+.modal-overlay:nth-of-type(n+6) .modal {
+    width: 70% !important;
+    max-width: 70vw !important;
+    transform: translate(-50%, -50%) scale(0.9) !important;
+    z-index: 10005 !important;
+}
+
+/* Overlay z-index */
+.modal-overlay:nth-of-type(1) { z-index: 10000 !important; }
+.modal-overlay:nth-of-type(2) { z-index: 10001 !important; }
+.modal-overlay:nth-of-type(3) { z-index: 10002 !important; }
+.modal-overlay:nth-of-type(4) { z-index: 10003 !important; }
+.modal-overlay:nth-of-type(5) { z-index: 10004 !important; }
+.modal-overlay:nth-of-type(n+6) { z-index: 10005 !important; }
+
+/* Delikatne przyciemnienie dla każdego kolejnego overlay */
+.modal-overlay:nth-of-type(1) {
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+
+.modal-overlay:nth-of-type(2) {
+    background: rgba(0, 0, 0, 0.55) !important;
+}
+
+.modal-overlay:nth-of-type(3) {
+    background: rgba(0, 0, 0, 0.6) !important;
+}
+
+.modal-overlay:nth-of-type(4) {
+    background: rgba(0, 0, 0, 0.65) !important;
+}
+
+.modal-overlay:nth-of-type(n+5) {
+    background: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Płynna animacja przy otwieraniu */
+.modal-overlay {
+    animation: overlayFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.modal-content,
+.modal {
+    animation: modalFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes overlayFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Płynne pojawienie się modala - bez przesunięcia */
+@keyframes modalFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Responsywne - na małych ekranach mniejsze różnice */
+@media (max-width: 768px) {
+    .modal-overlay:nth-of-type(1) .modal-content,
+    .modal-overlay:nth-of-type(1) .modal {
+        width: 98% !important;
+    }
+    
+    .modal-overlay:nth-of-type(2) .modal-content,
+    .modal-overlay:nth-of-type(2) .modal {
+        width: 96% !important;
+    }
+    
+    .modal-overlay:nth-of-type(3) .modal-content,
+    .modal-overlay:nth-of-type(3) .modal {
+        width: 94% !important;
+    }
+    
+    .modal-overlay:nth-of-type(n+4) .modal-content,
+    .modal-overlay:nth-of-type(n+4) .modal {
+        width: 92% !important;
+    }
+}

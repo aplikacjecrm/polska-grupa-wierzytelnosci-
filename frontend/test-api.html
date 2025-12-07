@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Test API - 6 Wyszukiwarek</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        
+        .api-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .api-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .results h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .result-item {
+            margin-bottom: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            color: #555;
+            margin-right: 8px;
+        }
+        
+        .result-value {
+            color: #333;
+        }
+        
+        .error {
+            background: #fee;
+            border-left-color: #e74c3c;
+            color: #c0392b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .zarząd-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .zarząd-item {
+            padding: 8px;
+            background: #f8f9fa;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test API - 6 Wyszukiwarek Prawniczych</h1>
+        <p style="text-align: center; color: white; margin-bottom: 20px; font-size: 1.1rem;">
+            KRS • CEIDG • CEPiK • UFG • Social Media • Facebook Groups
+        </p>
+        
+        <!-- KRS API TEST -->
+        <div class="api-section">
+            <h2>🏢 KRS API - Krajowy Rejestr Sądowy</h2>
+            <form id="krsForm">
+                <div class="form-group">
+                    <label for="krsNumber">Numer KRS (10 cyfr):</label>
+                    <input 
+                        type="text" 
+                        id="krsNumber" 
+                        placeholder="np. 0000028860 (PKN ORLEN)"
+                        maxlength="10"
+                        required
+                    >
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        💡 Przykłady: 0000028860 (ORLEN), 0000033427 (PGE)
+                    </small>
+                </div>
+                <button type="submit" class="btn" id="krsBtn">
+                    🔍 Sprawdź w KRS
+                </button>
+            </form>
+            
+            <div id="krsResults" class="results"></div>
+        </div>
+        
+        <!-- CEIDG API TEST -->
+        <div class="api-section">
+            <h2>🏪 CEIDG API - Jednoosobowa Działalność Gospodarcza</h2>
+            <form id="ceidgForm">
+                <div class="form-group">
+                    <label for="nipCeidg">NIP (10 cyfr):</label>
+                    <input 
+                        type="text" 
+                        id="nipCeidg" 
+                        placeholder="np. 1234567890"
+                        maxlength="10"
+                        required
+                    >
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        💡 Wyszukiwanie firm jednoosobowych (JDG)
+                    </small>
+                </div>
+                <button type="submit" class="btn" id="ceidgBtn">
+                    🔍 Sprawdź w CEIDG
+                </button>
+            </form>
+            
+            <div id="ceidgResults" class="results"></div>
+        </div>
+        
+        <!-- CEPiK API TEST -->
+        <div class="api-section">
+            <h2>🚗 CEPiK API - Pojazdy</h2>
+            <form id="cepikForm">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="marka">Marka pojazdu:</label>
+                        <input 
+                            type="text" 
+                            id="marka" 
+                            placeholder="np. TOYOTA"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="wojewodztwo">Województwo:</label>
+                        <input 
+                            type="text" 
+                            id="wojewodztwo" 
+                            placeholder="np. MAZOWIECKIE"
+                        >
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="dataOd">Data rejestracji od:</label>
+                        <input 
+                            type="date" 
+                            id="dataOd"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="dataDo">Data rejestracji do:</label>
+                        <input 
+                            type="date" 
+                            id="dataDo"
+                        >
+                    </div>
+                </div>
+                <small style="color: #666; display: block; margin-bottom: 15px;">
+                    ⚠️ CEPiK API wymaga co najmniej jednego parametru
+                </small>
+                <button type="submit" class="btn" id="cepikBtn">
+                    🔍 Szukaj pojazdów
+                </button>
+            </form>
+            
+            <div id="cepikResults" class="results"></div>
+        </div>
+        
+        <!-- UFG API TEST -->
+        <div class="api-section">
+            <h2>🚙 UFG API - Ubezpieczeniowy Fundusz Gwarancyjny</h2>
+            <form id="ufgForm">
+                <div class="form-group">
+                    <label for="numerRejestracyjny">Numer rejestracyjny pojazdu:</label>
+                    <input 
+                        type="text" 
+                        id="numerRejestracyjny" 
+                        placeholder="np. WA12345"
+                        required
+                    >
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        💡 Historia pojazdu: właściciele, ubezpieczenia, szkody
+                    </small>
+                </div>
+                <button type="submit" class="btn" id="ufgBtn">
+                    🔍 Sprawdź w UFG
+                </button>
+            </form>
+            
+            <div id="ufgResults" class="results"></div>
+        </div>
+        
+        <!-- SOCIAL SEARCHER API TEST -->
+        <div class="api-section">
+            <h2>🔍 Social Searcher - Weryfikacja w Social Media</h2>
+            <form id="socialForm">
+                <div class="form-group">
+                    <label for="socialQuery">Nazwa firmy/osoby do sprawdzenia:</label>
+                    <input 
+                        type="text" 
+                        id="socialQuery" 
+                        placeholder="np. nazwa firmy lub osoba"
+                        required
+                    >
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        💡 Sprawdza wzmianki w: Facebook, Twitter, Instagram, YouTube, Reddit
+                    </small>
+                </div>
+                <button type="submit" class="btn" id="socialBtn">
+                    🔍 Sprawdź w Social Media
+                </button>
+            </form>
+            
+            <div id="socialResults" class="results"></div>
+        </div>
+        
+        <!-- FACEBOOK GROUPS API TEST -->
+        <div class="api-section">
+            <h2>👥 Facebook Groups - Wyszukiwanie w Grupach</h2>
+            <form id="fbGroupsForm">
+                <div class="form-group">
+                    <label for="fbQuery">Zapytanie do grup FB:</label>
+                    <input 
+                        type="text" 
+                        id="fbQuery" 
+                        placeholder="np. opinie o firmie XYZ"
+                        required
+                    >
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        💡 Przeszukuje polskie grupy prawnicze i biznesowe na Facebook
+                    </small>
+                </div>
+                <button type="submit" class="btn" id="fbBtn">
+                    🔍 Szukaj w Grupach FB
+                </button>
+            </form>
+            
+            <div id="fbResults" class="results"></div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'https://web-production-7504.up.railway.app';
+        
+        // ==========================================
+        // KRS API TEST
+        // ==========================================
+        document.getElementById('krsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const krsNumber = document.getElementById('krsNumber').value.trim();
+            const resultsDiv = document.getElementById('krsResults');
+            const btn = document.getElementById('krsBtn');
+            
+            // Walidacja
+            if (!/^\d{10}$/.test(krsNumber)) {
+                resultsDiv.innerHTML = '<div class="error">❌ Numer KRS musi mieć dokładnie 10 cyfr</div>';
+                resultsDiv.classList.add('show');
+                return;
+            }
+            
+            // Loading
+            btn.disabled = true;
+            btn.textContent = 'Pobieranie...';
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Łączę z KRS...</div>';
+            resultsDiv.classList.add('show');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/company/krs/full`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ krs: krsNumber })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayKRSResults(data.data);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ ${data.error || 'Nie znaleziono firmy'}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Błąd połączenia: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔍 Sprawdź w KRS';
+            }
+        });
+        
+        function displayKRSResults(data) {
+            const resultsDiv = document.getElementById('krsResults');
+            
+            let html = '<h3>✅ Dane z KRS:</h3>';
+            
+            // Podstawowe dane
+            html += '<div class="result-item">';
+            html += `<div><span class="result-label">Nazwa:</span><span class="result-value" style="font-size: 1.2rem; font-weight: 600;">${data.nazwa}</span></div>`;
+            html += `<div><span class="result-label">KRS:</span><span class="result-value">${data.krs}</span></div>`;
+            html += `<div><span class="result-label">NIP:</span><span class="result-value">${data.nip}</span></div>`;
+            html += `<div><span class="result-label">REGON:</span><span class="result-value">${data.regon}</span></div>`;
+            html += '</div>';
+            
+            // Adres
+            html += '<div class="result-item">';
+            html += '<h4 style="color: #667eea; margin-bottom: 10px;">📍 Adres:</h4>';
+            html += `<div><span class="result-label">Pełny adres:</span><span class="result-value">${data.adres.pelny}</span></div>`;
+            html += `<div><span class="result-label">Województwo:</span><span class="result-value">${data.adres.wojewodztwo}</span></div>`;
+            if (data.adres.email) {
+                html += `<div><span class="result-label">Email:</span><span class="result-value">${data.adres.email}</span></div>`;
+            }
+            if (data.adres.www) {
+                html += `<div><span class="result-label">WWW:</span><span class="result-value"><a href="http://${data.adres.www}" target="_blank">${data.adres.www}</a></span></div>`;
+            }
+            html += '</div>';
+            
+            // Kapitał
+            if (data.kapitalZakladowy.wartosc) {
+                html += '<div class="result-item">';
+                html += '<h4 style="color: #667eea; margin-bottom: 10px;">💰 Kapitał zakładowy:</h4>';
+                html += `<div style="font-size: 1.3rem; font-weight: 600; color: #2ecc71;">${data.kapitalZakladowy.wartosc.toLocaleString('pl-PL')} ${data.kapitalZakladowy.waluta}</div>`;
+                html += '</div>';
+            }
+            
+            // Zarząd
+            if (data.reprezentacja.zarzad.length > 0) {
+                html += '<div class="result-item">';
+                html += '<h4 style="color: #667eea; margin-bottom: 10px;">👥 Zarząd (' + data.reprezentacja.zarzad.length + ' osób):</h4>';
+                html += '<div class="zarząd-list">';
+                data.reprezentacja.zarzad.forEach(osoba => {
+                    const imie = osoba.imieDrugie ? `${osoba.imie} ${osoba.imieDrugie}` : osoba.imie;
+                    html += `<div class="zarząd-item">`;
+                    html += `<strong>${imie} ${osoba.nazwisko}</strong><br>`;
+                    html += `<small style="color: #666;">${osoba.funkcja}</small>`;
+                    html += `</div>`;
+                });
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            // Sposób reprezentacji
+            if (data.reprezentacja.sposobReprezentacji) {
+                html += '<div class="result-item">';
+                html += '<h4 style="color: #667eea; margin-bottom: 10px;">⚖️ Sposób reprezentacji:</h4>';
+                html += `<div style="font-style: italic;">${data.reprezentacja.sposobReprezentacji}</div>`;
+                html += '</div>';
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // ==========================================
+        // CEIDG API TEST
+        // ==========================================
+        document.getElementById('ceidgForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const nip = document.getElementById('nipCeidg').value.trim();
+            const resultsDiv = document.getElementById('ceidgResults');
+            const btn = document.getElementById('ceidgBtn');
+            
+            // Walidacja
+            if (!/^\d{10}$/.test(nip)) {
+                resultsDiv.innerHTML = '<div class="error">❌ NIP musi mieć dokładnie 10 cyfr</div>';
+                resultsDiv.classList.add('show');
+                return;
+            }
+            
+            // Loading
+            btn.disabled = true;
+            btn.textContent = 'Pobieranie...';
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Łączę z CEIDG...</div>';
+            resultsDiv.classList.add('show');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/company/ceidg/nip`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nip: nip })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayCEIDGResults(data.data);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ ${data.error || 'Nie znaleziono firmy'}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Błąd połączenia: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔍 Sprawdź w CEIDG';
+            }
+        });
+        
+        function displayCEIDGResults(data) {
+            const resultsDiv = document.getElementById('ceidgResults');
+            
+            let html = '<h3>✅ Dane z CEIDG:</h3>';
+            
+            if (data.isMockData) {
+                html += '<div style="background: #fff3cd; padding: 10px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #ffc107;">';
+                html += '⚠️ <strong>Tryb demonstracyjny</strong> - To są przykładowe dane. Prawdziwe CEIDG API wymaga tokenu JWT.';
+                html += '</div>';
+            }
+            
+            // Podstawowe dane
+            html += '<div class="result-item">';
+            html += `<div><span class="result-label">Nazwa:</span><span class="result-value" style="font-size: 1.2rem; font-weight: 600;">${data.nazwa}</span></div>`;
+            html += `<div><span class="result-label">NIP:</span><span class="result-value">${data.nip}</span></div>`;
+            html += `<div><span class="result-label">REGON:</span><span class="result-value">${data.regon}</span></div>`;
+            html += `<div><span class="result-label">Status:</span><span class="result-value" style="color: ${data.statusInfo.color};">${data.statusInfo.icon} ${data.statusInfo.label}</span></div>`;
+            html += '</div>';
+            
+            // Adres
+            if (data.adres) {
+                html += '<div class="result-item">';
+                html += '<h4 style="color: #667eea; margin-bottom: 10px;">📍 Adres:</h4>';
+                html += `<div><span class="result-label">Pełny adres:</span><span class="result-value">${data.adres.pelny}</span></div>`;
+                html += `<div><span class="result-label">Województwo:</span><span class="result-value">${data.adres.wojewodztwo}</span></div>`;
+                html += '</div>';
+            }
+            
+            // PKD
+            if (data.pkd && data.pkd.length > 0) {
+                html += '<div class="result-item">';
+                html += '<h4 style="color: #667eea; margin-bottom: 10px;">📊 Działalność:</h4>';
+                data.pkd.forEach(p => {
+                    html += `<div><strong>${p.kod}</strong>: ${p.nazwa}</div>`;
+                });
+                html += '</div>';
+            }
+            
+            // Daty
+            if (data.dataRozpoczecia) {
+                html += '<div class="result-item">';
+                html += '<h4 style="color: #667eea; margin-bottom: 10px;">📅 Daty:</h4>';
+                html += `<div><span class="result-label">Rozpoczęcie:</span><span class="result-value">${data.dataRozpoczecia}</span></div>`;
+                if (data.wiekDzialalnosci) {
+                    html += `<div><span class="result-label">Wiek działalności:</span><span class="result-value">${data.wiekDzialalnosci} lat</span></div>`;
+                }
+                html += '</div>';
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // ==========================================
+        // CEPiK API TEST
+        // ==========================================
+        document.getElementById('cepikForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // WAŻNE: CEPiK wymaga WIELKICH LITER!
+            let marka = document.getElementById('marka').value.trim();
+            if (marka) marka = marka.toUpperCase();
+            
+            let wojewodztwo = document.getElementById('wojewodztwo').value.trim();
+            if (wojewodztwo) wojewodztwo = wojewodztwo.toUpperCase();
+            const dataOd = document.getElementById('dataOd').value;
+            const dataDo = document.getElementById('dataDo').value;
+            
+            const resultsDiv = document.getElementById('cepikResults');
+            const btn = document.getElementById('cepikBtn');
+            
+            // Walidacja - co najmniej jeden parametr
+            if (!marka && !wojewodztwo && !dataOd && !dataDo) {
+                resultsDiv.innerHTML = '<div class="error">❌ Podaj co najmniej jeden parametr wyszukiwania</div>';
+                resultsDiv.classList.add('show');
+                return;
+            }
+            
+            // Buduj parametry
+            const params = { limit: 10, page: 0 };
+            if (marka) params.marka = marka;
+            if (wojewodztwo) params.wojewodztwo = wojewodztwo;
+            if (dataOd) params['data-od'] = dataOd;
+            if (dataDo) params['data-do'] = dataDo;
+            
+            // Loading
+            btn.disabled = true;
+            btn.textContent = 'Szukam...';
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Łączę z CEPiK...</div>';
+            resultsDiv.classList.add('show');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/vehicle/cepik/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(params)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayCEPiKResults(data.data, data.count);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ ${data.error || 'Błąd wyszukiwania'}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Błąd połączenia: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔍 Szukaj pojazdów';
+            }
+        });
+        
+        function displayCEPiKResults(data, count) {
+            const resultsDiv = document.getElementById('cepikResults');
+            
+            if (count === 0) {
+                resultsDiv.innerHTML = '<div class="error">⚠️ Nie znaleziono pojazdów spełniających kryteria</div>';
+                return;
+            }
+            
+            let html = `<h3>✅ Znaleziono ${count} pojazdów:</h3>`;
+            
+            data.forEach((pojazd, index) => {
+                html += '<div class="result-item">';
+                html += `<h4 style="color: #667eea; margin-bottom: 10px;">🚗 Pojazd ${index + 1}</h4>`;
+                html += `<div><span class="result-label">Marka:</span><span class="result-value" style="font-weight: 600;">${pojazd.marka} ${pojazd.model}</span></div>`;
+                if (pojazd.wariant) html += `<div><span class="result-label">Wariant:</span><span class="result-value">${pojazd.wariant}</span></div>`;
+                html += `<div><span class="result-label">Rok produkcji:</span><span class="result-value">${pojazd.rokProdukcji}</span></div>`;
+                html += `<div><span class="result-label">Paliwo:</span><span class="result-value">${pojazd.rodzajPaliwa}</span></div>`;
+                if (pojazd.pojemnoscSilnika) html += `<div><span class="result-label">Pojemność:</span><span class="result-value">${pojazd.pojemnoscSilnika} cm³</span></div>`;
+                if (pojazd.moc) html += `<div><span class="result-label">Moc:</span><span class="result-value">${pojazd.moc} kW</span></div>`;
+                html += `<div><span class="result-label">Województwo:</span><span class="result-value">${pojazd.wojewodztwo}</span></div>`;
+                html += `<div><span class="result-label">Data rej.:</span><span class="result-value">${pojazd.dataPierwszejRejestracji}</span></div>`;
+                html += '</div>';
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // ==========================================
+        // UFG API TEST
+        // ==========================================
+        document.getElementById('ufgForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const numerRejestracyjny = document.getElementById('numerRejestracyjny').value.trim().toUpperCase();
+            const resultsDiv = document.getElementById('ufgResults');
+            const btn = document.getElementById('ufgBtn');
+            
+            if (!numerRejestracyjny) {
+                resultsDiv.innerHTML = '<div class="error">❌ Podaj numer rejestracyjny</div>';
+                resultsDiv.classList.add('show');
+                return;
+            }
+            
+            // Loading
+            btn.disabled = true;
+            btn.textContent = 'Pobieranie...';
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Łączę z UFG...</div>';
+            resultsDiv.classList.add('show');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/vehicle/ufg/history`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ numerRejestracyjny: numerRejestracyjny })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayUFGResults(data.data, data.isMockData);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ ${data.error || 'Nie znaleziono pojazdu'}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Błąd połączenia: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔍 Sprawdź w UFG';
+            }
+        });
+        
+        function displayUFGResults(data, isMockData) {
+            const resultsDiv = document.getElementById('ufgResults');
+            
+            let html = '<h3>✅ Historia pojazdu z UFG:</h3>';
+            
+            if (isMockData) {
+                html += '<div style="background: #fff3cd; padding: 10px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #ffc107;">';
+                html += '⚠️ <strong>Tryb demonstracyjny</strong> - To są przykładowe dane. Prawdziwe UFG API wymaga rejestracji i tokenu.';
+                html += '</div>';
+            }
+            
+            // Podstawowe dane pojazdu
+            html += '<div class="result-item">';
+            html += `<div><span class="result-label">Numer rejestracyjny:</span><span class="result-value" style="font-size: 1.2rem; font-weight: 600;">${data.numerRejestracyjny}</span></div>`;
+            html += `<div><span class="result-label">Pojazd:</span><span class="result-value">${data.marka} ${data.model}</span></div>`;
+            html += `<div><span class="result-label">Rok produkcji:</span><span class="result-value">${data.rokProdukcji}</span></div>`;
+            html += `<div><span class="result-label">VIN:</span><span class="result-value">${data.vin}</span></div>`;
+            html += '</div>';
+            
+            // Historia właścicieli
+            if (data.wlasciciele && data.wlasciciele.length > 0) {
+                html += '<div class="result-item">';
+                html += `<h4 style="color: #667eea; margin-bottom: 10px;">👥 Historia właścicieli (${data.wlasciciele.length}):</h4>`;
+                data.wlasciciele.forEach(wl => {
+                    html += `<div style="padding: 8px; background: #f8f9fa; margin-bottom: 6px; border-radius: 4px;">`;
+                    html += `<strong>Właściciel ${wl.nrWlasciciela}</strong> (${wl.typ})<br>`;
+                    html += `<small>Okres: ${wl.okresOd} - ${wl.okresDo || 'obecnie'}</small>`;
+                    html += `</div>`;
+                });
+                html += '</div>';
+            }
+            
+            // Historia ubezpieczeń
+            if (data.ubezpieczenia && data.ubezpieczenia.length > 0) {
+                html += '<div class="result-item">';
+                html += `<h4 style="color: #667eea; margin-bottom: 10px;">📋 Historia ubezpieczeń (${data.ubezpieczenia.length}):</h4>`;
+                data.ubezpieczenia.forEach(ub => {
+                    const statusColor = ub.status === 'Aktywna' ? '#2ecc71' : '#95a5a6';
+                    html += `<div style="padding: 8px; background: #f8f9fa; margin-bottom: 6px; border-radius: 4px;">`;
+                    html += `<strong>${ub.ubezpieczyciel}</strong> - ${ub.typ}<br>`;
+                    html += `<small>Polisa: ${ub.nrPolisy}</small><br>`;
+                    html += `<small>Okres: ${ub.okresOd} - ${ub.okresDo}</small><br>`;
+                    html += `<span style="color: ${statusColor}; font-weight: 600;">${ub.status}</span>`;
+                    html += `</div>`;
+                });
+                html += '</div>';
+            }
+            
+            // Szkody
+            if (data.szkody && data.szkody.length > 0) {
+                html += '<div class="result-item">';
+                html += `<h4 style="color: #667eea; margin-bottom: 10px;">💥 Historia szkód (${data.liczbaSzkod}):</h4>`;
+                html += `<div style="padding: 10px; background: #fff3cd; border-radius: 6px; margin-bottom: 10px;">`;
+                html += `<strong>Łączna wartość szkód:</strong> ${data.lacznaWartoscSzkod.toLocaleString('pl-PL')} PLN`;
+                html += `</div>`;
+                data.szkody.forEach((sz, idx) => {
+                    const statusColor = sz.status === 'Rozliczona' ? '#2ecc71' : '#e74c3c';
+                    html += `<div style="padding: 10px; background: #f8f9fa; margin-bottom: 8px; border-radius: 4px; border-left: 3px solid ${statusColor};">`;
+                    html += `<strong>Szkoda ${idx + 1}</strong> - ${sz.rodzajSzkody}<br>`;
+                    html += `<small>📅 ${sz.dataSzkody} | 📍 ${sz.miejsceSzkody}</small><br>`;
+                    html += `<small>Sprawca: ${sz.sprawca}</small><br>`;
+                    html += `<strong style="color: #e74c3c;">${sz.wartoscSzkody.toLocaleString('pl-PL')} ${sz.waluta}</strong> `;
+                    html += `<span style="color: ${statusColor};">(${sz.status})</span>`;
+                    html += `</div>`;
+                });
+                html += '</div>';
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // ==========================================
+        // SOCIAL SEARCHER API TEST
+        // ==========================================
+        document.getElementById('socialForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const query = document.getElementById('socialQuery').value.trim();
+            const resultsDiv = document.getElementById('socialResults');
+            const btn = document.getElementById('socialBtn');
+            
+            if (!query) {
+                resultsDiv.innerHTML = '<div class="error">❌ Podaj nazwę firmy lub osoby</div>';
+                resultsDiv.classList.add('show');
+                return;
+            }
+            
+            // Loading
+            btn.disabled = true;
+            btn.textContent = 'Szukam...';
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Przeszukuję social media...</div>';
+            resultsDiv.classList.add('show');
+            
+            try {
+                // UWAGA: Ten endpoint wymaga API key Social Searcher
+                const response = await fetch(`${API_BASE}/api/company/social-search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySocialResults(data.data);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ ${data.error || 'Błąd wyszukiwania'}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Błąd połączenia: ${error.message}<br><small>Social Searcher wymaga API key (FREE: 100 req/dzień)</small></div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔍 Sprawdź w Social Media';
+            }
+        });
+        
+        function displaySocialResults(data) {
+            const resultsDiv = document.getElementById('socialResults');
+            
+            let html = '<h3>✅ Wyniki z Social Media:</h3>';
+            
+            // Podsumowanie
+            html += '<div class="result-item">';
+            html += `<div><span class="result-label">Zapytanie:</span><span class="result-value" style="font-weight: 600;">${data.query}</span></div>`;
+            html += `<div><span class="result-label">Znalezionych wzmianek:</span><span class="result-value">${data.totalMentions}</span></div>`;
+            
+            // Sentiment
+            const sentimentColors = {
+                positive: '#2ecc71',
+                neutral: '#95a5a6',
+                negative: '#e74c3c'
+            };
+            const sentimentLabels = {
+                positive: '😊 Pozytywny',
+                neutral: '😐 Neutralny',
+                negative: '😟 Negatywny'
+            };
+            html += `<div><span class="result-label">Sentyment:</span><span class="result-value" style="color: ${sentimentColors[data.sentiment]}; font-weight: 600;">${sentimentLabels[data.sentiment]}</span></div>`;
+            html += '</div>';
+            
+            // Platformy
+            if (data.platforms) {
+                html += '<div class="result-item">';
+                html += '<h4 style="color: #667eea; margin-bottom: 10px;">📊 Wzmianki na platformach:</h4>';
+                html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">';
+                Object.entries(data.platforms).forEach(([platform, count]) => {
+                    if (count > 0) {
+                        html += `<div style="padding: 10px; background: #f8f9fa; border-radius: 6px; text-align: center;">`;
+                        html += `<strong>${platform}</strong><br><span style="font-size: 1.5rem; color: #667eea;">${count}</span>`;
+                        html += `</div>`;
+                    }
+                });
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            // Red flags
+            if (data.redFlags && data.redFlags.length > 0) {
+                html += '<div class="result-item">';
+                html += `<h4 style="color: #e74c3c; margin-bottom: 10px;">⚠️ RED FLAGS (${data.redFlags.length}):</h4>`;
+                data.redFlags.forEach(flag => {
+                    html += `<div style="padding: 10px; background: #fee; margin-bottom: 8px; border-radius: 4px; border-left: 3px solid #e74c3c;">`;
+                    html += `<strong style="color: #c0392b;">${flag.keyword.toUpperCase()}</strong><br>`;
+                    html += `<small>${flag.text}</small><br>`;
+                    html += `<small>📅 ${flag.date} | 🌐 ${flag.network}</small>`;
+                    html += `</div>`;
+                });
+                html += '</div>';
+            }
+            
+            // Ostatnie posty
+            if (data.recentPosts && data.recentPosts.length > 0) {
+                html += '<div class="result-item">';
+                html += '<h4 style="color: #667eea; margin-bottom: 10px;">📝 Ostatnie wzmianki:</h4>';
+                data.recentPosts.slice(0, 5).forEach(post => {
+                    html += `<div style="padding: 10px; background: #f8f9fa; margin-bottom: 8px; border-radius: 4px;">`;
+                    html += `<strong>${post.network}</strong> - ${post.user}<br>`;
+                    html += `<small>${post.text.substring(0, 200)}${post.text.length > 200 ? '...' : ''}</small><br>`;
+                    html += `<small>📅 ${post.posted}</small>`;
+                    html += `</div>`;
+                });
+                html += '</div>';
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // ==========================================
+        // FACEBOOK GROUPS API TEST
+        // ==========================================
+        document.getElementById('fbGroupsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const query = document.getElementById('fbQuery').value.trim();
+            const resultsDiv = document.getElementById('fbResults');
+            const btn = document.getElementById('fbBtn');
+            
+            if (!query) {
+                resultsDiv.innerHTML = '<div class="error">❌ Podaj zapytanie</div>';
+                resultsDiv.classList.add('show');
+                return;
+            }
+            
+            // Loading
+            btn.disabled = true;
+            btn.textContent = 'Szukam...';
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Przeszukuję grupy FB...</div>';
+            resultsDiv.classList.add('show');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/company/facebook-groups`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayFBGroupsResults(data.data);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ ${data.error || 'Błąd wyszukiwania'}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Błąd połączenia: ${error.message}<br><small>Apify Facebook Groups wymaga API token</small></div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔍 Szukaj w Grupach FB';
+            }
+        });
+        
+        function displayFBGroupsResults(data) {
+            const resultsDiv = document.getElementById('fbResults');
+            
+            let html = '<h3>✅ Wyniki z Grup Facebook:</h3>';
+            
+            if (!data || !data.posts || data.posts.length === 0) {
+                html += '<div class="error">⚠️ Nie znaleziono wyników w grupach FB</div>';
+                resultsDiv.innerHTML = html;
+                return;
+            }
+            
+            // Podsumowanie
+            html += '<div class="result-item">';
+            html += `<div><span class="result-label">Zapytanie:</span><span class="result-value" style="font-weight: 600;">${data.query}</span></div>`;
+            html += `<div><span class="result-label">Znalezionych postów:</span><span class="result-value">${data.totalPosts}</span></div>`;
+            html += `<div><span class="result-label">Przeszukanych grup:</span><span class="result-value">${data.monitoredGroups || data.groupsSearched || 0}</span></div>`;
+            if (data.demoMode) {
+                html += `<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 6px; border-left: 4px solid #ffc107;">`;
+                html += `⚠️ <strong>Tryb demonstracyjny</strong> - To są przykładowe dane. Skonfiguruj grupy FB lub użyj tokenu Apify.`;
+                html += `</div>`;
+            }
+            html += '</div>';
+            
+            // Posty
+            html += '<div class="result-item">';
+            html += `<h4 style="color: #667eea; margin-bottom: 10px;">📝 Znalezione posty (${Math.min(10, data.posts.length)}):</h4>`;
+            data.posts.slice(0, 10).forEach(post => {
+                html += `<div style="padding: 12px; background: #f8f9fa; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #1877f2;">`;
+                html += `<strong>${post.author || 'Facebook User'}</strong><br>`;
+                html += `<small style="color: #666;">📱 Grupa: ${post.groupName || post.group || 'N/A'}</small><br>`;
+                html += `<p style="margin: 8px 0;">${post.text?.substring(0, 300)}${post.text?.length > 300 ? '...' : ''}</p>`;
+                html += `<small>📅 ${post.time || post.date || 'N/A'} | 👍 ${post.likes || post.reactions || 0} | 💬 ${post.comments || 0}</small>`;
+                if (post.url) {
+                    html += `<br><a href="${post.url}" target="_blank" rel="noopener noreferrer" style="color: #1877f2; text-decoration: none; font-weight: 600;">🔗 Zobacz post na Facebook</a>`;
+                } else if (post.groupUrl) {
+                    html += `<br><a href="${post.groupUrl}" target="_blank" rel="noopener noreferrer" style="color: #95a5a6; text-decoration: none;">📍 Zobacz grupę</a>`;
+                }
+                if (post.postId) {
+                    html += `<br><small style="color: #95a5a6;">ID posta: ${post.postId}</small>`;
+                }
+                html += `</div>`;
+            });
+            html += '</div>';
+            
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
+

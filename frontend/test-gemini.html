@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Test Gemini AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #1a2332;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #FFD700;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #1a2332;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+        }
+        
+        .result.success {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            display: block;
+        }
+        
+        .result.error {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            display: block;
+        }
+        
+        .result h3 {
+            margin-bottom: 12px;
+            color: #333;
+        }
+        
+        .result p {
+            color: #666;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            display: none;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #FFD700;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .info p {
+            color: #0d47a1;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        
+        .info p:last-child {
+            margin-bottom: 0;
+        }
+        
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Gemini AI</h1>
+        <p class="subtitle">Prosty test połączenia z Gemini API - bez dodatkowych funkcji</p>
+        
+        <div class="info">
+            <p><strong>ℹ️ Informacje:</strong></p>
+            <p>• Ten test używa <code>/api/ai/test-gemini</code></p>
+            <p>• Bez legal-scraper, bez kontekstu, bez orzecznictwa</p>
+            <p>• Tylko czyste wywołanie Gemini z prostym promptem</p>
+            <p>• Jeśli to zadziała - problem jest w złożonym kodzie AI Legal Search</p>
+        </div>
+        
+        <form id="testForm">
+            <div class="form-group">
+                <label for="question">Zadaj proste pytanie:</label>
+                <input 
+                    type="text" 
+                    id="question" 
+                    name="question" 
+                    placeholder="np. Co to jest JavaScript?" 
+                    required
+                    autocomplete="off"
+                >
+            </div>
+            
+            <button type="submit" id="submitBtn">🚀 Testuj Gemini</button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Czekam na odpowiedź Gemini...</p>
+        </div>
+        
+        <div class="result" id="result"></div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('testForm');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const submitBtn = document.getElementById('submitBtn');
+        const questionInput = document.getElementById('question');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const question = questionInput.value.trim();
+            if (!question) {
+                showError('Wpisz pytanie!');
+                return;
+            }
+            
+            // Pokaż loading
+            loading.classList.add('active');
+            result.style.display = 'none';
+            submitBtn.disabled = true;
+            
+            try {
+                console.log('🧪 Wysyłam pytanie:', question);
+                
+                // Pobierz token z localStorage
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Brak tokenu - zaloguj się w głównej aplikacji');
+                }
+                
+                const response = await fetch('https://web-production-7504.up.railway.app/api/ai/test-gemini', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ query: question })
+                });
+                
+                console.log('🧪 Status odpowiedzi:', response.status);
+                
+                const data = await response.json();
+                console.log('🧪 Odpowiedź:', data);
+                
+                if (!response.ok) {
+                    throw new Error(data.error || data.message || 'Błąd API');
+                }
+                
+                console.log('🧪 Sprawdzam data.success:', data.success);
+                console.log('🧪 Sprawdzam data.answer:', data.answer);
+                
+                if (data.success) {
+                    console.log('🧪 Wywołuję showSuccess()');
+                    showSuccess(data.answer);
+                    console.log('🧪 showSuccess() wywołane');
+                } else {
+                    console.log('🧪 Wywołuję showError()');
+                    showError(data.error || 'Nieznany błąd');
+                }
+                
+            } catch (error) {
+                console.error('🧪 Błąd:', error);
+                showError(error.message);
+            } finally {
+                loading.classList.remove('active');
+                submitBtn.disabled = false;
+            }
+        });
+        
+        function showSuccess(answer) {
+            console.log('🧪 [showSuccess] Wywołano z answer:', answer);
+            console.log('🧪 [showSuccess] Element result:', result);
+            
+            result.className = 'result success';
+            result.style.display = 'block'; // ✅ JAWNE ustawienie display!
+            console.log('🧪 [showSuccess] Ustawiono className i display');
+            
+            result.innerHTML = `
+                <h3>✅ Sukces! Gemini odpowiada:</h3>
+                <p>${answer}</p>
+                <hr style="margin: 16px 0; border: none; border-top: 1px solid #4caf50;">
+                <p style="font-size: 0.85rem; color: #2e7d32;">
+                    <strong>🎉 Gemini API działa!</strong><br>
+                    Jeśli widzisz tę odpowiedź, klucz API jest poprawny i Gemini działa.<br>
+                    Problem musi być w złożonym kodzie AI Legal Search.
+                </p>
+            `;
+            
+            console.log('🧪 [showSuccess] Ustawiono innerHTML');
+            console.log('🧪 [showSuccess] TERAZ result.style.display:', window.getComputedStyle(result).display);
+        }
+        
+        function showError(message) {
+            result.className = 'result error';
+            result.style.display = 'block'; // ✅ JAWNE ustawienie display!
+            result.innerHTML = `
+                <h3>❌ Błąd:</h3>
+                <p>${message}</p>
+                <hr style="margin: 16px 0; border: none; border-top: 1px solid #f44336;">
+                <p style="font-size: 0.85rem; color: #c62828;">
+                    <strong>Możliwe przyczyny:</strong><br>
+                    • Nieprawidłowy klucz API Gemini<br>
+                    • Brak autoryzacji (zaloguj się w głównej aplikacji)<br>
+                    • Backend nie działa (sprawdź port 3500)<br>
+                    • Problem z siecią lub firewall
+                </p>
+            `;
+        }
+    </script>
+</body>
+</html>
+

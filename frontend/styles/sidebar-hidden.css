@@ -1,0 +1,159 @@
+/* Sidebar - CAŁKOWICIE SCHOWANY - width 0px */
+.sidebar {
+    width: 0px !important;
+    background: var(--bg-light);
+    display: flex;
+    flex-direction: column;
+    border-right: none;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    height: 100vh !important;
+    z-index: 1000;
+}
+
+/* Gdy sidebar jest rozwinięty - przewijaj zawartość */
+.sidebar:hover {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* INVISIBLE TRIGGER ZONE - 20px szerokości na lewej krawędzi */
+.sidebar::after {
+    content: '';
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 20px;
+    height: 100vh;
+    z-index: 9999; /* BARDZO WYSOKI żeby być nad wszystkim */
+    pointer-events: all;
+    cursor: pointer;
+}
+
+.sidebar::before {
+    content: '⚡';
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: var(--gold);
+    opacity: 0.2;
+    background: rgba(26, 26, 46, 0.6);
+    padding: 8px 4px;
+    border-radius: 0 6px 6px 0;
+    transition: opacity 0.3s ease;
+    z-index: 998;
+    pointer-events: none; /* NIE AKTYWNY - tylko wizualna wskazówka */
+}
+
+/* NADPISANIE sidebara w light mode - SUPER WAŻNE */
+body[data-theme="light"] .sidebar {
+    width: 0px !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
+    background: var(--bg-light) !important;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+    border-right: none !important;
+}
+
+/* Light mode - przewijaj gdy rozwinięty */
+body[data-theme="light"] .sidebar:hover {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* INVISIBLE TRIGGER w light mode - NAD WSZYSTKIM - SZERSZY */
+body[data-theme="light"] .sidebar::after {
+    content: '' !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 50px !important; /* ZWIĘKSZONE z 20px na 50px */
+    height: 100vh !important;
+    z-index: 10001 !important; /* NAD IKONĄ */
+    pointer-events: all !important;
+    cursor: pointer !important;
+    background: rgba(193, 124, 116, 0.05) !important; /* Lekko widoczne dla testów */
+}
+
+/* PRZYCISK W LIGHT MODE - Rose Gold & Navy - WIDOCZNY */
+body[data-theme="light"] .sidebar::before {
+    content: '⚡' !important;
+    display: block !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    font-size: 24px !important;
+    color: #C17C74 !important; /* Rose Gold */
+    background: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 0 4px 12px rgba(193, 124, 116, 0.5) !important;
+    opacity: 0.8 !important;
+    padding: 12px 6px !important;
+    border-radius: 0 10px 10px 0 !important;
+    z-index: 10000 !important; /* NAD WSZYSTKIM */
+    pointer-events: none !important; /* NIE AKTYWNY - tylko wskazówka */
+    transition: opacity 0.3s ease !important;
+}
+
+body[data-theme="light"] .sidebar:hover::before {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+.sidebar:hover::before {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sidebar:hover {
+    width: 280px !important;
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5);
+    border-right: 2px solid var(--gold);
+}
+
+/* DARK MODE hover */
+body[data-theme="dark"] .sidebar:hover {
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5);
+    border-right: 2px solid var(--gold);
+}
+
+/* LIGHT MODE hover - Rose Gold */
+body[data-theme="light"] .sidebar:hover {
+    width: 280px !important;
+    box-shadow: 4px 0 30px rgba(193, 124, 116, 0.4) !important;
+    border-right: 2px solid #C17C74 !important; /* Rose Gold */
+    background: var(--bg-light) !important;
+}
+
+/* Blokuj rozwijanie gdy hover na radio controls lub przyciski */
+.sidebar:has(#globalRadioControls:hover),
+.sidebar:has(#globalRadioControls button:hover) {
+    width: 0px !important;
+    box-shadow: none !important;
+}
+
+/* SUPER-MOCNE NADPISANIE - musi być na końcu! */
+body[data-theme="light"] .sidebar,
+html body[data-theme="light"] .sidebar,
+body[data-theme="light"] div.sidebar {
+    width: 0px !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+}
+
+body[data-theme="light"] .sidebar:hover,
+html body[data-theme="light"] .sidebar:hover,
+body[data-theme="light"] div.sidebar:hover {
+    width: 280px !important;
+    min-width: 280px !important;
+    max-width: 280px !important;
+}

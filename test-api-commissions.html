@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API Prowizji</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; background: #3B82F6; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        button:hover { background: #2563EB; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        .success { color: #2ecc71; }
+        .error { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test API Prowizji</h1>
+        
+        <h2>Endpointy:</h2>
+        <button onclick="testPending()">GET /commissions/v2/pending</button>
+        <button onclick="testAll()">GET /commissions (wszystkie)</button>
+        <button onclick="testPayment27()">GET prowizje dla Payment ID 27</button>
+        
+        <h2>Rezultat:</h2>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3500/api';
+        const token = localStorage.getItem('token');
+
+        async function request(endpoint) {
+            const response = await fetch(API_URL + endpoint, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            return response.json();
+        }
+
+        async function testPending() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>⏳ Ładowanie...</p>';
+            
+            try {
+                const data = await request('/commissions/v2/pending');
+                
+                result.innerHTML = `
+                    <p class="success">✅ Sukces!</p>
+                    <p><strong>Liczba prowizji:</strong> ${data.commissions?.length || 0}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (err) {
+                result.innerHTML = `<p class="error">❌ Błąd: ${err.message}</p>`;
+            }
+        }
+
+        async function testAll() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>⏳ Ładowanie...</p>';
+            
+            try {
+                const data = await request('/commissions');
+                
+                result.innerHTML = `
+                    <p class="success">✅ Sukces!</p>
+                    <p><strong>Liczba prowizji:</strong> ${data.commissions?.length || 0}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (err) {
+                result.innerHTML = `<p class="error">❌ Błąd: ${err.message}</p>`;
+            }
+        }
+
+        async function testPayment27() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>⏳ Ładowanie prowizji dla Payment ID 27...</p>';
+            
+            try {
+                // Najpierw pobierz wszystkie prowizje
+                const data = await request('/commissions');
+                
+                // Filtruj po payment_id = 27
+                const payment27Commissions = data.commissions?.filter(c => c.payment_id === 27) || [];
+                
+                result.innerHTML = `
+                    <p class="success">✅ Sukces!</p>
+                    <p><strong>Prowizje dla Payment ID 27:</strong> ${payment27Commissions.length}</p>
+                    <pre>${JSON.stringify(payment27Commissions, null, 2)}</pre>
+                `;
+            } catch (err) {
+                result.innerHTML = `<p class="error">❌ Błąd: ${err.message}</p>`;
+            }
+        }
+
+        // Auto-test na starcie
+        window.onload = () => {
+            if (!token) {
+                document.getElementById('result').innerHTML = '<p class="error">❌ Brak tokena! Zaloguj się najpierw.</p>';
+            } else {
+                testPending();
+            }
+        };
+    </script>
+</body>
+</html>

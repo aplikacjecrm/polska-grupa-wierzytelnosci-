@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: pro-meritum-komunikator
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3500
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dnn1s4f30
+      - key: CLOUDINARY_API_KEY
+        value: 695843691868791
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: USE_CLOUDINARY
+        value: true
+    disk:
+      name: data-disk
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1

@@ -1,0 +1,331 @@
+/* ========================================
+   MODERN NEON AUDIO PLAYER - Futurystyczny Design
+   ======================================== */
+
+/* Auto-Hide Sidebar */
+.sidebar {
+    width: 80px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar:hover {
+    width: 280px;
+}
+
+/* Modern Audio Player - Ciemny z neonowymi akcentami */
+.compact-radio {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px 10px;
+    margin-bottom: 15px;
+    background: linear-gradient(180deg, 
+        #0a0a0f 0%, 
+        #12121a 50%, 
+        #0a0a0f 100%
+    );
+    border-radius: 16px;
+    box-shadow: 
+        0 0 20px rgba(255, 215, 0, 0.15),
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        inset 0 -1px 0 rgba(0,0,0,0.5);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Kontener na przyciski - POZIOMO */
+.radio-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Neonowa poświata na górze */
+.compact-radio::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 215, 0, 0.8), 
+        transparent
+    );
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+/* Efekt szkła */
+.compact-radio::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg,
+        rgba(255,255,255,0.03) 0%,
+        transparent 100%
+    );
+    border-radius: 16px 16px 0 0;
+    pointer-events: none;
+}
+
+/* Modern Buttons - Minimalistyczne z neonem */
+.radio-speaker {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #1a1a24, #0f0f15);
+    color: #888;
+    font-size: 1.2rem;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    box-shadow: 
+        0 4px 15px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Hover Effect - Złota poświata */
+.radio-speaker:hover {
+    color: #FFD700;
+    box-shadow: 
+        0 4px 20px rgba(255, 215, 0, 0.3),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+}
+
+/* Główny Driver (Play) - Większy z neonowym ringiem */
+.radio-speaker.radio-main {
+    width: 56px;
+    height: 56px;
+    font-size: 1.4rem;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #1a1a24, #0f0f15);
+    border: 2px solid rgba(255, 215, 0, 0.2);
+}
+
+.radio-speaker.radio-main:hover {
+    border-color: rgba(255, 215, 0, 0.6);
+    box-shadow: 
+        0 0 25px rgba(255, 215, 0, 0.4),
+        inset 0 0 20px rgba(255, 215, 0, 0.1);
+    transform: scale(1.05);
+}
+
+/* Playing State - Neonowa poświata pulsująca */
+.radio-speaker.playing {
+    color: #FFD700;
+    border-color: #FFD700 !important;
+    animation: neonPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes neonPulse {
+    0%, 100% { 
+        box-shadow: 
+            0 0 15px rgba(255, 215, 0, 0.4),
+            0 0 30px rgba(255, 215, 0, 0.2),
+            inset 0 0 15px rgba(255, 215, 0, 0.1);
+    }
+    50% { 
+        box-shadow: 
+            0 0 25px rgba(255, 215, 0, 0.6),
+            0 0 50px rgba(255, 215, 0, 0.3),
+            inset 0 0 25px rgba(255, 215, 0, 0.2);
+    }
+}
+
+/* Radio - przyciski w poziomie */
+.radio-buttons {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+/* Logout Button - Maksymalnie do lewej, czerwone podświetlenie */
+.btn-logout {
+    width: 100% !important;
+    min-width: unset !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    padding: 12px 8px !important;
+    margin-top: 15px !important;
+    transition: all 0.3s ease !important;
+    border-radius: 8px !important;
+}
+
+/* Ukryj border gdy sidebar zwinięty */
+.sidebar:not(:hover) .btn-logout {
+    border: none !important;
+    background: transparent !important;
+}
+
+/* Czerwone podświetlenie na hover */
+.btn-logout:hover {
+    background: rgba(231, 76, 60, 0.2) !important;
+    border-color: #e74c3c !important;
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.4) !important;
+}
+
+.btn-logout:hover .logout-icon {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 5px #e74c3c);
+}
+
+.logout-icon {
+    font-size: 1.5rem;
+    min-width: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.logout-text {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    transition: all 0.3s ease 0.1s;
+    white-space: nowrap;
+}
+
+.sidebar:hover .logout-text {
+    opacity: 1;
+    width: auto;
+}
+
+/* Sidebar Rozwija Się Normalnie */
+/* Usunięto blokadę rozwijania - sidebar działa jak zwykle */
+
+/* ========================================
+   MODERN LCD DISPLAY + VOLUME SLIDER
+   ======================================== */
+
+.radio-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 10px;
+    border: 1px solid rgba(255,215,0,0.1);
+    position: relative;
+    z-index: 2;
+}
+
+/* Pokrętło Volume - Nowoczesne minimalistyczne */
+.volume-knob {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #1a1a24, #0f0f15);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    box-shadow: 
+        0 2px 10px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+/* Hover tylko gdy sidebar rozwinięty */
+.sidebar:hover .volume-knob:hover {
+    transform: scale(1.05);
+}
+
+/* Brak hover gdy sidebar zwinięty */
+.sidebar:not(:hover) .volume-knob:hover {
+    transform: none;
+}
+
+/* Wskaźnik na pokrętle - Neonowy */
+.knob-indicator {
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 8px;
+    background: #FFD700;
+    border-radius: 2px;
+    box-shadow: 0 0 6px #FFD700;
+}
+
+/* Modern LCD Display - Ciemny z neonem */
+.lcd-display {
+    flex: 1;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    position: relative;
+}
+
+/* Tekst LCD - Neonowy złoty */
+.lcd-text {
+    color: #FFD700;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lcd-volume {
+    color: #c0c5ce;
+    font-size: 0.65rem;
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 5px #c0c5ce;
+}
+
+/* Animacja migania gdy zatrzymane */
+@keyframes lcdBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Responsywność */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 70px;
+    }
+    
+    .radio-speaker {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    .radio-speaker.radio-main {
+        width: 60px;
+        height: 60px;
+        font-size: 1.4rem;
+    }
+    
+    .volume-knob {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .lcd-text {
+        font-size: 0.7rem;
+    }
+}

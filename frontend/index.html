@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Pro Meritum Komunikator</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
+    <style>
+        /* Ukryj scrollbar w czacie */
+        .messages-list::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        
+        /* Mentions dropdown - BARDZO ciemny tekst */
+        .mention-name {
+            color: #000000 !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+        }
+        .mention-role {
+            color: #333333 !important;
+            font-size: 13px !important;
+        }
+        .mention-avatar {
+            color: white !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+        }
+        .mentions-dropdown {
+            background: #ffffff !important;
+            border: 3px solid #3498db !important;
+        }
+        .mention-item:hover,
+        .mention-item.active {
+            background: #e3f2fd !important;
+        }
+        .mention-item:hover .mention-name,
+        .mention-item.active .mention-name {
+            color: #1565c0 !important;
+        }
+    </style>
+    <link rel="stylesheet" href="styles/main.css?v=7.0&VOICE_MESSAGES=TRUE&t=20251117115600">
+    <link rel="stylesheet" href="styles/video-recording.css?v=1.4&POINTER_EVENTS_FIX=TRUE">
+    <link rel="stylesheet" href="styles/floating-chat.css?v=20251119012700&SENDER_NAME=TRUE&SMART_DATES=TRUE">
+    <link rel="stylesheet" href="styles/case-tabs-modern.css?v=2.5&RESPONSIVE_FIX_15INCH=TRUE&t=20251116005500">
+    <link rel="stylesheet" href="styles/theme-light-modern.css?v=12.0&PRECISE_ROSE_GOLD=TRUE&t=20251114052750">
+    <link rel="stylesheet" href="styles/theme-switcher.css?v=1.0&THEME_SWITCHER=TRUE&t=20251114045100">
+    <link rel="stylesheet" href="styles/compact-radio.css">
+    <link rel="stylesheet" href="styles/case-permissions.css?v=1.0&PERMISSIONS_MODULE=TRUE&t=20251114015900">
+    <!-- SIDEBAR SCHOWANY - MUSI BYĆ NA KOŃCU! -->
+    <link rel="stylesheet" href="styles/sidebar-hidden.css?v=12.0&VISIBLE_ICON=TRUE&t=20251114130900">
+    <!-- UKRYJ SCROLLBARY - TYMCZASOWO WYŁĄCZONE ŻEBY CZAT DZIAŁAŁ -->
+    <!-- <link rel="stylesheet" href="styles/hide-scrollbars.css?v=2.0&CHAT_SCROLLBAR_VISIBLE=TRUE&t=20251117071900"> -->
+    <!-- MODAL CASCADE - Każdy kolejny modal mniejszy -->
+    <link rel="stylesheet" href="styles/modal-cascade.css?v=1.4&NO_ANIMATION_CASEMODAL=TRUE&t=20251120232400">
+    <!-- COMPACT VIEW - Wszystko mniejsze i bardziej czytelne -->
+    <link rel="stylesheet" href="styles/compact-view.css?v=1.0&COMPACT=TRUE&t=20251114060700">
+    <!-- EMPLOYEE DASHBOARD - MUSI BYĆ PO COMPACT VIEW! -->
+    <link rel="stylesheet" href="styles/employee-dashboard.css?v=6.6&STICKY_CSV_PDF=TRUE&FULLWIDTH_LAYOUT=TRUE&t=20251128162600">
+    
+    <!-- SIDEBAR FORCE HIDE - JavaScript wymuszenie -->
+    <script src="scripts/sidebar-force-hide.js?v=4.2&LOGS_ENABLED=TRUE&t=20251116112200"></script>
+    
+    <!-- INQUIRIES MODAL FORCE CSS -->
+    <style id="inquiriesModalForceCSS">
+        #inquiriesModal.modal-open {
+            display: block !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(0,0,0,0.95) !important;
+            z-index: 2147483647 !important; /* Max int */
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        body.modal-inquiries-open {
+            overflow: hidden !important;
+        }
+        
+        body.modal-inquiries-open [class*="floating"],
+        body.modal-inquiries-open #fabContainer,
+        body.modal-inquiries-open .unified-fab,
+        body.modal-inquiries-open .floating-chat-button,
+        body.modal-inquiries-open .floating-chat-panel {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            z-index: -9999 !important;
+            pointer-events: none !important;
+        }
+    </style>
+    
+    <!-- Mapbox GL JS - Najlepsze mapy! -->
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
+    
+    <!-- Mapbox Geocoder - Autouzupełnianie -->
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+    
+    <!-- PayPal SDK - SANDBOX dla testów -->
+    <!-- <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=PLN&locale=pl_PL"></script> -->
+    <!-- PayPal wyłączony - nie jest używany w aplikacji -->
+    
+    <!-- Chart.js - Wykresy -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        @keyframes slideOut {
+            from { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            to { 
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Ekran logowania -->
+    <div id="loginScreen" class="screen active">
+        <!-- Pasek górny dla okna logowania -->
+        <div class="titlebar">
+            <div class="titlebar-left">
+                <div class="logo-small">§</div>
+                <span class="app-title">Pro Meritum Komunikator</span>
+            </div>
+            <div class="titlebar-right">
+                <button class="titlebar-btn" id="minimizeBtnLogin">−</button>
+                <button class="titlebar-btn" id="maximizeBtnLogin">□</button>
+                <button class="titlebar-btn close" id="closeBtnLogin">×</button>
+            </div>
+        </div>
+        
+        <div class="login-container">
+            <div class="login-header">
+                <div class="logo">§</div>
+                <h1>Pro Meritum</h1>
+                <p>Komunikator</p>
+            </div>
+            <div class="login-form">
+                <!-- Tylko logowanie - rejestracja przez admina -->
+                
+                <!-- Formularz logowania -->
+                <form id="loginForm" class="tab-content active">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="loginEmail" placeholder="twoj@email.pl" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hasło</label>
+                        <input type="password" id="loginPassword" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Zaloguj się</button>
+                </form>
+
+                <!-- Formularz rejestracji UKRYTY - tylko admin dodaje użytkowników -->
+                <form id="registerForm" class="tab-content" style="display: none !important;">
+                </form>
+
+                <div id="loginError" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Główny ekran aplikacji -->
+    <div id="mainScreen" class="screen">
+        <!-- Pasek górny -->
+        <div class="titlebar">
+            <div class="titlebar-left">
+                <div class="logo-small">§</div>
+                <span class="app-title">Pro Meritum Komunikator</span>
+            </div>
+            
+            <!-- Globalna wyszukiwarka -->
+            <div style="flex: 1; max-width: 700px; margin: 0 20px; position: relative;">
+                <div style="display: flex; gap: 8px;">
+                    <div style="position: relative; flex: 1;">
+                        <input type="text" 
+                               id="globalSearch" 
+                               placeholder="🔍 Szukaj spraw, terminów, dokumentów, klientów..." 
+                               style="width: 100%; padding: 8px 40px 8px 15px; border: 2px solid rgba(255,215,0,0.3); border-radius: 20px; background: rgba(26,35,50,0.8); color: white; font-size: 0.9rem; outline: none; transition: all 0.3s;"
+                               onkeyup="crmManager.globalSearch(this.value)"
+                               onfocus="this.style.borderColor='#FFD700'; this.style.background='rgba(26,35,50,0.95)'"
+                               onblur="setTimeout(() => { if(!event.relatedTarget || !event.relatedTarget.closest('#globalSearchResults')) document.getElementById('globalSearchResults').style.display='none'; }, 200)">
+                        <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #FFD700; font-size: 1.2rem; pointer-events: none;">🔍</span>
+                    </div>
+                </div>
+                
+                <!-- Dropdown z wynikami -->
+                <div id="globalSearchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 8px; background: white; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); max-height: 500px; overflow-y: auto; z-index: 9999;"></div>
+            </div>
+            
+            <div class="titlebar-right">
+                <button class="titlebar-btn" id="minimizeBtn">−</button>
+                <button class="titlebar-btn" id="maximizeBtn">□</button>
+                <button class="titlebar-btn close" id="closeBtn">×</button>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="user-profile">
+                    <div class="user-avatar" id="userAvatar">
+                        <span id="userInitials">U</span>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name" id="userName">Użytkownik</div>
+                        <div class="user-status">
+                            <span class="status-dot online"></span>
+                            <span>Online</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nav-menu" id="navMenu">
+                    <!-- Menu dla Admina -->
+                    <button class="nav-item admin-only" data-view="admin">
+                        <span class="nav-icon">👑</span>
+                        <span class="nav-label">Panel Admina</span>
+                    </button>
+                    
+                    <!-- Menu dla Mecenasa -->
+                    <button class="nav-item lawyer-only" data-view="lawyer-dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-label">Mój Dashboard</span>
+                    </button>
+                    
+                    <!-- Menu dla Opiekuna Sprawy -->
+                    <button class="nav-item lawyer-only" data-view="my-cases">
+                        <span class="nav-icon">📂</span>
+                        <span class="nav-label">Moje Sprawy</span>
+                    </button>
+                    
+                    <!-- Menu dla Admina i Mecenasa -->
+                    <button class="nav-item active lawyer-only admin-only" data-view="crm">
+                        <span class="nav-icon">👥</span>
+                        <span class="nav-label">Klienci i Sprawy</span>
+                    </button>
+                    
+                    <button class="nav-item inquiries-only" id="inquiriesBtn" data-action="openInquiries">
+                        <span class="nav-icon">📩</span>
+                        <span class="nav-label">Zapytania WWW</span>
+                        <span class="badge" id="inquiriesBadge" style="display:none;">0</span>
+                    </button>
+                    
+                    <button class="nav-item lawyer-only admin-only" data-view="calendar">
+                        <span class="nav-icon">📅</span>
+                        <span class="nav-label">Kalendarz</span>
+                    </button>
+                    
+                    <!-- Menu dla Klienta -->
+                    <button class="nav-item client-only" data-view="client-portal">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-label">Mój Portal</span>
+                    </button>
+                    <button class="nav-item client-only" data-view="projects">
+                        <span class="nav-icon">💼</span>
+                        <span class="nav-label">Projekty Inwestycyjne</span>
+                    </button>
+                    
+                    <!-- Menu dla HR -->
+                    <button class="nav-item hr-only" data-view="hr-dashboard">
+                        <span class="nav-icon">👥</span>
+                        <span class="nav-label">Pracownicy</span>
+                    </button>
+                    
+                    <!-- Menu dla Finance -->
+                    <button class="nav-item finance-only" data-view="finance-dashboard">
+                        <span class="nav-icon">💰</span>
+                        <span class="nav-label">Finanse</span>
+                    </button>
+                    
+                    <!-- Menu dla Payroll -->
+                    <button class="nav-item payroll-only" data-view="payroll-dashboard">
+                        <span class="nav-icon">💼</span>
+                        <span class="nav-label">Payroll</span>
+                    </button>
+                    
+                    <!-- Menu wspólne -->
+                    <button class="nav-item" data-view="mail">
+                        <span class="nav-icon">✉️</span>
+                        <span class="nav-label">Poczta</span>
+                        <span class="badge" id="mailBadge">0</span>
+                    </button>
+                    <button class="nav-item" data-view="chat">
+                        <span class="nav-icon">💬</span>
+                        <span class="nav-label">Czat</span>
+                        <span class="badge" id="chatBadge">0</span>
+                    </button>
+                    
+                    <button class="nav-item" data-view="settings">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-label">Ustawienia</span>
+                    </button>
+                </div>
+
+                <div class="sidebar-footer">
+                    <!-- Kompaktowe Radio - Przyciski POZIOMO -->
+                    <div id="compactRadio" class="compact-radio">
+                        <!-- Przyciski w poziomie: ⏮ ▶ ⏭ -->
+                        <div class="radio-buttons">
+                            <button onclick="globalRadio.prev()" class="radio-speaker" title="Poprzednia stacja">⏮</button>
+                            <button onclick="globalRadio.toggle()" id="radioPlayBtn" class="radio-speaker radio-main" title="Play/Pause">▶</button>
+                            <button onclick="globalRadio.next()" class="radio-speaker" title="Następna stacja">⏭</button>
+                        </div>
+                        
+                        <!-- LCD Display + Volume Knob -->
+                        <div class="radio-controls">
+                            <!-- Pokrętło Volume -->
+                            <div class="volume-knob" id="volumeKnob" title="Głośność">
+                                <div class="knob-indicator"></div>
+                            </div>
+                            
+                            <!-- LCD Display -->
+                            <div class="lcd-display">
+                                <div class="lcd-text" id="lcdStation">RADIO ZET</div>
+                                <div class="lcd-volume">VOL: <span id="lcdVolume">5</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-logout" id="logoutBtn">
+                        <span class="logout-icon">🚪</span>
+                        <span class="logout-text">Wyloguj</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Widok CRM - Klienci i Sprawy -->
+            <div id="crmView" class="view-content">
+                <div class="view-header" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 20px !important; background: white !important; border-bottom: 2px solid #e0e0e0 !important;">
+                    <h2 style="margin: 0 !important;">👥 Klienci i Sprawy</h2>
+                    <div class="view-actions" style="display: flex !important; gap: 10px !important; z-index: 100 !important;">
+                        <button class="btn-action btn-new-client" id="newClientBtn" style="display: inline-block !important; padding: 12px 24px !important; background: linear-gradient(135deg, #1a2332, #2c3e50) !important; border: 2px solid #FFD700 !important; border-radius: 6px !important; cursor: pointer !important; font-weight: 600 !important; color: white !important; font-size: 0.95rem !important; transition: all 0.3s ease !important;">➕ Nowy klient</button>
+                        <button class="btn-action primary" id="newCaseBtn" style="display: inline-block !important; padding: 12px 24px !important; background: linear-gradient(135deg, #FFD700, #FFA500) !important; border: none !important; border-radius: 6px !important; cursor: pointer !important; font-weight: 600 !important; color: white !important; font-size: 0.95rem !important;">📋 Nowa sprawa</button>
+                    </div>
+                </div>
+
+                <div class="crm-container">
+                    <!-- Widget nadchodzących wydarzeń -->
+                    <div id="upcomingEventsWidget" style="background: linear-gradient(135deg, #1a2332, #2c3e50); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(26,35,50,0.3);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="color: white; margin: 0; font-size: 1.2rem;">📅 Nadchodzące terminy</h3>
+                            <button onclick="window.refreshUpcomingEvents()" style="padding: 8px 16px; background: rgba(255,255,255,0.2); color: white; border: 2px solid white; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+                                🔄 Odśwież
+                            </button>
+                        </div>
+                        <div id="upcomingEventsList" style="display: grid; gap: 12px;">
+                            <p style="text-align: center; color: white; padding: 20px;">Ładowanie...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="crm-tabs">
+                        <button class="crm-tab active" data-tab="clients">Klienci</button>
+                        <button class="crm-tab" data-tab="cases">Sprawy</button>
+                    </div>
+
+                    <!-- Tab Klienci -->
+                    <div id="clientsTab" class="crm-tab-content active">
+                        <div class="search-bar">
+                            <input type="search" id="clientSearch" placeholder="🔍 Szukaj klienta...">
+                            <select id="clientStatusFilter">
+                                <option value="">Wszyscy</option>
+                                <option value="active">Aktywni</option>
+                                <option value="inactive">Nieaktywni</option>
+                            </select>
+                        </div>
+
+                        <div id="clientsList" class="data-grid"></div>
+                    </div>
+
+                    <!-- Tab Sprawy -->
+                    <div id="casesTab" class="crm-tab-content">
+                        <div class="search-bar">
+                            <input type="search" id="caseSearch" placeholder="🔍 Szukaj sprawy...">
+                            <select id="caseStatusFilter">
+                                <option value="">Wszystkie</option>
+                                <option value="open">Otwarte</option>
+                                <option value="in_progress">W toku</option>
+                                <option value="closed">Zamknięte</option>
+                            </select>
+                        </div>
+
+                        <div id="casesList" class="data-grid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Widok Moje Sprawy -->
+            <div id="my-casesView" class="view-content">
+                <div class="view-header" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 20px !important; background: white !important; border-bottom: 2px solid #e0e0e0 !important;">
+                    <h2 style="margin: 0 !important;">📂 Moje Sprawy</h2>
+                    <div class="view-actions" style="display: flex !important; gap: 10px !important;">
+                        <button class="btn-action" onclick="window.refreshMyCases()" style="display: inline-block !important; padding: 12px 24px !important; background: linear-gradient(135deg, #1a2332, #2c3e50) !important; border: 2px solid #FFD700 !important; border-radius: 6px !important; cursor: pointer !important; font-weight: 600 !important; color: white !important; font-size: 0.95rem !important;">🔄 Odśwież</button>
+                    </div>
+                </div>
+
+                <div class="crm-container">
+                    <!-- Statystyki -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                        <div style="background: linear-gradient(135deg, #1a2332, #2c3e50); border-radius: 12px; padding: 20px; color: white; box-shadow: 0 4px 15px rgba(26,35,50,0.4); border: 2px solid #FFD700;">
+                            <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;" id="myTotalCases">0</div>
+                            <div style="opacity: 0.9;">Wszystkie sprawy</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #1a2332, #FFD700); border-radius: 12px; padding: 20px; color: white; box-shadow: 0 4px 15px rgba(255,215,0,0.4); border: 2px solid #FFD700;">
+                            <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;" id="myActiveCases">0</div>
+                            <div style="opacity: 0.9;">W toku</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #FFD700, #d4af37); border-radius: 12px; padding: 20px; color: #1a2332; box-shadow: 0 4px 15px rgba(255,215,0,0.4); border: 2px solid #1a2332;">
+                            <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;" id="myUpcomingEvents">0</div>
+                            <div style="opacity: 0.9;">Nadchodzące terminy</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #0f1419, #1a2332); border-radius: 12px; padding: 20px; color: white; box-shadow: 0 4px 15px rgba(15,20,25,0.4); border: 2px solid #d4af37;">
+                            <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;" id="myClosedCases">0</div>
+                            <div style="opacity: 0.9;">Zamknięte</div>
+                        </div>
+                    </div>
+
+                    <!-- Filtry -->
+                    <div class="search-bar" style="margin-bottom: 20px;">
+                        <input type="search" id="myCaseSearch" placeholder="🔍 Szukaj w moich sprawach...">
+                        <select id="myCaseStatusFilter">
+                            <option value="">Wszystkie</option>
+                            <option value="open">Otwarte</option>
+                            <option value="in_progress">W toku</option>
+                            <option value="closed">Zamknięte</option>
+                        </select>
+                        <select id="myCaseTypeFilter">
+                            <option value="">Wszystkie typy</option>
+                            <option value="civil">Cywilne</option>
+                            <option value="criminal">Karne</option>
+                            <option value="family">Rodzinne</option>
+                            <option value="commercial">Gospodarcze</option>
+                            <option value="administrative">Administracyjne</option>
+                        </select>
+                    </div>
+
+                    <!-- Lista spraw -->
+                    <div id="myCasesList" class="data-grid">
+                        <p style="text-align: center; color: #999; padding: 40px;">Ładowanie...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Widok poczty -->
+            <div id="mailView" class="view-content">
+                <div class="view-header">
+                    <h2>📧 Poczta</h2>
+                    <div class="view-actions">
+                        <button class="btn-action" id="refreshMailBtn">🔄 Odśwież</button>
+                        <button class="btn-action primary" id="newMailBtn">✉️ Nowa wiadomość</button>
+                    </div>
+                </div>
+
+                <div class="mail-container">
+                    <div class="mail-accounts">
+                        <h3>Konta pocztowe</h3>
+                        <div id="accountsList"></div>
+                        <button class="btn-add-account" id="addAccountBtn">+ Dodaj konto</button>
+                    </div>
+
+                    <div class="mail-list">
+                        <div class="mail-list-header">
+                            <input type="search" placeholder="🔍 Szukaj wiadomości..." id="mailSearch">
+                        </div>
+                        <div id="mailMessages" class="messages-list">
+                            <div class="empty-state">
+                                <span class="empty-icon">📭</span>
+                                <p>Wybierz konto pocztowe</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mail-content">
+                        <div id="mailPreview" class="empty-state">
+                            <span class="empty-icon">✉️</span>
+                            <p>Wybierz wiadomość</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Widok Employee Dashboard (dla HR) -->
+            <div id="employee-dashboardView" class="view-content">
+                <div id="employeeDashboardContainer"></div>
+            </div>
+
+            <!-- Widok Finance Dashboard (dla Finance) -->
+            <div id="finance-dashboardView" class="view-content">
+                <div id="financeDashboardContainer"></div>
+            </div>
+
+            <!-- Widok Payroll Dashboard (dla Payroll) -->
+            <div id="payroll-dashboardView" class="view-content">
+                <div id="payrollDashboardContainer"></div>
+            </div>
+
+            <!-- Widok Kalendarz -->
+            <div id="calendarView" class="view-content">
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <div class="calendar-nav">
+                            <button class="btn-calendar-nav" id="prevPeriod">◀</button>
+                            <h2 id="calendarTitle">📅 Styczeń 2025</h2>
+                            <button class="btn-calendar-nav" id="nextPeriod">▶</button>
+                        </div>
+                        <div class="calendar-view-switcher">
+                            <button class="btn-view active" data-calendar-view="day">📋 Lista</button>
+                            <button class="btn-view" data-calendar-view="week">📆 Tydzień</button>
+                            <button class="btn-view" data-calendar-view="month">🗓️ Miesiąc</button>
+                        </div>
+                        <button class="btn-action primary" id="todayBtn">Dzisiaj</button>
+                        <button class="btn-action" id="newEventBtn" style="background: linear-gradient(145deg, var(--gold-light), var(--gold)); color: #1a1a2e;">➕ Nowe wydarzenie</button>
+                    </div>
+
+                    <!-- Statystyki -->
+                    <div class="calendar-stats">
+                        <div class="stat-card urgent">
+                            <div class="stat-number" id="urgentCount">0</div>
+                            <div class="stat-label">🔥 Pilne (dziś/jutro)</div>
+                        </div>
+                        <div class="stat-card upcoming">
+                            <div class="stat-number" id="upcomingCount">0</div>
+                            <div class="stat-label">📅 Nadchodzące (7 dni)</div>
+                        </div>
+                        <div class="stat-card total">
+                            <div class="stat-number" id="totalEventsCount">0</div>
+                            <div class="stat-label">📊 Wszystkie wydarzenia</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Widok dzienny -->
+                    <div id="dayView" class="calendar-view-content" style="max-height: calc(100vh - 400px); overflow-y: auto; overflow-x: hidden;">
+                        <div class="day-grid" id="dayGrid"></div>
+                    </div>
+
+                    <!-- Widok tygodniowy -->
+                    <div id="weekView" class="calendar-view-content" style="display: none; max-height: calc(100vh - 400px); overflow-y: auto; overflow-x: hidden;">
+                        <div class="week-grid" id="weekGrid"></div>
+                    </div>
+
+                    <!-- Widok miesięczny -->
+                    <div id="monthView" class="calendar-view-content" style="display: none; max-height: calc(100vh - 400px); overflow-y: auto; overflow-x: hidden;">
+                        <div class="month-grid" id="monthGrid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Widok Czat -->
+            <div id="chatView" class="view-content">
+                <div class="view-header">
+                    <h2>💬 Czat</h2>
+                    <div class="view-actions">
+                        <input type="search" placeholder="🔍 Szukaj użytkowników..." id="userSearch">
+                    </div>
+                </div>
+
+                <div class="chat-container">
+                    <div class="chat-users">
+                        <h3>Użytkownicy</h3>
+                        <div id="usersList"></div>
+                    </div>
+
+                    <div class="chat-messages" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
+                        <div id="chatHeader" class="chat-header" style="display: none; flex-shrink: 0;">
+                            <h3 id="chatUsername"></h3>
+                        </div>
+
+                        <div id="messagesList" class="messages-list" style="flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 20px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; -ms-overflow-style: none;">
+                            <div class="empty-state">
+                                <span class="empty-icon">💬</span>
+                            </div>
+                        </div>
+
+                        <div id="chatInput" class="chat-input" style="display: none; flex-shrink: 0;">
+                            <button class="btn-attach" id="attachBtn">📎</button>
+                            <button class="btn-emoji" onclick="window.toggleEmojiPicker()">😊</button>
+                            <button class="btn-voice" id="voiceBtn" onclick="window.toggleVoiceRecording()">🎤</button>
+                            <button class="btn-video" id="videoBtn" onclick="window.toggleVideoRecording()" title="Nagraj wideo">📹</button>
+                            <input type="text" id="messageInput" placeholder="Napisz wiadomość...">
+                            <button class="btn-send" id="sendBtn">Wyślij</button>
+                        </div>                </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIDEO RECORDING MODAL - MINIATURA Z PODGLĄDEM -->
+            <div id="videoRecordingModal" class="video-recording-modal" style="display: none;" title="Kliknij aby zatrzymać nagrywanie">
+                <video id="recordingPreview" autoplay muted playsinline></video>
+                <span id="recordingTimer">0:00</span>
+            </div>
+
+            <!-- AUDIO RECORDING MODAL - MAŁA IKONKA -->
+            <div id="audioRecordingModal" class="audio-recording-modal" style="display: none;" title="Kliknij aby zatrzymać nagrywanie">
+                <div class="recording-container-audio">
+                    <div class="audio-icon">🎤</div>
+                    <span id="audioRecordingTimer">0:00</span>
+                </div>
+            </div>
+
+            <!-- AUDIO PREVIEW MODAL -->
+            <div id="audioPreviewModal" class="preview-modal" style="display: none;">
+                <div class="preview-container">
+                    <h3>🎤 Podgląd nagrania audio</h3>
+                    <audio id="audioPreviewPlayer" controls style="width: 100%; margin: 20px 0;"></audio>
+                    <div class="preview-actions">
+                        <button class="preview-btn preview-btn-send" onclick="window.sendAudioPreview()">✅ Wyślij</button>
+                        <button class="preview-btn preview-btn-cancel" onclick="window.cancelAudioPreview()">❌ Anuluj</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIDEO PREVIEW MODAL -->
+            <div id="videoPreviewModal" class="preview-modal" style="display: none;">
+                <div class="preview-container">
+                    <h3>📹 Podgląd nagrania wideo</h3>
+                    <video id="videoPreviewPlayer" controls style="max-width: 100%; border-radius: 8px; margin: 20px 0;"></video>
+                    <div class="preview-actions">
+                        <button class="preview-btn preview-btn-send" onclick="window.sendVideoPreview()">✅ Wyślij</button>
+                        <button class="preview-btn preview-btn-cancel" onclick="window.cancelVideoPreview()">❌ Anuluj</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Widok Asystenta AI -->
+            <div id="ai-assistantView" class="view-content">
+                <div class="view-header">
+                    <h2>🤖 Asystent AI - Analiza Prawna</h2>
+                </div>
+                <div id="aiAssistantContent" style="padding: 20px;">
+                    <p style="text-align: center; color: #999; padding: 40px;">Ładowanie asystenta AI...</p>
+                </div>
+            </div>
+
+            <!-- Widok Biblioteki Kodeksów -->
+            <div id="legal-libraryView" class="view-content">
+                <div class="view-header">
+                    <h2>📚 Biblioteka Kodeksów</h2>
+                </div>
+                <div id="legalLibraryContent" style="padding: 20px;">
+                    <p style="text-align: center; color: #999; padding: 40px;">Ładowanie biblioteki kodeksów...</p>
+                </div>
+            </div>
+
+            <!-- Widok Admina -->
+            <div id="adminView" class="view-content">
+                <!-- Zawartość renderowana przez admin-dashboard.js -->
+            </div>
+
+            <!-- Widok HR Dashboard - Zarządzanie Pracownikami -->
+            <div id="hr-dashboardView" class="view-content">
+                <!-- Zawartość renderowana przez hr-dashboard.js -->
+            </div>
+
+            <!-- Widok Dashboard Mecenasa -->
+            <div id="lawyer-dashboardView" class="view-content">
+                <!-- Zawartość renderowana przez lawyer-dashboard.js -->
+            </div>
+
+            <!-- Widok Dashboard Opiekuna Sprawy -->
+            <div id="case-manager-dashboardView" class="view-content">
+                <!-- Zawartość renderowana przez case-manager-dashboard.js -->
+            </div>
+
+            <!-- Widok ustawień -->
+            <div id="settingsView" class="view-content">
+                <div class="view-header">
+                    <h2>⚙️ Ustawienia</h2>
+                </div>
+
+                <div class="settings-container">
+                    <div class="settings-section">
+                        <h3>Profil użytkownika</h3>
+                        <div class="form-group">
+                            <label>Imię i nazwisko</label>
+                            <input type="text" id="settingsName" placeholder="Jan Kowalski">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="settingsEmail" readonly>
+                        </div>
+                        <button class="btn-primary">Zapisz zmiany</button>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Powiadomienia</h3>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="notifMail" checked>
+                            <span>Powiadomienia o nowych emailach</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="notifChat" checked>
+                            <span>Powiadomienia o wiadomościach czatu</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="notifSound" checked>
+                            <span>Dźwięki powiadomień</span>
+                        </label>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Wygląd</h3>
+                        <div class="form-group">
+                            <label>Motyw</label>
+                            <select id="themeSelect">
+                                <option value="light">Jasny</option>
+                                <option value="dark">Ciemny</option>
+                                <option value="auto">Automatyczny</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>O aplikacji</h3>
+                        <p><strong>Pro Meritum Komunikator</strong></p>
+                        <p>Wersja: 1.0.0</p>
+                        <p>© 2025 Pro Meritum - Kancelaria Radców Prawnych</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal - Nowa wiadomość email -->
+    <div id="newMailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✉️ Nowa wiadomość</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="newMailForm">
+                    <div class="form-group">
+                        <label>Do:</label>
+                        <input type="email" id="mailTo" required placeholder="odbiorca@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Temat:</label>
+                        <input type="text" id="mailSubject" required placeholder="Temat wiadomości">
+                    </div>
+                    <div class="form-group">
+                        <label>Treść:</label>
+                        <textarea id="mailBody" rows="10" required placeholder="Treść wiadomości..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Załączniki:</label>
+                        <input type="file" id="mailAttachments" multiple>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary modal-close">Anuluj</button>
+                        <button type="submit" class="btn-primary">Wyślij</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal - Dodaj konto email -->
+    <div id="addAccountModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>➕ Dodaj konto pocztowe</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addAccountForm">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="accountEmail" required placeholder="kontakt@kancelaria-pro-meritum.pl">
+                    </div>
+                    <div class="form-group">
+                        <label>Hasło:</label>
+                        <input type="password" id="accountPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Serwer IMAP:</label>
+                        <input type="text" id="accountImapHost" required placeholder="mail.kancelaria-pro-meritum.pl">
+                    </div>
+                    <div class="form-group">
+                        <label>Port IMAP:</label>
+                        <input type="number" id="accountImapPort" value="993">
+                    </div>
+                    <div class="form-group">
+                        <label>Serwer SMTP:</label>
+                        <input type="text" id="accountSmtpHost" required placeholder="mail.kancelaria-pro-meritum.pl">
+                    </div>
+                    <div class="form-group">
+                        <label>Port SMTP:</label>
+                        <input type="number" id="accountSmtpPort" value="587">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary modal-close">Anuluj</button>
+                        <button type="submit" class="btn-primary">Dodaj konto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal - Nowy/Edytuj Klienta -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="clientModalTitle">➕ Nowy klient</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="clientForm">
+                    <input type="hidden" id="clientId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Imię *</label>
+                            <input type="text" id="clientFirstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nazwisko *</label>
+                            <input type="text" id="clientLastName" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nazwa firmy</label>
+                        <input type="text" id="clientCompany">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="clientEmail" placeholder="email@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Telefon</label>
+                            <input type="tel" id="clientPhone" placeholder="000-000-000">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>PESEL</label>
+                            <input type="text" id="clientPesel" placeholder="000-00-00000">
+                        </div>
+                        <div class="form-group">
+                            <label>NIP</label>
+                            <input type="text" id="clientNip" placeholder="000-000-00-00">
+                        </div>
+                    </div>
+
+                    <h4 style="margin: 20px 0 10px; color: var(--text-dark);">Adres</h4>
+                    <div class="form-group">
+                        <label>Ulica i numer</label>
+                        <input type="text" id="clientStreet">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Miasto</label>
+                            <input type="text" id="clientCity">
+                        </div>
+                        <div class="form-group">
+                            <label>Kod pocztowy</label>
+                            <input type="text" id="clientPostal" placeholder="00-000">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notatki</label>
+                        <textarea id="clientNotes" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>👤 Opiekun klienta</label>
+                        <select id="clientManager">
+                            <option value="">-- Wybierz opiekuna klienta --</option>
+                        </select>
+                        <small style="color: #999;">Osoba odpowiedzialna za kontakt z klientem</small>
+                    </div>
+
+                    <h4 style="margin: 20px 0 10px; color: var(--text-dark);">Dokumenty klienta</h4>
+                    <div class="form-group">
+                        <label>Dodaj pliki (PDF, zdjęcia)</label>
+                        <input type="file" id="clientFiles" multiple accept=".pdf,.jpg,.jpeg,.png">
+                        <small style="color: #999;">Możesz wybrać wiele plików naraz</small>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary modal-close">Anuluj</button>
+                        <button type="submit" class="btn-primary">Zapisz</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal - Nowa/Edytuj Sprawę -->
+    <div id="caseModal" class="modal">
+        <div class="modal-content fullscreen">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="caseModalTitle">📋 Nowa sprawa</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="caseForm">
+                    <input type="hidden" id="caseId">
+                    
+                    <div class="form-group">
+                        <label>Klient *</label>
+                        <select id="caseClientId" required>
+                            <option value="">Wybierz klienta...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Typ sprawy * <small style="color: #999;">(wybierz podtyp - główny typ zostanie automatycznie przypisany)</small></label>
+                            <select id="caseType" required>
+                                <option value="">Wybierz...</option>
+                                <!-- Opcje będą załadowane z case-type-config.js -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Numer sprawy</label>
+                            <input type="text" id="caseNumber" placeholder="Zostanie wygenerowany automatycznie" readonly style="background: #f0f9ff; border: 1px dashed #3b82f6; cursor: not-allowed; color: #666; font-style: italic;">
+                            <small style="color: #3b82f6; font-size: 0.85rem; display: block; margin-top: 4px;">💡 Numer zostanie nadany podczas zapisywania sprawy</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tytuł sprawy *</label>
+                        <input type="text" id="caseTitle" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Opis</label>
+                        <textarea id="caseDescription" rows="4"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Priorytet</label>
+                            <select id="casePriority">
+                                <option value="low">Niski</option>
+                                <option value="medium" selected>Średni</option>
+                                <option value="high">Wysoki</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="caseStatus">
+                                <option value="open" selected>Otwarta</option>
+                                <option value="in_progress">W toku</option>
+                                <option value="closed">Zamknięta</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4 style="margin: 20px 0 10px; color: var(--text-dark);">Dane sądowe (opcjonalnie)</h4>
+                    <div class="form-group">
+                        <label>Nazwa sądu</label>
+                        <input type="text" id="caseCourtName">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sygnatura</label>
+                        <input type="text" id="caseCourtSignature">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Strona przeciwna</label>
+                        <input type="text" id="caseOpposingParty">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Wartość przedmiotu sporu (PLN)</label>
+                            <input type="number" id="caseValue" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>👤 Opiekun klienta (z danych klienta)</label>
+                            <input type="text" id="caseClientCaretaker" readonly style="background: #f5f5f5; cursor: not-allowed;" placeholder="Wybierz klienta...">
+                        </div>
+                    </div>
+
+                    <h4 style="margin: 20px 0 10px; color: var(--text-dark);">👨‍⚖️ Obsługa prawna</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Mecenas prowadzący sprawę</label>
+                            <select id="caseLawyerId">
+                                <option value="">-- Wybierz mecenasa --</option>
+                            </select>
+                            <small style="color: #999;">Opcjonalne: Można przypisać mecenasa później</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Dodatkowy opiekun sprawy (opcjonalnie)</label>
+                            <select id="caseAdditionalCaretaker">
+                                <option value="">-- Brak --</option>
+                            </select>
+                            <small style="color: #999;">Jeśli sprawa wymaga współpracy z innym opiekunem</small>
+                        </div>
+                    </div>
+
+                    <h4 style="margin: 20px 0 10px; color: var(--text-dark);">📎 Dokumenty sprawy</h4>
+                    <div class="form-group">
+                        <label>Dodaj dokumenty (PDF, zdjęcia, DOC, XLS)</label>
+                        <input type="file" id="caseFiles" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt">
+                        <small style="color: #999;">Możesz wybrać wiele plików naraz - pozew, umowy, dowody, itp.</small>
+                    </div>
+
+                    <div class="modal-actions" style="display: flex; justify-content: center; gap: 15px; margin: 30px -30px 0 -30px; padding: 25px 30px; border-top: 2px solid #e0e0e0; background: #f8f9fa; box-sizing: border-box;">
+                        <button type="button" class="btn-secondary modal-close" style="padding: 14px 40px; font-size: 1rem; font-weight: 600; border-radius: 8px; cursor: pointer; border: none; min-width: 150px; background: #6c757d; color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.3s ease;">Anuluj</button>
+                        <button type="submit" class="btn-primary" style="padding: 14px 40px; font-size: 1rem; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; min-width: 150px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2332; box-shadow: 0 4px 15px rgba(255,215,0,0.4); transition: all 0.3s ease;">Zapisz sprawę</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal - Szczegóły Sprawy -->
+    <div id="caseDetailsModal" class="modal">
+        <div class="modal-content fullscreen">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>⚖️ Szczegóły sprawy: <span id="detailsCaseNumber"></span></h3>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button onclick="crmManager.openAIForCurrentCase()" 
+                            style="padding: 10px 18px; background: linear-gradient(135deg, #1a1a2e, #2d2d44); border: 2px solid #d4af37; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: all 0.3s; box-shadow: 0 2px 12px rgba(212,175,55,0.3); color: #d4af37; letter-spacing: 0.3px;"
+                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 20px rgba(212,175,55,0.5)'; this.style.background='linear-gradient(135deg, #d4af37, #ffd700)'; this.style.color='#1a1a2e'"
+                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 12px rgba(212,175,55,0.3)'; this.style.background='linear-gradient(135deg, #1a1a2e, #2d2d44)'; this.style.color='#d4af37'">
+                        <span style="font-size: 1.2rem;">⚖️</span> Asystent Prawny
+                    </button>
+                    <button class="modal-close">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="case-details-grid">
+                    <div class="details-section">
+                        <h4 style="display: flex; align-items: center; gap: 8px;"><span style="color: #d4af37; font-size: 1.2rem;">§</span> Informacje podstawowe</h4>
+                        <div class="detail-row">
+                            <span class="detail-label">Tytuł:</span>
+                            <span class="detail-value" id="detailsTitle"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Klient:</span>
+                            <span class="detail-value" id="detailsClient"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Typ:</span>
+                            <span class="detail-value" id="detailsType"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Status:</span>
+                            <span class="detail-value" id="detailsStatus"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Priorytet:</span>
+                            <span class="detail-value" id="detailsPriority"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Mecenas:</span>
+                            <span class="detail-value" id="detailsLawyer"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Opis:</span>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Wartość przedmiotu sporu (PLN)</label>
+                                <input type="number" id="caseValue" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>👨‍⚖️ Mecenas prowadzący</label>
+                                <select id="caseAssignedTo">
+                        </div>
+                    </div>
+
+                    <div class="details-section">
+                        <h4 style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem;">
+                                <span style="color: #d4af37; font-size: 1rem;">📅</span> Terminy i zadania
+                            </span>
+                            <button onclick="crmManager.showAddEventForm()" style="background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(46,204,113,0.3); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(46,204,113,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(46,204,113,0.3)'">
+                            ➕ Dodaj termin
+                            <input type="file" id="caseFiles" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt">
+                            <small style="color: #999;">Możesz wybrać wiele plików naraz - pozew, umowy, dowody, itp.</small>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary modal-close">Anuluj</button>
+                            <button type="submit" class="btn-primary">Zapisz sprawę</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal - Szczegóły Sprawy -->
+        <div id="caseDetailsModal" class="modal">
+            <div class="modal-content fullscreen">
+                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>⚖️ Szczegóły sprawy: <span id="detailsCaseNumber"></span></h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button onclick="crmManager.openAIForCurrentCase()" 
+                                style="padding: 10px 18px; background: linear-gradient(135deg, #1a1a2e, #2d2d44); border: 2px solid #d4af37; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: all 0.3s; box-shadow: 0 2px 12px rgba(212,175,55,0.3); color: #d4af37; letter-spacing: 0.3px;"
+                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 20px rgba(212,175,55,0.5)'; this.style.background='linear-gradient(135deg, #d4af37, #ffd700)'; this.style.color='#1a1a2e'"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 12px rgba(212,175,55,0.3)'; this.style.background='linear-gradient(135deg, #1a1a2e, #2d2d44)'; this.style.color='#d4af37'">
+                            <span style="font-size: 1.2rem;">⚖️</span> Asystent Prawny
+                        </button>
+                        <button class="modal-close">&times;</button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="case-details-grid">
+                        <div class="details-section">
+                            <h4 style="display: flex; align-items: center; gap: 8px;"><span style="color: #d4af37; font-size: 1.2rem;">§</span> Informacje podstawowe</h4>
+                            <div class="detail-row">
+                                <span class="detail-label">Tytuł:</span>
+                                <span class="detail-value" id="detailsTitle"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Klient:</span>
+                                <span class="detail-value" id="detailsClient"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Typ:</span>
+                                <span class="detail-value" id="detailsType"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Status:</span>
+                                <span class="detail-value" id="detailsStatus"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Priorytet:</span>
+                                <span class="detail-value" id="detailsPriority"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Mecenas:</span>
+                                <span class="detail-value" id="detailsLawyer"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Opis:</span>
+                                <textarea id="detailsDescription" rows="4"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="details-section">
+                            <h4 style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem;">
+                                    <span style="color: #d4af37; font-size: 1rem;">📅</span> Terminy i zadania
+                                </span>
+                                <button onclick="crmManager.showAddEventForm()" style="background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(46,204,113,0.3); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(46,204,113,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(46,204,113,0.3)'">
+                                ➕ Dodaj termin
+                            </button>
+                        </h4>
+                        
+                        <!-- Formularz dodawania wydarzenia - ukryty domyślnie -->
+                        <div id="eventForm" style="display: none; background: white; border: 2px solid #d4af37; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(212,175,55,0.2);">
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 6px; font-size: 0.9rem;">
+                                    📋 Typ wydarzenia: *
+                                </label>
+                                <select id="eventType" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='#d4af37'" onblur="this.style.borderColor='#e0e0e0'">
+                                    <option value="meeting">🤝 Spotkanie</option>
+                                    <option value="negotiation">💼 Negocjacje</option>
+                                    <option value="inspection">🔍 Oględziny</option>
+                                    <option value="task">✅ Zadanie do wykonania</option>
+                                    <option value="hearing">⚖️ Rozprawa</option>
+                                    <option value="deadline">⏰ Termin procesowy</option>
+                                    <option value="other">📌 Inne</option>
+                                </select>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                <div class="form-group">
+                                    <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 6px; font-size: 0.9rem;">
+                                        📅 Data: *
+                                    </label>
+                                    <input type="date" id="eventDate" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 6px; font-size: 0.9rem;">
+                                        🕐 Godzina: *
+                                    </label>
+                                    <input type="time" id="eventTime" value="09:00" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 6px; font-size: 0.9rem;">
+                                    📝 Tytuł: *
+                                </label>
+                                <input type="text" id="eventTitle" placeholder="np. Spotkanie z klientem, Rozprawa sądowa..." required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem; box-sizing: border-box;">
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 6px; font-size: 0.9rem;">
+                                    📍 Lokalizacja:
+                                </label>
+                                <input type="text" id="eventLocation" placeholder="np. Sąd Rejonowy w Warszawie, Kancelaria..." style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem; box-sizing: border-box;">
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 6px; font-size: 0.9rem;">
+                                    💬 Opis:
+                                </label>
+                                <textarea id="eventDescription" placeholder="Dodatkowe informacje..." rows="3" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem; resize: vertical; box-sizing: border-box;"></textarea>
+                            </div>
+                            
+                            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                <button onclick="crmManager.hideEventForm()" type="button" style="padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+                                    Anuluj
+                                </button>
+                                <button onclick="crmManager.saveEvent()" type="button" style="padding: 10px 20px; background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+                                    📅 Zapisz termin
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Lista terminów i zadań -->
+                        <div id="eventsList"></div>
+                    </div>
+
+                    <div class="details-section">
+                        <h4 style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 0.9rem;"><span style="color: #d4af37; font-size: 1rem;">📌</span> Narzędzia</h4>
+                        
+                        <!-- Zegar Cyfrowy z animowaną pogodą -->
+                        <div style="background: linear-gradient(135deg, #1a1a2e, #2d2d44); border: 1px solid #95a5a6; border-radius: 12px; padding: 15px; margin-bottom: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+                            <!-- Animowane tło z cząsteczkami -->
+                            <div id="weatherParticles" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></div>
+                            
+                            <!-- Główna ikona pogody z efektami -->
+                            <div style="position: relative; z-index: 1;">
+                                <div id="weatherIcon" style="font-size: 4rem; margin-bottom: 5px; animation: float 3s ease-in-out infinite; filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));">🌤️</div>
+                                
+                                <!-- Temperatura i opis pogody -->
+                                <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 10px;">
+                                    <div id="temperature" style="color: #4fc3f7; font-size: 1.5rem; font-weight: 700; font-family: 'Courier New', monospace;">--°C</div>
+                                    <div style="width: 2px; height: 30px; background: rgba(255,255,255,0.2);"></div>
+                                    <div id="weatherDesc" style="color: #81c784; font-size: 0.85rem; font-weight: 600;">Ładna pogoda</div>
+                                </div>
+                                
+                                <!-- Zegar -->
+                                <div style="color: #95a5a6; font-size: 2rem; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 3px; text-shadow: 0 0 10px rgba(149,165,166,0.5);" id="digitalClock">00:00:00</div>
+                                <div style="color: #999; font-size: 0.75rem; margin-top: 5px; letter-spacing: 1px;" id="currentDateFull"></div>
+                                
+                                <!-- Dodatkowe info -->
+                                <div style="display: flex; justify-content: space-around; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <div style="text-align: center;">
+                                        <div style="color: #64b5f6; font-size: 0.65rem;">💧 Wilgotność</div>
+                                        <div id="humidity" style="color: #90caf9; font-size: 0.8rem; font-weight: 600;">---%</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="color: #ffb74d; font-size: 0.65rem;">🌅 Wschód</div>
+                                        <div id="sunrise" style="color: #ffcc80; font-size: 0.8rem; font-weight: 600;">--:--</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="color: #f06292; font-size: 0.65rem;">🌇 Zachód</div>
+                                        <div id="sunset" style="color: #f48fb1; font-size: 0.8rem; font-weight: 600;">--:--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Motto Adwokackie - przeniesione pod zegar -->
+                        <div style="background: linear-gradient(135deg, #fffbf0, #fff9e6); border-left: 3px solid #95a5a6; padding: 10px; margin-bottom: 10px; border-radius: 6px; text-align: center;">
+                            <div style="font-weight: 600; color: #95a5a6; margin-bottom: 6px; font-size: 0.75rem;">⚖️ Sentencja dnia</div>
+                            <div style="font-style: italic; color: #666; font-size: 0.75rem; line-height: 1.4;" id="dailyMotto">
+                                "Lex est ratio summa insita in natura"<br>
+                                <small style="color: #999; font-size: 0.65rem;">- Prawo jest najwyższym rozumem natury</small>
+                            </div>
+                        </div>
+
+                        <!-- Mini Notatnik -->
+                        <div style="background: white; border: 1px solid #95a5a6; border-radius: 8px; padding: 8px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <div style="font-weight: 600; color: #95a5a6; font-size: 0.75rem;">📝 Szybkie notatki</div>
+                                <div id="notesCaseSignature" style="font-size: 0.65rem; color: #d4af37; font-weight: 700; background: #1a1a2e; padding: 2px 6px; border-radius: 4px;"></div>
+                            </div>
+                            <textarea id="quickNotes" 
+                                      placeholder="Twoje myśli..." 
+                                      style="width: 100%; min-height: 80px; padding: 6px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.7rem; resize: vertical; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin-bottom: 8px;"
+                                      onchange="localStorage.setItem('userNotes_' + (window.crmManager?.currentCase?.id || 'general'), this.value)"></textarea>
+                            
+                            <!-- Klawiatura Emoji -->
+                            <div style="background: linear-gradient(135deg, #f5f5f5, #e8e8e8); border-radius: 8px; padding: 8px; border: 1px solid #d0d0d0;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <div style="font-size: 0.65rem; font-weight: 600; color: #666;">⌨️ Klawiatura Emoji</div>
+                                    <button onclick="toggleEmojiCategory()" style="background: none; border: none; font-size: 0.7rem; color: #95a5a6; cursor: pointer; padding: 2px 6px;">🔄</button>
+                                </div>
+                                
+                                <!-- Kategorie Emoji -->
+                                <div id="emojiCategory1" class="emoji-category" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px;">
+                                    <button onclick="insertEmoji('⚖️')" class="emoji-key" title="Waga">⚖️</button>
+                                    <button onclick="insertEmoji('👨‍⚖️')" class="emoji-key" title="Sędzia">👨‍⚖️</button>
+                                    <button onclick="insertEmoji('📜')" class="emoji-key" title="Dokument">📜</button>
+                                    <button onclick="insertEmoji('📋')" class="emoji-key" title="Notatki">📋</button>
+                                    <button onclick="insertEmoji('⚡')" class="emoji-key" title="Ważne">⚡</button>
+                                    <button onclick="insertEmoji('🔨')" class="emoji-key" title="Młotek">🔨</button>
+                                    <button onclick="insertEmoji('📚')" class="emoji-key" title="Książki">📚</button>
+                                    <button onclick="insertEmoji('✍️')" class="emoji-key" title="Pisanie">✍️</button>
+                                    <button onclick="insertEmoji('📞')" class="emoji-key" title="Telefon">📞</button>
+                                    <button onclick="insertEmoji('📅')" class="emoji-key" title="Kalendarz">📅</button>
+                                    <button onclick="insertEmoji('✅')" class="emoji-key" title="Zrobione">✅</button>
+                                    <button onclick="insertEmoji('❌')" class="emoji-key" title="Anulowane">❌</button>
+                                    <button onclick="insertEmoji('💼')" class="emoji-key" title="Teczka">💼</button>
+                                    <button onclick="insertEmoji('🏛️')" class="emoji-key" title="Sąd">🏛️</button>
+                                    <button onclick="insertEmoji('📝')" class="emoji-key" title="Notatka">📝</button>
+                                    <button onclick="insertEmoji('🔍')" class="emoji-key" title="Szukaj">🔍</button>
+                                    <button onclick="insertEmoji('💡')" class="emoji-key" title="Pomysł">💡</button>
+                                    <button onclick="insertEmoji('⏰')" class="emoji-key" title="Alarm">⏰</button>
+                                </div>
+                                
+                                <div id="emojiCategory2" class="emoji-category" style="display: none; grid-template-columns: repeat(6, 1fr); gap: 4px;">
+                                    <button onclick="insertEmoji('😊')" class="emoji-key" title="Uśmiech">😊</button>
+                                    <button onclick="insertEmoji('😎')" class="emoji-key" title="Cool">😎</button>
+                                    <button onclick="insertEmoji('🤔')" class="emoji-key" title="Myślę">🤔</button>
+                                    <button onclick="insertEmoji('👍')" class="emoji-key" title="Super">👍</button>
+                                    <button onclick="insertEmoji('👎')" class="emoji-key" title="Nie">👎</button>
+                                    <button onclick="insertEmoji('🎉')" class="emoji-key" title="Sukces">🎉</button>
+                                    <button onclick="insertEmoji('💪')" class="emoji-key" title="Siła">💪</button>
+                                    <button onclick="insertEmoji('🙏')" class="emoji-key" title="Proszę">🙏</button>
+                                    <button onclick="insertEmoji('❤️')" class="emoji-key" title="Serce">❤️</button>
+                                    <button onclick="insertEmoji('⭐')" class="emoji-key" title="Gwiazda">⭐</button>
+                                    <button onclick="insertEmoji('🔥')" class="emoji-key" title="Ogień">🔥</button>
+                                    <button onclick="insertEmoji('💯')" class="emoji-key" title="100%">💯</button>
+                                    <button onclick="insertEmoji('🎯')" class="emoji-key" title="Cel">🎯</button>
+                                    <button onclick="insertEmoji('🚀')" class="emoji-key" title="Rakieta">🚀</button>
+                                    <button onclick="insertEmoji('💰')" class="emoji-key" title="Pieniądze">💰</button>
+                                    <button onclick="insertEmoji('🏆')" class="emoji-key" title="Trofeum">🏆</button>
+                                    <button onclick="insertEmoji('📈')" class="emoji-key" title="Wzrost">📈</button>
+                                    <button onclick="insertEmoji('⚠️')" class="emoji-key" title="Uwaga">⚠️</button>
+                                </div>
+                            </div>
+                            
+                            <small style="color: #999; font-size: 0.65rem; display: block; margin-top: 6px;">💾 Auto-zapis</small>
+                        </div>
+                    </div>
+
+                    <div class="details-section">
+                        <h4 style="display: flex; align-items: center; gap: 8px;"><span style="color: #d4af37; font-size: 1.2rem;">◆</span> Dokumenty sprawy</h4>
+                        
+                        <!-- Upload dokumentu - zwijany -->
+                        <details style="margin-bottom: 6px;">
+                            <summary style="background: #f0f0f0; color: #333; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.75rem; text-align: center; list-style: none; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #d0d0d0; transition: all 0.2s;" onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='#f0f0f0'">
+                                <span>📂</span> <span>Dodaj dokument</span> <span style="font-size: 0.65rem;">▼</span>
+                            </summary>
+                            <div style="background: linear-gradient(135deg, #fffbf0, #fff9e6); border: 2px dashed #d4af37; border-radius: 6px; padding: 6px; margin-top: 4px;">
+                                <input type="hidden" id="uploadCaseId">
+                                
+                                <div style="margin-bottom: 4px;">
+                                    <label for="documentFile" style="display: flex; width: 100%; align-items: center; justify-content: center; gap: 4px; padding: 4px 8px; background: white; border: 1px solid #d4af37; color: #d4af37; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.7rem; box-sizing: border-box;">
+                                        📎 Wybierz
+                                    </label>
+                                    <input type="file" id="documentFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt" style="display: none;" onchange="document.getElementById('fileNameDisplay').textContent = this.files[0]?.name || 'Nie wybrano'">
+                                    <div id="fileNameDisplay" style="margin-top: 2px; color: #999; font-size: 0.65rem; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Nie wybrano</div>
+                                </div>
+                                
+                                <input type="text" id="documentTitle" placeholder="Tytuł" 
+                                       style="width: 100%; padding: 4px 6px; border: 1px solid #d4af37; border-radius: 4px; font-size: 0.7rem; margin-bottom: 4px; box-sizing: border-box;">
+                                
+                                <select id="documentCategory" 
+                                        style="width: 100%; padding: 4px 6px; border: 1px solid #d4af37; border-radius: 4px; font-size: 0.7rem; margin-bottom: 4px; box-sizing: border-box;">
+                                    <option value="general">Ogólne</option>
+                                    <option value="contract">Umowa</option>
+                                    <option value="court">Sądowe</option>
+                                    <option value="evidence">Dowody</option>
+                                </select>
+                                
+                                <button onclick="crmManager.uploadDocument()" 
+                                        style="width: 100%; padding: 5px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.7rem; box-sizing: border-box;">
+                                    ✚ Dodaj
+                                </button>
+                            </div>
+                        </details>
+
+                        <!-- Separator - mniejszy -->
+                        <div style="border-top: 1px solid #e0e0e0; margin: 4px 0 6px 0;"></div>
+
+                        <!-- Lista dokumentów -->
+                        <div id="documentsList" class="documents-list"></div>
+                    </div>
+
+                    <div class="details-section">
+                        <h4 style="display: flex; align-items: center; gap: 8px;"><span style="color: #d4af37; font-size: 1.2rem;">💬</span> Komentarze</h4>
+                        
+                        <!-- Lista komentarzy -->
+                        <div id="commentsList" class="comments-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            <!-- Widok Panel Admina -->
+            <div id="adminView" class="view-content"></div>
+
+            <!-- Widok Portal Klienta -->
+            <div id="clientPortalView" class="view-content" style="display: none;"></div>
+
+            <!-- Widok Projekty Inwestycyjne -->
+            <div id="projectsView" class="view-content" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Modal szczegółów klienta -->
+    <div id="clientDetailsModal" class="modal">
+        <div class="modal-content" style="width: 1400px; max-width: 96vw; max-height: 92vh; background: white; border-radius: 16px; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+            <div style="background: linear-gradient(135deg, #1a2332 0%, #2c3e50 50%, #34495e 100%); padding: 20px; color: white; position: relative; overflow: hidden; flex-shrink: 0;">
+                <div style="position: absolute; top: 0; right: 0; width: 300px; height: 300px; background: radial-gradient(circle, rgba(212,175,55,0.15) 0%, transparent 70%); border-radius: 50%;"></div>
+                <div style="display: flex; justify-content: space-between; align-items: start; position: relative; z-index: 1;">
+                    <div style="flex: 1;">
+                        <h2 id="clientDetailsName" style="margin: 0 0 10px 0; font-size: 1.5rem; color: #FFD700;">Ładowanie...</h2>
+                        <p id="clientDetailsCompany" style="margin: 0 0 15px 0; opacity: 0.9; font-size: 1rem; color: #C0C0C0;"></p>
+                        
+                        <!-- Przyciski kontaktu -->
+                        <div id="clientContactButtons" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button id="callClientBtn" style="display: none; padding: 10px 18px; background: rgba(76,175,80,0.2); border: 2px solid #4CAF50; color: #4CAF50; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s;" onmouseover="this.style.background='rgba(76,175,80,0.3)'" onmouseout="this.style.background='rgba(76,175,80,0.2)'">
+                                📞 Zadzwoń
+                            </button>
+                            <button id="messageClientBtn" onclick="crmManager.openClientChat()" style="padding: 10px 18px; background: rgba(255,215,0,0.2); border: 2px solid #FFD700; color: #d4af37; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,215,0,0.3)'" onmouseout="this.style.background='rgba(255,215,0,0.2)'">
+                                💬 Wyślij wiadomość
+                            </button>
+                            <button id="emailClientBtn" onclick="crmManager.openClientEmail()" style="display: none; padding: 10px 18px; background: rgba(33,150,243,0.2); border: 2px solid #2196F3; color: #2196F3; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s;" onmouseover="this.style.background='rgba(33,150,243,0.3)'" onmouseout="this.style.background='rgba(33,150,243,0.2)'">
+                                ✉️ Wyślij email
+                            </button>
+                        </div>
+                    </div>
+                    <button onclick="window.closeClientDetails()" style="background: rgba(212,175,55,0.2); border: 2px solid #FFD700; color: #FFD700; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.3rem; transition: all 0.3s; flex-shrink: 0;" onmouseover="this.style.background='rgba(212,175,55,0.3)'" onmouseout="this.style.background='rgba(212,175,55,0.2)'">✕</button>
+                </div>
+            </div>
+            
+            <div style="padding: 20px; background: #f8f9fa; overflow-y: auto; flex: 1;">
+                <!-- Zakładki -->
+                <div style="display: flex; gap: 8px; border-bottom: 2px solid #d4af37; margin-bottom: 20px; background: white; padding: 8px; border-radius: 12px 12px 0 0; flex-wrap: wrap;">
+                    <button class="client-tab active" data-tab="info" style="padding: 10px 16px; border: none; background: linear-gradient(135deg, #FFD700, #d4af37); cursor: pointer; font-weight: 600; color: #1a2332; border-radius: 8px; transition: all 0.3s; font-size: 0.9rem;">📋 Informacje</button>
+                    <button class="client-tab" data-tab="cases" style="padding: 10px 16px; border: none; background: #ecf0f1; cursor: pointer; font-weight: 600; color: #2c3e50; border-radius: 8px; transition: all 0.3s; font-size: 0.9rem;">⚖️ Sprawy</button>
+                    <button class="client-tab" data-tab="files" style="padding: 10px 16px; border: none; background: #ecf0f1; cursor: pointer; font-weight: 600; color: #2c3e50; border-radius: 8px; transition: all 0.3s; font-size: 0.9rem;">📁 Pliki</button>
+                    <button class="client-tab" data-tab="history" style="padding: 10px 16px; border: none; background: #ecf0f1; cursor: pointer; font-weight: 600; color: #2c3e50; border-radius: 8px; transition: all 0.3s; font-size: 0.9rem;">🕒 Historia</button>
+                </div>
+
+                <!-- Zawartość zakładek -->
+                <div id="clientTabContent" style="min-height: 550px; max-height: 550px; overflow-y: auto; padding-right: 10px;">
+                    <div class="client-tab-pane active" data-pane="info" id="clientInfoPane"></div>
+                    <div class="client-tab-pane" data-pane="cases" id="clientCasesPane" style="display: none;"></div>
+                    <div class="client-tab-pane" data-pane="files" id="clientFilesPane" style="display: none;"></div>
+                    <div class="client-tab-pane" data-pane="history" id="clientHistoryPane" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        /* Custom scrollbar dla zawartości */
+        #clientTabContent::-webkit-scrollbar {
+            width: 8px;
+        }
+        #clientTabContent::-webkit-scrollbar-track {
+            background: #ecf0f1;
+            border-radius: 10px;
+        }
+        #clientTabContent::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #FFD700, #d4af37);
+            border-radius: 10px;
+        }
+        #clientTabContent::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #d4af37, #FFD700);
+        }
+    
+        /* Responsywność dla małych ekranów */
+        @media (max-height: 900px) {
+            #clientDetailsModal .modal-content {
+                max-height: 95vh !important;
+            }
+            #clientTabContent {
+                min-height: 450px !important;
+                max-height: 450px !important;
+            }
+        }
+        
+        @media (max-height: 700px) {
+            #clientTabContent {
+                min-height: 350px !important;
+                max-height: 350px !important;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            #clientDetailsModal .modal-content {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 100vh !important;
+                max-height: 100vh !important;
+                border-radius: 0 !important;
+            }
+        }
+    </style>
+
+    <!-- Modal dodawania pliku do klienta -->
+    <div id="addClientFileModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; background: white; border-radius: 16px; padding: 30px;">
+            <h3 style="color: #1a2332; margin-bottom: 20px; font-size: 1.5rem; border-left: 4px solid #FFD700; padding-left: 15px;">📁 Dodaj plik</h3>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="color: #2c3e50; font-weight: 600; margin-bottom: 8px; display: block;">Sprawa:</label>
+                <select id="clientFileCaseSelect" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; background: white;">
+                    <option value="">Ładowanie spraw...</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="color: #2c3e50; font-weight: 600; margin-bottom: 8px; display: block;">Wybierz plik:</label>
+                <input type="file" id="clientFileInput" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="color: #2c3e50; font-weight: 600; margin-bottom: 8px; display: block;">Tytuł pliku (opcjonalnie):</label>
+                <input type="text" id="clientFileTitle" placeholder="Zostaw puste aby użyć nazwy pliku" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+            </div>
+            <div id="addClientFileError" style="color: #e74c3c; margin-bottom: 15px; display: none;"></div>
+            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="window.closeAddClientFileModal()" style="padding: 12px 24px; border-radius: 8px; border: 2px solid #95a5a6; background: white; color: #2c3e50; font-weight: 600; cursor: pointer;">Anuluj</button>
+                <button onclick="window.uploadClientFile()" style="padding: 12px 24px; border-radius: 8px; border: none; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; font-weight: 600; cursor: pointer;">📤 Prześlij</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal dodawania notatki do klienta -->
+    <div id="addClientNoteModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; background: white; border-radius: 16px; padding: 30px;">
+            <h3 style="color: #1a2332; margin-bottom: 20px; font-size: 1.5rem; border-left: 4px solid #FFD700; padding-left: 15px;">📝 Dodaj notatkę</h3>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="color: #2c3e50; font-weight: 600; margin-bottom: 8px; display: block;">Treść notatki:</label>
+                <textarea id="newClientNoteContent" rows="6" placeholder="Wpisz treść notatki..." style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; resize: vertical;"></textarea>
+            </div>
+            <div id="addClientNoteError" style="color: #e74c3c; margin-bottom: 15px; display: none;"></div>
+            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="window.closeAddClientNoteModal()" style="padding: 12px 24px; border-radius: 8px; border: 2px solid #95a5a6; background: white; color: #2c3e50; font-weight: 600; cursor: pointer;">Anuluj</button>
+                <button onclick="window.saveClientNote()" style="padding: 12px 24px; border-radius: 8px; border: none; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; font-weight: 600; cursor: pointer;">💾 Zapisz</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kontener na powiadomienia toast -->
+    <div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; max-width: 400px;"></div>
+    
+    <style>
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        /* Responsywność dla toastów */
+        @media (max-width: 768px) {
+            #toastContainer {
+                left: 10px !important;
+                right: 10px !important;
+                max-width: none !important;
+            }
+        }
+    </style>
+
+    <!-- Modal szczegółów sprawy -->
+    <div id="caseDetailsModal" class="modal">
+        <div class="modal-content" style="max-width: 900px; background: white; border-radius: 16px; padding: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: #1a2332; margin: 0; font-size: 1.5rem; border-left: 4px solid #FFD700; padding-left: 15px;">⚖️ Szczegóły sprawy</h3>
+                <button onclick="window.closeCaseDetailsModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #7f8c8d;">✕</button>
+            </div>
+            <div id="caseDetailsContent" style="max-height: 500px; overflow-y: auto;"></div>
+            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 20px; border-top: 2px solid #ecf0f1;">
+                <button onclick="window.closeCaseDetailsModal()" style="padding: 12px 24px; border-radius: 8px; border: 2px solid #95a5a6; background: white; color: #2c3e50; font-weight: 600; cursor: pointer;">Zamknij</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal potwierdzenia usunięcia -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; background: white; border-radius: 16px; padding: 30px;">
+            <h3 style="color: #2c3e50; margin-bottom: 20px; font-size: 1.5rem;">⚠️ Potwierdzenie usunięcia</h3>
+            <p id="deleteConfirmText" style="color: #34495e; margin-bottom: 20px; line-height: 1.6;"></p>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="color: #2c3e50; font-weight: 600; margin-bottom: 8px; display: block;">Hasło administratora:</label>
+                <input type="password" id="deleteAdminPassword" placeholder="Wprowadź hasło administratora" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+            </div>
+            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-secondary" style="padding: 12px 24px; border-radius: 8px; border: 2px solid #95a5a6; background: white; color: #2c3e50; font-weight: 600; cursor: pointer;">Anuluj</button>
+                <button class="btn-danger" style="padding: 12px 24px; border-radius: 8px; border: none; background: #e74c3c; color: white; font-weight: 600; cursor: pointer;">🗑️ Usuń</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal przypisywania dokumentów do terminu -->
+    <div id="attachDocsModal" class="modal">
+        <div class="modal-content" style="max-width: 700px; background: white; border-radius: 16px; padding: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h3 style="color: #1a2332; margin: 0; font-size: 1.3rem; border-left: 4px solid #2196F3; padding-left: 15px;">📎 Przypisz dokumenty do terminu</h3>
+                    <div id="attachDocsEventTitle" style="color: #7f8c8d; margin-top: 8px; margin-left: 19px; font-size: 0.9rem;"></div>
+                </div>
+                <button onclick="crmManager.closeAttachDocsModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #7f8c8d;">✕</button>
+            </div>
+            
+            <div style="margin-bottom: 20px; padding: 12px; background: #e3f2fd; border-left: 4px solid #2196F3; border-radius: 6px; color: #1976d2; font-size: 0.9rem;">
+                ℹ️ Zaznacz dokumenty z listy, które dotyczą tego terminu
+            </div>
+            
+            <div id="attachDocsListContainer" style="max-height: 400px; overflow-y: auto; border: 2px solid #ecf0f1; border-radius: 8px; padding: 15px;">
+                <div id="attachDocsList"></div>
+            </div>
+            
+            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 20px; border-top: 2px solid #ecf0f1;">
+                <button onclick="crmManager.closeAttachDocsModal()" style="padding: 12px 24px; border-radius: 8px; border: 2px solid #95a5a6; background: white; color: #2c3e50; font-weight: 600; cursor: pointer;">Anuluj</button>
+                <button onclick="crmManager.saveAttachedDocs()" style="padding: 12px 24px; border-radius: 8px; border: none; background: #2196F3; color: white; font-weight: 600; cursor: pointer;">📎 Zapisz przypisane</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skrypty aplikacji -->
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <!-- 🕐 DATETIME UTILS - GLOBALNY MODUŁ DAT (UTC → Lokalny czas) - MUSI BYĆ ABSOLUTNIE PIERWSZY! -->
+    <script src="scripts/datetime-utils.js?v=6.0&OBJECT_LITERAL=TRUE&NO_CLASS=TRUE&FORCE_RELOAD=ABSOLUTE&UTC_FIX=TRUE&t=20251119012700"></script>
+    <!-- LOGGER - Przywrócony -->
+    <script src="scripts/logger.js?v=1.0&PRODUCTION_MODE=TRUE"></script>
+    <!-- Theme Switcher - MUSI BYĆ PIERWSZY! -->
+    <script src="scripts/theme-switcher.js?v=3.0&ROSE_GOLD_NAVY=TRUE&t=20251114051400"></script>
+    <!-- Core -->
+    <script src="scripts/api.js?v=11&AUTO_ENV=TRUE&t=20251205120900"></script>
+    <script src="scripts/socket.js?v=20251119013000&NO_SELF_NOTIFICATION=TRUE"></script>
+    <script src="scripts/auth.js?v=20251123220500&HR_FINANCE_NO_CRM_DATA=TRUE"></script>
+    <script src="scripts/formatters.js?v=7"></script>
+    <!-- Nowe moduły - TYMCZASOWO WYŁĄCZONE (konflikt ze starym crm.js) -->
+    <!-- <script src="scripts/router.js?v=2"></script> -->
+    <!-- <script src="scripts/modals.js?v=2"></script> -->
+    <!-- <script src="scripts/ui.js?v=2"></script> -->
+    <!-- <script src="scripts/clients.js?v=2"></script> -->
+    <!-- <script src="scripts/cases.js?v=2"></script> -->
+    <!-- Event Bus - MUSI BYĆ PIERWSZY! -->
+    <script src="scripts/event-bus.js?v=1"></script>
+    
+    <!-- Stare moduły (do stopniowej refaktoryzacji) -->
+    <!-- <script src="scripts/admin-panel.js?v=7"></script> --> <!-- ZASTĄPIONY przez admin-dashboard.js -->
+    <script src="scripts/client-portal.js?v=7"></script>
+    <script src="scripts/ai-assistant.js?v=11.0&GEMINI_FULL=TRUE&DOCS_ENABLED=TRUE&t=20251202023000"></script>
+    <!-- NOWY CZYSTY CRM - budowany krok po kroku -->
+    <script src="scripts/case-type-config.js?v=7&AUTO_COURT_TYPE=TRUE&t=20251108095800"></script>
+    <!-- Wersja frontend po naprawie formularza: v20251108054400 -->
+    <script src="scripts/app-config.js?v=8&tasks_tab_added=true&t=20251112162600"></script>
+    <script src="scripts/calendar-manager.js?v=25&DATE_ONLY_COMPARISON=TRUE&NO_TIME_DIFF=TRUE&t=20251119013600"></script>
+    <script src="scripts/client-calendar.js?v=1&CLIENT_CALENDAR=TRUE&t=20251107225000"></script>
+    <script src="scripts/rich-text-editor.js?v=4&AUTO_DETECT_SIZE=TRUE&t=20251201185000"></script>
+    <script src="scripts/crm-clean.js?v=2058&SEPARATE_EDIT_MODAL=TRUE&t=20251201192600"></script>
+    <script src="scripts/crm-case-tabs-v2021.js?v=2040&PULSING_HIGH_PRIORITY=TRUE&t=20251203192200&ANIMATE"></script>
+    <script src="scripts/civil-cases-module.js?v=1&CIVIL_MODULE=TRUE&t=20251108192000"></script>
+    <script src="scripts/family-cases-module.js?v=1&FAMILY_MODULE=TRUE&t=20251108192500"></script>
+    <script src="scripts/commercial-cases-module.js?v=1&COMMERCIAL_MODULE=TRUE&t=20251108193000"></script>
+    <script src="scripts/event-details-complete.js?v=4&FORCE_RELOAD=TRUE&TIMEZONE_FIX=TRUE&UTC_TO_LOCAL=TRUE&t=20251119011700"></script>
+    <script src="scripts/event-report-generator.js?v=14&QR_CLICKABLE=TRUE&t=20251108091500"></script>
+    <script src="scripts/reports-search.js?v=1&REPORTS_SEARCH=TRUE&t=20251108085500"></script>
+    <script src="scripts/case-court-map.js?v=10&NO_OVERRIDE_FIX=TRUE&t=20251112082900"></script>
+    <script src="scripts/case-court-location.js?v=1&AUTO_COURT_LOCATION=TRUE&t=20251107084000"></script>
+    <script src="scripts/case-court-variables.js?v=1&COURT_DOCUMENT_VARS=TRUE&t=20251107085000"></script>
+    <script defer src="scripts/ai-search.js?v=2.1&GEMINI_DEBUG=TRUE&t=20251202021500"></script>
+    <script>
+        // 🤖 AI CO-PILOT - INLINE VERSION v1.0
+        console.log('🤖 AI Co-Pilot INLINE Loading...');
+        
+        // Czekaj na załadowanie DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAICopilot);
+        } else {
+            initAICopilot();
+        }
+        
+        function initAICopilot() {
+            console.log('🤖 Inicjalizacja AI Co-Pilot INLINE...');
+            
+            // Panel AI (ukryty na start)
+            const panel = document.createElement('div');
+            panel.id = 'aiCopilotPanel';
+            panel.style.cssText = `
+                position: fixed;
+                right: 20px;
+                bottom: 100px;
+                width: 350px;
+                max-height: 500px;
+                background: linear-gradient(135deg, #1a2332, #2d3748);
+                border: 2px solid #FFD700;
+                border-radius: 16px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                display: none;
+                z-index: 100000;
+                overflow: hidden;
+            `;
+            panel.innerHTML = `
+                <div style="background: linear-gradient(135deg, #FFD700, #FFA500); padding: 15px; color: #1a2332; font-weight: bold;">
+                    🤖 AI Co-Pilot
+                </div>
+                <div id="aiCopilotContent" style="padding: 20px; color: white;">
+                    <p style="text-align: center; opacity: 0.7;">
+                        Kliknij przycisk AI aby uzyskać pomoc!
+                    </p>
+                </div>
+            `;
+            document.body.appendChild(panel);
+            
+            // Floating button
+            const btn = document.createElement('div');
+            btn.id = 'aiCopilotBtn';
+            btn.innerHTML = '🤖';
+            btn.title = 'AI Co-Pilot - Asystent';
+            btn.style.cssText = `
+                position: fixed;
+                right: 20px;
+                bottom: 20px;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #FFD700, #FFA500);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2rem;
+                cursor: pointer;
+                z-index: 100001;
+                box-shadow: 0 4px 20px rgba(255,215,0,0.5);
+                transition: all 0.3s;
+            `;
+            
+            btn.onmouseover = () => {
+                btn.style.transform = 'scale(1.1)';
+                btn.style.boxShadow = '0 6px 30px rgba(255,215,0,0.7)';
+            };
+            
+            btn.onmouseout = () => {
+                btn.style.transform = 'scale(1)';
+                btn.style.boxShadow = '0 4px 20px rgba(255,215,0,0.5)';
+            };
+            
+            btn.onclick = () => {
+                const isVisible = panel.style.display !== 'none';
+                panel.style.display = isVisible ? 'none' : 'block';
+                
+                if (!isVisible) {
+                    showAIHelp();
+                }
+            };
+            
+            document.body.appendChild(btn);
+            console.log('✅ AI Co-Pilot załadowany!');
+        }
+        
+        function showAIHelp() {
+            const content = document.getElementById('aiCopilotContent');
+            if (!content) return;
+            
+            const caseData = window.crmManager?.currentCaseData;
+            
+            let html = '<div style="line-height: 1.6;">';
+            html += '<h3 style="color: #FFD700; margin-top: 0;">💡 AI Assistant</h3>';
+            
+            if (caseData) {
+                html += `<p><strong>Sprawa:</strong> ${caseData.case_number || 'Brak'}</p>`;
+                html += `<p><strong>Tytuł:</strong> ${caseData.title || 'Brak'}</p>`;
+            }
+            
+            html += '<p style="margin-top: 20px;">🤖 Funkcje dostępne:</p>';
+            html += '<ul style="list-style: none; padding: 0;">';
+            html += '<li style="margin: 10px 0;">📄 Analiza dokumentów PDF/DOCX</li>';
+            html += '<li style="margin: 10px 0;">🔍 AI Legal Search</li>';
+            html += '<li style="margin: 10px 0;">📚 Wyszukiwanie przepisów</li>';
+            html += '</ul>';
+            
+            html += '<p style="margin-top: 20px; font-size: 0.9rem; opacity: 0.8;">Użyj menu AI Legal Search aby analizować dokumenty!</p>';
+            html += '</div>';
+            
+            content.innerHTML = html;
+        }
+    </script>
+    <!-- WYŁĄCZONE - zastąpione przez unified-fab.js -->
+    <!-- <script defer src="scripts/ai-case-button.js?v=1"></script> -->
+    <script defer src="scripts/legal-library.js?v=18&nonavbuttons=true"></script>
+    <!-- WŁĄCZONE - potrzebne dla unified-fab.js -->
+    <script defer src="scripts/legal-browser.js?v=1"></script>
+    <script defer src="scripts/full-code-viewer.js?v=13&simplebuttons=true"></script>
+    <script src="scripts/court-decisions-viewer.js?v=11&STYLE_DUPLICATE_FIX=TRUE&t=20251108043400"></script>
+    <!-- Komponenty -->
+    <script src="scripts/components/attachment-uploader.js?v=1003&TXT_PREVIEW=TRUE"></script>
+    <!-- Moduły -->
+    <script src="scripts/modules/witnesses-module.js?v=14&ORAL_TXT_SAVE=TRUE"></script>
+    <script src="scripts/modules/evidence-module.js?v=13&DATA_EVIDENCE_ID_ADDED=TRUE&t=20251117011500"></script>
+    <script src="scripts/modules/notes-module.js?v=1&NEW_CODES_DISPLAY=TRUE"></script>
+    <script src="scripts/modules/scenarios-module.js?v=3.2&NO_SCENARIOS_FIX=TRUE&t=20251201235800"></script>
+    <script src="scripts/my-cases.js?v=1.2&LOCALSTORAGE_FULL_FIX=TRUE&t=20251116161800"></script>
+    <!-- Ankiety -->
+    <script defer src="scripts/questionnaires/bankruptcy-questionnaire.js?v=16&UNIFIED_UI=TRUE&t=20251108164600"></script>
+    <script defer src="scripts/questionnaires/restructuring-questionnaire.js?v=5&UNIFIED_UI=TRUE&t=20251108164600"></script>
+    <!-- NOWE: Ankieta odszkodowawcza -->
+    <script defer src="scripts/questionnaires/compensation-questionnaire-part1.js?v=3&UNIFIED_UI=TRUE&t=20251108164600"></script>
+    <script defer src="scripts/questionnaires/compensation-questionnaire-part2.js?v=3&UNIFIED_UI=TRUE&t=20251108164600"></script>
+    <script defer src="scripts/questionnaires/compensation-questionnaire.js?v=4&UNIFIED_UI=TRUE&t=20251108164600"></script>
+    <script src="scripts/insurance-companies-database.js?v=1&TU_DATABASE=TRUE&t=20251108132800"></script>
+    <!-- NOWE: Ankieta windykacyjna -->
+    <script defer src="scripts/questionnaires/debt-collection-questionnaire-part1.js?v=2&UNIFIED_UI=TRUE&t=20251108164600"></script>
+    <script defer src="scripts/questionnaires/debt-collection-questionnaire-part2.js?v=5&UNIFIED_UI=TRUE&t=20251108164600"></script>
+    <script defer src="scripts/questionnaires/debt-collection-questionnaire-part3.js?v=2&UNIFIED_UI=TRUE&t=20251108164600"></script>
+    <script defer src="scripts/questionnaires/debt-collection-questionnaire.js?v=2&UNIFIED_UI=TRUE&t=20251108164600"></script>
+    <!-- NOWE: Ankieta gospodarcza (GOS/) -->
+    <script defer src="scripts/questionnaires/commercial-questionnaire-part1.js?v=1&COMMERCIAL_GOS=TRUE&t=20251108235300"></script>
+    <script defer src="scripts/questionnaires/commercial-questionnaire-part2.js?v=1&COMMERCIAL_GOS=TRUE&t=20251108235300"></script>
+    <script defer src="scripts/questionnaires/commercial-questionnaire-part3.js?v=2&AI_GENERATOR=TRUE&t=20251109004500"></script>
+    <script defer src="scripts/questionnaires/commercial-questionnaire.js?v=1&COMMERCIAL_GOS=TRUE&t=20251108235300"></script>
+    <!-- NOWE: Ankieta spadkowa (SPA/) -->
+    <script defer src="scripts/questionnaires/inheritance-questionnaire-part1.js?v=1&INHERITANCE_SPA=TRUE&t=20251109005200"></script>
+    <script defer src="scripts/questionnaires/inheritance-questionnaire-part2.js?v=1&INHERITANCE_SPA=TRUE&t=20251109005200"></script>
+    <script defer src="scripts/questionnaires/inheritance-questionnaire-part3.js?v=1&INHERITANCE_SPA=TRUE&t=20251109005200"></script>
+    <script defer src="scripts/questionnaires/inheritance-questionnaire.js?v=1&INHERITANCE_SPA=TRUE&t=20251109005200"></script>
+    <!-- NOWE: Ankieta majątkowa (MAJ/) -->
+    <script defer src="scripts/questionnaires/property-questionnaire-part1.js?v=6&COPY_INHERITANCE=TRUE&t=20251109023000"></script>
+    <script defer src="scripts/questionnaires/property-questionnaire-part2.js?v=6&COPY_INHERITANCE=TRUE&t=20251109023000"></script>
+    <script defer src="scripts/questionnaires/property-questionnaire-part3.js?v=6&COPY_INHERITANCE=TRUE&t=20251109023000"></script>
+    <script defer src="scripts/questionnaires/property-questionnaire.js?v=6&COPY_INHERITANCE=TRUE&t=20251109023000"></script>
+    <!-- NOWE: Ankieta umowna (UMO/) -->
+    <script defer src="scripts/questionnaires/contract-questionnaire-part1.js?v=1&CONTRACT_UMO=TRUE&t=20251109105000"></script>
+    <script defer src="scripts/questionnaires/contract-questionnaire-part2.js?v=1&CONTRACT_UMO=TRUE&t=20251109105000"></script>
+    <script defer src="scripts/questionnaires/contract-questionnaire-part3.js?v=2&TASKS_FIX=TRUE&t=20251109110000"></script>
+    <script defer src="scripts/questionnaires/contract-questionnaire.js?v=1&CONTRACT_UMO=TRUE&t=20251109105000"></script>
+    <!-- NOWE: Ankieta rodzinna (ROD/) -->
+    <script defer src="scripts/questionnaires/family-questionnaire-part1.js?v=1&FAMILY_ROD=TRUE&t=20251109111500"></script>
+    <script defer src="scripts/questionnaires/family-questionnaire-part2.js?v=1&FAMILY_ROD=TRUE&t=20251109111500"></script>
+    <script defer src="scripts/questionnaires/family-questionnaire-part3.js?v=1&FAMILY_ROD=TRUE&t=20251109111500"></script>
+    <script defer src="scripts/questionnaires/family-questionnaire.js?v=1&FAMILY_ROD=TRUE&t=20251109111500"></script>
+    <!-- NOWE: Ankieta budowlana (BUD/) -->
+    <script defer src="scripts/questionnaires/building-questionnaire-part1.js?v=1&BUILDING_BUD=TRUE&t=20251109113000"></script>
+    <script defer src="scripts/questionnaires/building-questionnaire-part2.js?v=1&BUILDING_BUD=TRUE&t=20251109113000"></script>
+    <script defer src="scripts/questionnaires/building-questionnaire-part3.js?v=1&BUILDING_BUD=TRUE&t=20251109113000"></script>
+    <script defer src="scripts/questionnaires/building-questionnaire.js?v=1&BUILDING_BUD=TRUE&t=20251109113000"></script>
+    <!-- NOWE: Ankieta podatkowa (POD/) -->
+    <script defer src="scripts/questionnaires/tax-questionnaire-part1.js?v=1&TAX_POD=TRUE&t=20251109115000"></script>
+    <script defer src="scripts/questionnaires/tax-questionnaire-part2.js?v=1&TAX_POD=TRUE&t=20251109115000"></script>
+    <script defer src="scripts/questionnaires/tax-questionnaire-part3.js?v=1&TAX_POD=TRUE&t=20251109115000"></script>
+    <script defer src="scripts/questionnaires/tax-questionnaire.js?v=1&TAX_POD=TRUE&t=20251109115000"></script>
+    <!-- NOWE: Ankieta zagospodarowania (ZAG/) -->
+    <script defer src="scripts/questionnaires/zoning-questionnaire-part1.js?v=1&ZONING_ZAG=TRUE&t=20251109121500"></script>
+    <script defer src="scripts/questionnaires/zoning-questionnaire-part2.js?v=1&ZONING_ZAG=TRUE&t=20251109121500"></script>
+    <script defer src="scripts/questionnaires/zoning-questionnaire-part3.js?v=1&ZONING_ZAG=TRUE&t=20251109121500"></script>
+    <script defer src="scripts/questionnaires/zoning-questionnaire.js?v=1&ZONING_ZAG=TRUE&t=20251109121500"></script>
+    <!-- NOWE: Ankieta międzynarodowa (MIE/EUR/ARB) -->
+    <script defer src="scripts/questionnaires/international-questionnaire-part1.js?v=1&INTL_MIE_EUR_ARB=TRUE&t=20251109124000"></script>
+    <script defer src="scripts/questionnaires/international-questionnaire-part2.js?v=1&INTL_MIE_EUR_ARB=TRUE&t=20251109124000"></script>
+    <script defer src="scripts/questionnaires/international-questionnaire-part3.js?v=3&ICONS_FIXED_FORCE_RELOAD=TRUE&t=20251109132345&cache_bust=987654"></script>
+    <script defer src="scripts/questionnaires/international-questionnaire.js?v=2&DEBUG_ADDED=TRUE&t=20251109132000"></script>
+    <!-- NOWE: Ankieta prawa specjalnego (MOR/ENE/OZE/LOT/IT) -->
+    <script defer src="scripts/questionnaires/special-questionnaire-part1.js?v=1&SPECIAL_MOR_ENE_OZE_LOT_IT=TRUE&t=20251109135500"></script>
+    <script defer src="scripts/questionnaires/special-questionnaire-part2.js?v=1&SPECIAL_MOR_ENE_OZE_LOT_IT=TRUE&t=20251109135500"></script>
+    <script defer src="scripts/questionnaires/special-questionnaire-part3.js?v=1&SPECIAL_MOR_ENE_OZE_LOT_IT=TRUE&t=20251109135500"></script>
+    <script defer src="scripts/questionnaires/special-questionnaire.js?v=1&SPECIAL_MOR_ENE_OZE_LOT_IT=TRUE&t=20251109135500"></script>
+    <!-- NOWE: Ankieta karna -->
+    <script defer src="scripts/questionnaires/criminal-questionnaire-part1.js?v=2&LIFE_DANGER_RIGHTS=TRUE&t=20251108182500"></script>
+    <script defer src="scripts/questionnaires/criminal-questionnaire-part2.js?v=1&UNIVERSAL=TRUE&t=20251108165300"></script>
+    <script defer src="scripts/questionnaires/criminal-questionnaire-part3.js?v=1&UNIVERSAL=TRUE&t=20251108165300"></script>
+    <script defer src="scripts/questionnaires/criminal-questionnaire.js?v=5&DEBUG_INIT=TRUE&t=20251108181100"></script>
+    <script defer src="scripts/questionnaires/questionnaire-renderer.js?v=71&HEADER_FIXED=TRUE&t=20251109140800"></script>
+    <script defer src="scripts/questionnaires/questionnaire-panels.js?v=13&SPECIAL_ADDED=TRUE&t=20251109135600"></script>
+    <!-- USUNIĘTE HELPERY - panel ankiety karnej jest teraz w dashboardzie (crm-case-tabs.js) -->
+    <!-- <script defer src="scripts/questionnaires/questionnaire-button-helper.js?v=1"></script> -->
+    <!-- <script defer src="scripts/questionnaires/criminal-questionnaire-auto-panel.js?v=3"></script> -->
+    <script src="scripts/modules/opposing-party-module.js?v=20251202015500&ALL_BLACK=TRUE&FORCE_RELOAD=NOW"></script>
+    <!-- 🕵️ MODUŁ ANALIZY PRZECIWNIKA - WYŁĄCZONY (używamy opposing-party-module) -->
+    <!-- <script src="scripts/modules/opposing-analysis-module.js?v=16&CLEAR_CACHE=TRUE&FIX=20251109175200"></script> -->
+    <!-- MODUŁY SZCZEGÓŁÓW CYWILNYCH - WYŁĄCZONE (używamy ankiet) -->
+    <!-- <script src="scripts/modules/civil-details-module.js?v=1"></script> -->
+    <!-- <script src="scripts/modules/civil-form.js?v=1"></script> -->
+    <!-- <script src="scripts/modules/civil-helpers.js?v=1"></script> -->
+    <script src="scripts/prosecutors-autocomplete.js?v=3&PROSECUTORS_DATABASE=TRUE"></script>
+    <script src="scripts/police-autocomplete.js?v=8&SHOW_DETAILS_PANEL=TRUE&t=20251108052500"></script>
+    <script src="scripts/chat.js?v=20251119031700&FORCE_RELOAD=TRUE&TIMEZONE_FIX=TRUE&UTC_TO_LOCAL=TRUE"></script>
+    <!-- WŁĄCZONE - potrzebne dla unified-fab.js (mały komunikator) -->
+    <script src="scripts/floating-chat.js?v=20251119031700&FORCE_RELOAD=TRUE&TIMEZONE_FIX=TRUE&UTC_TO_LOCAL=TRUE"></script>
+    
+    <!-- Dashboardy - Nowa architektura modularna -->
+    <script src="scripts/dashboards/admin-dashboard.js?v=9.8&REFRESH_IN_PLACE=TRUE&t=20251205130000"></script>
+    <script src="scripts/dashboards/employee-dashboard.js?v=10.1&ALL_FORMS=TRUE&t=20251205181000"></script>
+    <script src="scripts/dashboards/hr-dashboard.js?v=8.0&SALARY_FIX=TRUE&t=20251126020600"></script>
+    <script src="scripts/dashboards/universal-dashboard.js?v=17.0&NO_HR_FORMS=TRUE&t=20251205181000"></script>
+    <script src="scripts/dashboards/lawyer-dashboard.js?v=1.3&RESTORED=TRUE&t=20251116010600"></script>
+    <script src="scripts/dashboards/case-manager-dashboard.js?v=1.1&RESTORED=TRUE&t=20251116010600"></script>
+    <script src="scripts/dashboards/payroll-dashboard.js?v=3.2&PDF_UPLOAD=TRUE&t=20251126023500"></script>
+    
+    <!-- Moduły funkcjonalne -->
+    <script src="scripts/modules/payments-module.js?v=7.0&BLIK_ADDED=TRUE"></script>
+    <script src="scripts/modules/client-balance-module.js?v=3.2&CASH_INVOICE=TRUE"></script>
+    <script src="scripts/modules/sales-invoices-module.js?v=1.9&CLIENT_DATA_FIX=TRUE&t=20251112140800"></script>
+    <script src="scripts/modules/installments-dashboard.js?v=1.0&INSTALLMENTS_DASHBOARD=TRUE"></script>
+    <script src="scripts/modules/tasks-module.js?v=2.0&TASKS_SYSTEM=TRUE&cachebust=20251112191000"></script>
+    <script src="scripts/modules/case-permissions-module.js?v=2.1&PERMISSIONS_SYSTEM=TRUE&t=20251114031700"></script>
+    <script src="scripts/modules/ai-assistant-module.js?v=1.0&GEMINI_AI=TRUE&t=20251202020000"></script>
+    
+    <!-- PROSTY handler uprawnień - działa zawsze! -->
+    <script src="scripts/simple-permissions.js?v=2.1&ENDPOINT_FIX=TRUE&t=20251114033600"></script>
+    
+    <!-- Fix: Automatyczne dodawanie zakładki płatności (bez nadpisywania funkcji) -->
+    <script src="scripts/add-payments-tab-fix.js?v=6.0&NO_OVERRIDE=TRUE&t=20251114032400"></script>
+    
+    <!-- Globalny Audio Player (poza dashboardem - nie zatrzymuje się) -->
+    <audio id="globalRadioPlayer" preload="none"></audio>
+    
+    <!-- Globalny Kontroler Radia -->
+    <script>
+    window.globalRadio = {
+        stations: [
+            { name: 'Radio ZET', url: 'https://zt.cdn.eurozet.pl/zet-net.mp3' },
+            { name: 'RMF FM', url: 'http://195.150.20.242:8000/rmf_fm' },
+            { name: 'RMF Maxxx', url: 'https://rs8-krk2-cyfronet.rmfstream.pl/rmf_maxxx' },
+            { name: 'Chillizet', url: 'https://ch.cdn.eurozet.pl/chi-net.mp3' },
+            { name: 'Meloradio', url: 'https://ml.cdn.eurozet.pl/mel-net.mp3' },
+            { name: 'Eska Hits', url: 'https://ic1.smcdn.pl/2330-1.mp3' }
+        ],
+        currentIndex: 0,
+        isPlaying: false,
+        volume: 50,
+        knobRotation: 0,
+        
+        toggle() {
+            const player = document.getElementById('globalRadioPlayer');
+            const btn = document.getElementById('radioPlayBtn');
+            if (!player || !btn) return;
+            
+            if (player.paused) {
+                this.play();
+            } else {
+                player.pause();
+                btn.innerHTML = '▶';
+                btn.classList.remove('playing');
+                this.isPlaying = false;
+            }
+        },
+        
+        play() {
+            const player = document.getElementById('globalRadioPlayer');
+            const btn = document.getElementById('radioPlayBtn');
+            const station = this.stations[this.currentIndex];
+            
+            player.src = station.url;
+            player.volume = 0.5;
+            
+            player.play().then(() => {
+                if (btn) {
+                    btn.innerHTML = '⏸';
+                    btn.classList.add('playing');
+                }
+                this.isPlaying = true;
+                console.log(`✅ Odtwarzam: ${station.name}`);
+            }).catch(err => {
+                console.error('❌ Błąd odtwarzania:', err);
+            });
+        },
+        
+        next() {
+            const wasPlaying = this.isPlaying;
+            this.currentIndex = (this.currentIndex + 1) % this.stations.length;
+            if (wasPlaying) {
+                setTimeout(() => this.play(), 100);
+            }
+            this.updateLCD();
+        },
+        
+        prev() {
+            const wasPlaying = this.isPlaying;
+            this.currentIndex = (this.currentIndex - 1 + this.stations.length) % this.stations.length;
+            if (wasPlaying) {
+                setTimeout(() => this.play(), 100);
+            }
+            this.updateLCD();
+        },
+        
+        updateLCD() {
+            const lcdStation = document.getElementById('lcdStation');
+            const station = this.stations[this.currentIndex];
+            if (lcdStation) {
+                lcdStation.textContent = station.name.toUpperCase();
+            }
+        },
+        
+        setVolume(vol) {
+            this.volume = Math.max(0, Math.min(100, vol));
+            const player = document.getElementById('globalRadioPlayer');
+            const lcdVolume = document.getElementById('lcdVolume');
+            const knob = document.getElementById('volumeKnob');
+            
+            if (player) player.volume = this.volume / 100;
+            
+            // LCD pokazuje skalę 1-10 (jak w tradycyjnych radiach)
+            const displayVolume = Math.max(1, Math.ceil(this.volume / 10));
+            if (lcdVolume) lcdVolume.textContent = displayVolume;
+            
+            // Obróć pokrętło (0-270 stopni)
+            this.knobRotation = (this.volume / 100) * 270;
+            if (knob) {
+                knob.style.transform = `rotate(${this.knobRotation}deg)`;
+            }
+        }
+    };
+    
+    // Inicjalizacja pokrętła volume
+    document.addEventListener('DOMContentLoaded', () => {
+        const knob = document.getElementById('volumeKnob');
+        if (!knob) return;
+        
+        let isDragging = false;
+        let startY = 0;
+        
+        knob.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startY = e.clientY;
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const delta = startY - e.clientY;
+            const newVolume = globalRadio.volume + (delta * 0.5);
+            globalRadio.setVolume(newVolume);
+            startY = e.clientY;
+        });
+        
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        // Scroll na pokrętle
+        knob.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -5 : 5;
+            globalRadio.setVolume(globalRadio.volume + delta);
+        });
+        
+        // Ustaw początkową głośność
+        globalRadio.setVolume(50);
+        globalRadio.updateLCD();
+    });
+    </script>
+    
+    <!-- Główna aplikacja -->
+    <script src="scripts/app.js?v=27&VIEWS_HTML_ADDED=TRUE&t=20251123221000"></script>
+
+    <!-- DIAGNOSTIC TOOL - Sprawdza dashboardy -->
+    <script src="scripts/dashboard-diagnostic.js?v=1&DEBUG=TRUE&t=20251120015200"></script>
+
+    <script src="scripts/client-manager-loader.js?v=5.0"></script>
+    <script src="scripts/case-staff-loader.js?v=4.0"></script>
+
+    <!-- EMOJI PICKER - SUPER PROSTY SKRYPT -->
+    <script>
+    // Globalna funkcja toggle emoji picker
+    window.toggleEmojiPicker = function() {
+        console.log('🎯 Toggle Emoji Picker!');
+        
+        // Zamknij jeśli otwarty
+        const existing = document.getElementById('emojiPicker');
+        if (existing) {
+            existing.remove();
+            return;
+        }
+        
+        // Emoji prawnicze - Unicode escape sequences + SPECJALNE!
+        const emojis = {
+            'Prawnicze': [
+                '\u2696\uFE0F',  // Waga sprawiedliwości
+                '\uD83D\uDCDC', // Zwój/Akt prawny
+                '\uD83C\uDFDB\uFE0F', // Sąd
+                '\uD83D\uDC54', // Krawat
+                '\uD83D\uDCDD', // Pismo
+                '\uD83D\uDD28', // Młotek sędziego
+                '\uD83D\uDCCB', // Clipboard
+                '\uD83D\uDD0D', // Lupa
+                '\uD83D\uDCBC', // Teczka
+                '\uD83D\uDCDE', // Telefon
+                '\uD83D\uDCB0', // Pieniądze
+                '\u23F0',       // Budzik/Termin
+                '\u00A7',       // § PARAGRAF!
+                '\uD83D\uDD8A\uFE0F', // Długopis
+                '\uD83D\uDCD1', // Zakładka
+                '\uD83D\uDCE6'  // Paczka/Dokumenty
+            ],
+            'Emocje': [
+                '\uD83E\uDD1D',  // Uścisk dłoni
+                '\u26A0\uFE0F',  // Ostrzeżenie
+                '\uD83D\uDEA8',  // Sygnał policji
+                '\uD83D\uDC4D',  // Kciuk w górę
+                '\uD83D\uDC4E',  // Kciuk w dół
+                '\uD83D\uDCAA',  // Siła
+                '\uD83C\uDF93',  // Dyplom
+                '\uD83D\uDCDA',  // Książki
+                '\u2705',        // Zielony check
+                '\u274C',        // Czerwony X
+                '\uD83C\uDFAF',  // Cel
+                '\uD83D\uDCA1',  // Żarówka/Pomysł
+                '\uD83D\uDD25',  // Ogień
+                '\uD83D\uDE80',  // Rakieta/Start
+                '\uD83C\uDFC6',  // Puchar/Wygrana
+                '\uD83D\uDEE1\uFE0F'  // Tarcza/Ochrona
+            ],
+            'Standardowe': [
+                '\uD83D\uDE0A',  // Uśmiech
+                '\uD83D\uDE02',  // Śmiech
+                '\uD83D\uDE0D',  // Zakochany
+                '\uD83E\uDD14',  // Myślący
+                '\uD83D\uDE0E',  // Cool
+                '\uD83D\uDC4B',  // Machanie
+                '\uD83D\uDC4F',  // Brawa
+                '\uD83D\uDE4F',  // Modlitwa
+                '\uD83D\uDCAF',  // 100
+                '\uD83C\uDF89',  // Konfetti
+                '\u2764\uFE0F',  // Serce
+                '\u2B50',        // Gwiazdka
+                '\u2728',        // Iskierki
+                '\uD83D\uDC4C',  // OK
+                '\uD83D\uDE4C',  // Hurra
+                '\uD83D\uDD1D'   // Klucz/Ważne
+            ]
+        };
+        
+        // Utwórz picker
+        const picker = document.createElement('div');
+        picker.id = 'emojiPicker';
+        picker.className = 'emoji-picker';
+        
+        // INLINE STYLE - ZAWSZE DZIAŁA! (Kompaktowy - 2 rzędy emoji)
+        picker.style.cssText = 'position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: white; border: 5px solid #3498db; border-radius: 20px; box-shadow: 0 10px 50px rgba(0,0,0,0.5); padding: 25px; z-index: 999999; width: 500px; max-height: 450px;';
+        
+        let html = '<div class="emoji-picker-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid #ecf0f1;">';
+        html += '<span class="emoji-picker-title" style="font-weight: 700; color: #2c3e50; font-size: 1.4rem;">Emotikony</span>';
+        html += '<button class="emoji-picker-close" style="background: #e74c3c; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 1.6rem; font-weight: bold;" onclick="document.getElementById(\'emojiPicker\').remove()">×</button>';
+        html += '</div>';
+        
+        html += '<div class="emoji-categories" style="display: flex; gap: 10px; margin-bottom: 20px;">';
+        for (let cat in emojis) {
+            const isActive = cat === 'Prawnicze';
+            const btnStyle = 'flex: 1; padding: 12px; border: 2px solid #bdc3c7; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: 700; ' + (isActive ? 'background: #3498db; color: white;' : 'background: #ecf0f1; color: #34495e;');
+            html += '<button class="emoji-category-btn' + (isActive ? ' active' : '') + '" style="' + btnStyle + '" onclick="window.showEmojiCategory(\'' + cat + '\')">' + cat + '</button>';
+        }
+        html += '</div>';
+        
+        html += '<div class="emoji-grid" id="emojiGrid" style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; max-height: 200px; overflow-y: auto; padding: 10px;"></div>';
+        
+        picker.innerHTML = html;
+        document.body.appendChild(picker);
+        
+        // Pokaż pierwszą kategorię
+        window.currentEmojis = emojis;
+        window.showEmojiCategory('Prawnicze');
+        
+        console.log('✅ Emoji picker utworzony!');
+    };
+    
+    // Funkcja przełączania kategorii
+    window.showEmojiCategory = function(category) {
+        const grid = document.getElementById('emojiGrid');
+        if (!grid || !window.currentEmojis) return;
+        
+        // Zmień aktywną zakładkę - INLINE STYLE!
+        document.querySelectorAll('.emoji-category-btn').forEach(btn => {
+            const isActive = btn.textContent === category;
+            btn.style.cssText = 'flex: 1; padding: 12px; border: 2px solid #bdc3c7; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: 700; ' + (isActive ? 'background: #3498db; color: white;' : 'background: #ecf0f1; color: #34495e;');
+        });
+        
+        // Renderuj emoji - INLINE STYLE dla gridu i itemów (2 rzędy widoczne!)
+        grid.style.cssText = 'display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; max-height: 200px; overflow-y: auto; padding: 10px;';
+        
+        const emojis = window.currentEmojis[category];
+        let html = '';
+        emojis.forEach(emoji => {
+            html += '<div class="emoji-item" style="font-size: 2.2rem; padding: 12px; cursor: pointer; text-align: center; border-radius: 10px; background: #f8f9fa;" onclick="window.addEmoji(\'' + emoji + '\')">' + emoji + '</div>';
+        });
+        grid.innerHTML = html;
+    };
+    
+    // Funkcja dodawania emoji do inputa
+    window.addEmoji = function(emoji) {
+        const input = document.getElementById('messageInput');
+        if (input) {
+            input.value += emoji;
+            input.focus();
+            console.log('✅ Dodano emoji:', emoji);
+        }
+    };
+    
+    console.log('✅ Emoji Picker Functions Loaded!');
+    </script>
+
+    <!-- RECORDING SYSTEM - CLEAN VERSION -->
+    <script src="scripts/recording-system-v3.js"></script>
+    
+    <!-- UNIFIED FAB - Jeden przycisk dla wszystkich funkcji -->
+    <script src="scripts/unified-fab.js"></script>
+    
+    <!-- FINANCE DASHBOARD - Dashboard Finansowy -->
+    <script src="scripts/finance-dashboard.js"></script>
+    
+    <!-- FINANCE DASHBOARD - Obsługa przycisku -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const financeBtn = document.querySelector('[data-view="finance-dashboard"]');
+        if (financeBtn) {
+            financeBtn.addEventListener('click', function() {
+                console.log('💰 Kliknięto Finance Dashboard');
+                if (window.financeDashboard) {
+                    financeDashboard.open();
+                } else {
+                    console.error('❌ Finance Dashboard nie załadowany');
+                }
+            });
+            console.log('✅ Finance Dashboard button handler dodany');
+        }
+    });
+    </script>
+    
+    <!-- WEBSITE INQUIRIES MODAL -->
+    <div id="inquiriesModal" style="display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(0,0,0,0.9) !important; z-index: 9999999 !important; pointer-events: auto !important;">
+        <div style="position: relative; width: 98%; height: 97%; margin: 1.5% auto; background: white; border-radius: 15px; box-shadow: 0 10px 50px rgba(0,0,0,0.8); overflow: hidden; z-index: 9999999 !important;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; background: linear-gradient(135deg, #fef9e7 0%, white 100%); border-bottom: 2px solid #f0f0f0;">
+                <h2 style="margin: 0; color: #1a2332; font-size: 1.5rem;">📩 Zapytania ze Strony WWW</h2>
+                <button onclick="closeInquiriesModal()" style="background: none; border: none; font-size: 2rem; cursor: pointer; color: #7f8c8d; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s;" onmouseover="this.style.background='#fee'; this.style.color='#e74c3c'" onmouseout="this.style.background='none'; this.style.color='#7f8c8d'">&times;</button>
+            </div>
+            <iframe id="inquiriesFrame" src="website-inquiries.html" style="width: 100%; height: calc(100% - 82px); border: none;"></iframe>
+        </div>
+    </div>
+    
+    <script>
+    function openInquiriesModal() {
+        console.log('📩 Otwieranie modalu zapytań...');
+        const modal = document.getElementById('inquiriesModal');
+        if (modal) {
+            // Dodaj klasy CSS które wymuszą pokazanie
+            modal.classList.add('modal-open');
+            document.body.classList.add('modal-inquiries-open');
+            
+            console.log('✅ Modal zapytań otwarty (przez CSS klasy)');
+            console.log('📊 Modal classList:', modal.classList.toString());
+            console.log('📊 Body classList:', document.body.classList.toString());
+            
+            // Reload iframe to refresh data
+            setTimeout(() => {
+                const iframe = document.getElementById('inquiriesFrame');
+                if (iframe) {
+                    iframe.src = 'website-inquiries.html?' + new Date().getTime();
+                    console.log('🔄 Iframe odświeżony');
+                }
+            }, 100);
+        } else {
+            console.error('❌ Modal nie znaleziony!');
+        }
+    }
+    
+    function closeInquiriesModal() {
+        console.log('❌ Zamykanie modalu zapytań...');
+        const modal = document.getElementById('inquiriesModal');
+        if (modal) {
+            // Usuń klasy CSS
+            modal.classList.remove('modal-open');
+            document.body.classList.remove('modal-inquiries-open');
+            
+            console.log('✅ Modal zamknięty (usunięto CSS klasy)');
+        }
+    }
+    
+    // Close on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('inquiriesModal');
+            if (modal && modal.classList.contains('modal-open')) {
+                closeInquiriesModal();
+            }
+        }
+    });
+    
+    // Close on outside click
+    const modal = document.getElementById('inquiriesModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeInquiriesModal();
+            }
+        });
+    }
+    
+    console.log('✅ Website Inquiries Modal Functions Loaded');
+    
+    // Event listener dla przycisku Zapytania WWW
+    document.addEventListener('DOMContentLoaded', function() {
+        const inquiriesBtn = document.getElementById('inquiriesBtn');
+        if (inquiriesBtn) {
+            inquiriesBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🖱️ Kliknięto przycisk Zapytania WWW');
+                openInquiriesModal();
+            });
+            console.log('✅ Event listener dla Zapytania WWW dodany');
+        } else {
+            console.error('❌ Przycisk inquiriesBtn nie znaleziony!');
+        }
+    });
+    </script>
+</body>
+</html>
+
+
+

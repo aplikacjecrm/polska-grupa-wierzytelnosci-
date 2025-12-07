@@ -1,0 +1,92 @@
+/* UKRYJ WSZYSTKIE SCROLLBARY */
+
+/* Dla Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 0px !important;
+    height: 0px !important;
+    background: transparent !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: transparent !important;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+/* Dla Firefox */
+* {
+    scrollbar-width: none !important;
+    scrollbar-color: transparent transparent !important;
+}
+
+/* Dla wszystkich elementów */
+body, html, div, section, article, aside, nav, main {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+/* Dodatkowe ukrycie dla IE */
+body::-webkit-scrollbar,
+html::-webkit-scrollbar,
+div::-webkit-scrollbar {
+    display: none !important;
+}
+
+/* Zachowaj możliwość przewijania, ale ukryj scrollbar */
+body {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+html {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Wszystkie kontenery mogą się przewijać, ale bez scrollbara */
+.view-content,
+.modal-content,
+.sidebar,
+.main-container,
+[class*="container"],
+[class*="content"] {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.view-content::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar,
+.main-container::-webkit-scrollbar,
+[class*="container"]::-webkit-scrollbar,
+[class*="content"]::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* WYJĄTEK: Pokaż scrollbar w czacie */
+.messages-list::-webkit-scrollbar {
+    display: block !important;
+    width: 8px !important;
+}
+
+.messages-list::-webkit-scrollbar-thumb {
+    background: #cbd5e0 !important;
+    border-radius: 4px !important;
+}
+
+.messages-list::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0 !important;
+}
+
+.messages-list::-webkit-scrollbar-track {
+    background: #f7fafc !important;
+}
+
+.messages-list {
+    scrollbar-width: thin !important;
+    scrollbar-color: #cbd5e0 #f7fafc !important;
+}

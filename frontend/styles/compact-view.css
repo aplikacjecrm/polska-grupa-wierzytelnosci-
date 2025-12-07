@@ -1,0 +1,281 @@
+/* KOMPAKTOWY WIDOK - Wszystko mniejsze i bardziej czytelne */
+
+/* Nagłówki spraw - mniejsze */
+.case-header,
+.case-title-bar {
+    padding: 10px 15px !important;
+    font-size: 16px !important;
+    min-height: 40px !important;
+}
+
+.case-header h2,
+.case-title-bar h2 {
+    font-size: 18px !important;
+    margin: 0 !important;
+}
+
+/* Zakładki - mniejsze */
+.case-tabs,
+.tab-buttons {
+    padding: 8px 10px !important;
+    gap: 8px !important;
+}
+
+.case-tabs button,
+.tab-buttons button,
+.tab-button {
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    min-height: 32px !important;
+}
+
+/* Sekcje - mniejsze paddingi */
+.case-section,
+.section,
+[class*="section"] {
+    padding: 12px 15px !important;
+    margin-bottom: 12px !important;
+}
+
+.case-section h3,
+.section h3,
+.section-title {
+    font-size: 16px !important;
+    margin-bottom: 10px !important;
+    padding: 8px 12px !important;
+}
+
+/* Formularze - kompaktowe */
+.form-group,
+.input-group {
+    margin-bottom: 12px !important;
+}
+
+.form-group label,
+.input-group label {
+    font-size: 13px !important;
+    margin-bottom: 4px !important;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="time"],
+textarea,
+select {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    min-height: 36px !important;
+}
+
+textarea {
+    min-height: 80px !important;
+}
+
+/* Przyciski - mniejsze */
+button,
+.btn,
+.button {
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    min-height: 36px !important;
+}
+
+button.btn-primary,
+.btn-primary {
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+}
+
+/* Karty - kompaktowe */
+.card,
+.case-card,
+[class*="card"] {
+    padding: 12px 15px !important;
+    margin-bottom: 12px !important;
+}
+
+.card-header {
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+}
+
+.card-body {
+    padding: 12px !important;
+}
+
+/* Listy - mniejsze */
+.list-item,
+li {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+}
+
+/* Tabele - kompaktowe */
+table {
+    font-size: 13px !important;
+}
+
+table th {
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+}
+
+table td {
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+}
+
+/* Modalne okna - lepsze wykorzystanie przestrzeni */
+.modal-header {
+    padding: 12px 20px !important;
+    font-size: 18px !important;
+}
+
+.modal-body {
+    padding: 15px 20px !important;
+    font-size: 14px !important;
+}
+
+.modal-footer {
+    padding: 12px 20px !important;
+}
+
+/* Hasło dostępu - mniejsze */
+.password-display,
+[class*="password"] {
+    padding: 15px 20px !important;
+    font-size: 24px !important;
+}
+
+/* Komentarze - kompaktowe */
+.comment,
+.comment-item {
+    padding: 10px 12px !important;
+    margin-bottom: 10px !important;
+}
+
+.comment-header {
+    font-size: 13px !important;
+    margin-bottom: 6px !important;
+}
+
+.comment-text {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+}
+
+/* Wydarzenia - mniejsze karty */
+.event-card {
+    padding: 12px 15px !important;
+    margin-bottom: 10px !important;
+}
+
+.event-title {
+    font-size: 15px !important;
+    margin-bottom: 6px !important;
+}
+
+.event-details {
+    font-size: 13px !important;
+}
+
+/* Dokumenty - lista kompaktowa */
+.document-item {
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+}
+
+/* Statystyki/Badge - mniejsze */
+.badge,
+.stat-badge,
+[class*="badge"] {
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+}
+
+/* Sidebar w sprawie - kompaktowy */
+.case-sidebar {
+    padding: 12px !important;
+}
+
+.case-sidebar .info-item {
+    padding: 8px 0 !important;
+    font-size: 13px !important;
+}
+
+/* Panele zwijane - mniejsze */
+details summary {
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+}
+
+details[open] {
+    padding-bottom: 10px !important;
+}
+
+/* Ogólne odstępy */
+.container,
+.main-content,
+.content-area {
+    padding: 15px !important;
+}
+
+/* Responsywne - jeszcze mniejsze na małych ekranach */
+@media (max-width: 768px) {
+    .case-header h2 {
+        font-size: 16px !important;
+    }
+    
+    .case-tabs button {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+    }
+    
+    .case-section {
+        padding: 10px !important;
+    }
+    
+    input, select, textarea, button {
+        font-size: 13px !important;
+    }
+}
+
+/* Linie tekstu - lepsza czytelność */
+p, div, span {
+    line-height: 1.5 !important;
+}
+
+/* Zmniejsz height nagłówka głównego */
+.titlebar {
+    height: 36px !important;
+    padding: 0 12px !important;
+}
+
+.titlebar .title {
+    font-size: 14px !important;
+}
+
+/* Avatar użytkownika - mniejszy */
+.user-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    font-size: 16px !important;
+}
+
+/* Ikony - proporcjonalnie mniejsze */
+.icon,
+[class*="icon"] {
+    font-size: 18px !important;
+}
+
+/* Więcej treści na ekranie - mniejsze marginesy */
+* {
+    margin-top: 0 !important;
+}
+
+.case-section + .case-section {
+    margin-top: 12px !important;
+}

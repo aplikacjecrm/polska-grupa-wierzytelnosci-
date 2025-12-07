@@ -1,0 +1,88 @@
+<!-- 🚔 PANEL ANKIETY KARNEJ - Dokładnie ten sam styl co windykacja -->
+<!-- WKLEJ TO W TO SAMO MIEJSCE CO PANEL WINDYKACYJNY -->
+
+<div style="background: linear-gradient(135deg, #e74c3c, #c0392b); padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(231,76,60,0.4); text-align: center; margin-bottom: 20px;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+        <div style="font-size: 3rem;">🚔</div>
+        <div style="text-align: left;">
+            <h3 style="margin: 0; color: white; font-size: 1.4rem;">Ankieta Karna</h3>
+            <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0;">Kompleksowe postępowanie karne - dla pokrzywdzonych i oskarżonych</p>
+        </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+        <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+            <div style="font-size: 1.5rem; margin-bottom: 8px;">📋</div>
+            <div style="color: white; font-size: 0.9rem; font-weight: 600;">9 Sekcji</div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 0.8rem;">Dynamiczne pytania</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+            <div style="font-size: 1.5rem; margin-bottom: 8px;">⚖️</div>
+            <div style="color: white; font-size: 0.9rem; font-weight: 600;">6 Faz</div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 0.8rem;">Procedura karna</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+            <div style="font-size: 1.5rem; margin-bottom: 8px;">📄</div>
+            <div style="color: white; font-size: 0.9rem; font-weight: 600;">9 Dokumentów</div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 0.8rem;">AI wygeneruje</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+            <div style="font-size: 1.5rem; margin-bottom: 8px;">💰</div>
+            <div style="color: white; font-size: 0.9rem; font-weight: 600;">Kalkulator AI</div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 0.8rem;">Zadośćuczynienie</div>
+        </div>
+    </div>
+    <button onclick="window.openCriminalQuestionnaire(${caseId}, '${caseNumber}')" style="
+        padding: 18px 40px;
+        background: white;
+        color: #e74c3c;
+        border: none;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.2rem;
+        cursor: pointer;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        transition: all 0.3s;
+        margin-top: 20px;
+    " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)'">
+        🚔 Wypełnij ankietę karną
+    </button>
+    <p style="color: rgba(255,255,255,0.8); margin-top: 15px; font-size: 0.9rem;">
+        📢 Zawiadomienie • 🔍 Śledztwo • ⚖️ Proces • 💰 Zadośćuczynienie
+    </p>
+</div>
+
+<!-- 
+INSTRUKCJA UŻYCIA:
+
+1. Znajdź plik gdzie jest panel windykacyjny (ten który mi pokazałeś)
+
+2. Znajdź warunek który sprawdza typ sprawy, np:
+   if (case_type === 'debt_collection' || case_number.startsWith('WIN')) {
+       // tutaj jest panel windykacyjny
+   }
+
+3. DODAJ PODOBNY WARUNEK dla spraw karnych:
+
+   // ANKIETA KARNA - dla POB/KRA/OSZ/DRO/NAR
+   if (window.isCriminalCase(case_type) || window.isCriminalCase(case_number)) {
+       panelHTML += `
+           [WKLEJ CAŁY KOD Z TEGO PLIKU TUTAJ]
+       `;
+   }
+
+4. ZMIEŃ w przycisku:
+   - ${caseId} → ID sprawy (np. 27, currentCase.id)
+   - ${caseNumber} → numer sprawy (np. 'KRA/DK01/001', currentCase.case_number)
+
+PRZYKŁAD:
+onclick="window.openCriminalQuestionnaire(${currentCase.id}, '${currentCase.case_number}')"
+
+LUB jeśli to jest template string:
+onclick="window.openCriminalQuestionnaire(${case.id}, '${case.case_number}')"
+
+5. Odśwież stronę (Ctrl + Shift + R)
+
+ROZPOZNAWANIE:
+- Automatycznie wykryje sprawy: POB, KRA, OSZ, DRO, NAR
+- Zadziała też dla typów: assault, theft, fraud, traffic, drugs
+-->

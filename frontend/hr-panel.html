@@ -1,0 +1,2290 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HR Panel - Zarządzanie wnioskami</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      padding: 30px;
+    }
+    
+    h1 {
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .tab-btn {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #666;
+      transition: all 0.3s;
+    }
+    
+    .tab-btn:hover {
+      color: #667eea;
+    }
+    
+    .tab-btn.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      padding: 20px;
+      border-radius: 12px;
+      color: white;
+      text-align: center;
+    }
+    
+    .stat-card.pending { background: linear-gradient(135deg, #FFA726, #FB8C00); }
+    .stat-card.approved { background: linear-gradient(135deg, #66BB6A, #43A047); }
+    .stat-card.rejected { background: linear-gradient(135deg, #EF5350, #E53935); }
+    
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin: 10px 0;
+    }
+    
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    
+    .request-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      transition: all 0.3s;
+    }
+    
+    .request-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+    
+    .request-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 15px;
+    }
+    
+    .request-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 5px;
+    }
+    
+    .request-employee {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    .request-badge {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    
+    .badge-vacation { background: #E3F2FD; color: #1976D2; }
+    .badge-training { background: #E8F5E9; color: #388E3C; }
+    .badge-document { background: #FFF3E0; color: #F57C00; }
+    
+    .request-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 15px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    
+    .detail-item {
+      font-size: 0.9rem;
+    }
+    
+    .detail-label {
+      color: #666;
+      margin-bottom: 3px;
+    }
+    
+    .detail-value {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    
+    .request-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+    
+    .btn-approve {
+      background: #66BB6A;
+      color: white;
+    }
+    
+    .btn-approve:hover {
+      background: #43A047;
+    }
+    
+    .btn-reject {
+      background: #EF5350;
+      color: white;
+    }
+    
+    .btn-reject:hover {
+      background: #E53935;
+    }
+    
+    .btn-view {
+      background: #42A5F5;
+      color: white;
+    }
+    
+    .btn-view:hover {
+      background: #1E88E5;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+    
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-size: 1.1rem;
+    }
+    
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    
+    .back-link:hover {
+      background: rgba(255,255,255,0.3);
+    }
+  </style>
+</head>
+<body>
+  <a href="/index.html" class="back-link">← Powrót do głównego panelu</a>
+  
+  <div class="container">
+    <h1>
+      <span>👥</span>
+      Panel HR
+    </h1>
+    <p class="subtitle">Zarządzanie wnioskami pracowników</p>
+    
+    <!-- Statystyki -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card pending">
+        <div class="stat-label">⏳ Oczekujące</div>
+        <div class="stat-value" id="pendingCount">-</div>
+      </div>
+      <div class="stat-card approved">
+        <div class="stat-label">✅ Zatwierdzone</div>
+        <div class="stat-value" id="approvedCount">-</div>
+      </div>
+      <div class="stat-card rejected">
+        <div class="stat-label">❌ Odrzucone</div>
+        <div class="stat-value" id="rejectedCount">-</div>
+      </div>
+    </div>
+    
+    <!-- Zakładki -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="vacations" onclick="switchTab('vacations')">
+        🏖️ Wnioski urlopowe
+      </button>
+      <button class="tab-btn" data-tab="trainings" onclick="switchTab('trainings')">
+        🎓 Wnioski o szkolenia
+      </button>
+      <button class="tab-btn" data-tab="remote" onclick="switchTab('remote')">
+        🏠 Praca zdalna
+      </button>
+      <button class="tab-btn" data-tab="certificates" onclick="switchTab('certificates')">
+        📄 Zaświadczenia
+      </button>
+      <button class="tab-btn" data-tab="documents" onclick="switchTab('documents')">
+        📄 Dokumenty do weryfikacji
+      </button>
+      <button class="tab-btn" data-tab="tickets" onclick="switchTab('tickets')">
+        🎫 Wszystkie tickety HR
+      </button>
+      <button class="tab-btn" data-tab="schedule" onclick="switchTab('schedule')">
+        📅 Grafik pracy
+      </button>
+      <button class="tab-btn" data-tab="schedule-report" onclick="switchTab('schedule-report')">
+        📊 Raport obecności
+      </button>
+      <button class="tab-btn" data-tab="office-bookings" onclick="switchTab('office-bookings')">
+        🏢 Rezerwacje biura
+      </button>
+    </div>
+    
+    <!-- Zawartość zakładek -->
+    <div id="tab-vacations" class="tab-content active">
+      <div class="loading">Ładowanie wniosków urlopowych...</div>
+    </div>
+    
+    <div id="tab-trainings" class="tab-content">
+      <div class="loading">Ładowanie wniosków o szkolenia...</div>
+    </div>
+    
+    <div id="tab-remote" class="tab-content">
+      <div class="loading">Ładowanie wniosków o pracę zdalną...</div>
+    </div>
+    
+    <div id="tab-certificates" class="tab-content">
+      <div class="loading">Ładowanie wniosków o zaświadczenia...</div>
+    </div>
+    
+    <div id="tab-documents" class="tab-content">
+      <div class="loading">Ładowanie dokumentów...</div>
+    </div>
+    
+    <div id="tab-tickets" class="tab-content">
+      <div class="loading">Ładowanie ticketów...</div>
+    </div>
+    
+    <div id="tab-schedule" class="tab-content">
+      <div class="loading">Ładowanie grafiku pracy...</div>
+    </div>
+    
+    <div id="tab-schedule-report" class="tab-content">
+      <div class="loading">Ładowanie raportu obecności...</div>
+    </div>
+    
+    <div id="tab-office-bookings" class="tab-content">
+      <div class="loading">Ładowanie rezerwacji biura...</div>
+    </div>
+  </div>
+  
+  <script src="/scripts/api.js"></script>
+  <script>
+    // DEBUG: Sprawdź czy API jest załadowane
+    console.log('🔍 HR Panel - Sprawdzam API:', typeof window.api);
+    
+    // Fallback API jeśli nie ma window.api
+    if (!window.api) {
+      console.log('⚠️ window.api nie istnieje, tworzę fallback');
+      window.api = {
+        request: async function(url, options = {}) {
+          const token = localStorage.getItem('token');
+          const headers = {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          };
+          
+          const response = await fetch(`/api${url}`, {
+            ...options,
+            headers
+          });
+          
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'API Error');
+          }
+          
+          return response.json();
+        }
+      };
+    }
+    
+    // Przełączanie zakładek
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+      
+      // Załaduj dane dla zakładki
+      if (tabName === 'vacations') loadVacations();
+      else if (tabName === 'trainings') loadTrainings();
+      else if (tabName === 'remote') loadRemoteWork();
+      else if (tabName === 'certificates') loadCertificates();
+      else if (tabName === 'documents') loadDocuments();
+      else if (tabName === 'tickets') loadAllTickets();
+      else if (tabName === 'schedule') loadSchedule();
+      else if (tabName === 'schedule-report') loadScheduleReport();
+      else if (tabName === 'office-bookings') loadOfficeBookings();
+    }
+    
+    // Załaduj wnioski urlopowe
+    async function loadVacations() {
+      console.log('🔍 loadVacations() wywołane');
+      const container = document.getElementById('tab-vacations');
+      container.innerHTML = '<div class="loading">Ładowanie...</div>';
+      
+      try {
+        console.log('📡 Wysyłam request do /api/hr-vacations/pending');
+        const res = await window.api.request('/hr-vacations/pending');
+        console.log('✅ Odpowiedź otrzymana:', res);
+        const vacations = res.vacations || [];
+        console.log(`📋 Liczba wniosków: ${vacations.length}`);
+        
+        if (vacations.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div style="font-size: 3rem;">🏖️</div>
+              <h3>Brak oczekujących wniosków urlopowych</h3>
+              <p>Wszystko aktualne!</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = vacations.map(v => `
+          <div class="request-card">
+            <div class="request-header">
+              <div>
+                <div class="request-title">${v.employee_name || 'Pracownik'}</div>
+                <div class="request-employee">${v.position || ''} • ${v.employee_email || ''}</div>
+              </div>
+              <span class="request-badge badge-vacation">🏖️ Urlop</span>
+            </div>
+            
+            <div class="request-details">
+              <div class="detail-item">
+                <div class="detail-label">Typ urlopu</div>
+                <div class="detail-value">${getVacationType(v.vacation_type)}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Od - Do</div>
+                <div class="detail-value">${new Date(v.start_date).toLocaleDateString('pl-PL')} - ${new Date(v.end_date).toLocaleDateString('pl-PL')}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Liczba dni</div>
+                <div class="detail-value">${v.days_count} dni</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Data wniosku</div>
+                <div class="detail-value">${new Date(v.request_date).toLocaleDateString('pl-PL')}</div>
+              </div>
+            </div>
+            
+            ${v.notes ? `<div style="padding: 10px; background: #fff9e6; border-left: 3px solid #FFA726; border-radius: 4px; margin: 10px 0;"><strong>Uwagi:</strong> ${v.notes}</div>` : ''}
+            
+            <div class="request-actions">
+              <button class="btn btn-approve" onclick="approveVacation(${v.id})">
+                ✓ Zatwierdź
+              </button>
+              <button class="btn btn-reject" onclick="rejectVacation(${v.id})">
+                ✗ Odrzuć
+              </button>
+              ${v.ticket_id ? `<button class="btn btn-view" onclick="viewTicket(${v.ticket_id})">🎫 Zobacz ticket</button>` : ''}
+            </div>
+          </div>
+        `).join('');
+        
+      } catch (error) {
+        console.error('❌ Błąd ładowania wniosków:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Błąd ładowania wniosków</h3>
+            <p>${error.message}</p>
+            <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+              Sprawdź konsolę przeglądarki (F12) dla szczegółów
+            </p>
+            <button onclick="loadVacations()" 
+                    style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px;">
+              🔄 Spróbuj ponownie
+            </button>
+          </div>
+        `;
+      }
+    }
+    
+    // Zatwierdź urlop - z modalem na notatkę
+    function approveVacation(vacationId) {
+      showApprovalModal('vacation', vacationId, 'Zatwierdź wniosek urlopowy', 'Notatka dla pracownika (opcjonalna):', async (notes) => {
+        try {
+          const res = await window.api.request(`/hr-vacations/${vacationId}/approve`, { 
+            method: 'POST',
+            body: JSON.stringify({ approval_notes: notes })
+          });
+          if (res.success) {
+            alert('✅ Wniosek zatwierdzony!');
+            loadVacations();
+            updateStats();
+          }
+        } catch (error) {
+          alert('❌ Błąd: ' + error.message);
+        }
+      });
+    }
+    
+    // Odrzuć urlop - z modalem na powód
+    function rejectVacation(vacationId) {
+      showApprovalModal('vacation', vacationId, 'Odrzuć wniosek urlopowy', 'Powód odrzucenia (wymagany):', async (reason) => {
+        if (!reason) {
+          alert('Musisz podać powód odrzucenia!');
+          return;
+        }
+        try {
+          const res = await window.api.request(`/hr-vacations/${vacationId}/reject`, {
+            method: 'POST',
+            body: JSON.stringify({ rejection_reason: reason })
+          });
+          if (res.success) {
+            alert('✅ Wniosek odrzucony');
+            loadVacations();
+            updateStats();
+          }
+        } catch (error) {
+          alert('❌ Błąd: ' + error.message);
+        }
+      }, true);
+    }
+    
+    // Pokaż ticket
+    function viewTicket(ticketId) {
+      alert(`Ticket ID: ${ticketId}\nTODO: Otworzyć szczegóły ticketu`);
+    }
+    
+    // Helper functions
+    function getVacationType(type) {
+      const types = {
+        'annual': '🏖️ Wypoczynkowy',
+        'sick': '🏥 Zwolnienie',
+        'unpaid': '💔 Bezpłatny',
+        'parental': '👶 Rodzicielski',
+        'occasional': '⚡ Na żądanie',
+        'other': '📝 Inny'
+      };
+      return types[type] || type;
+    }
+    
+    // Załaduj statystyki
+    async function updateStats() {
+      try {
+        console.log('📊 Ładuję statystyki...');
+        const res = await window.api.request('/hr-vacations/pending');
+        const pendingCount = res.vacations?.length || 0;
+        console.log(`📊 Pending: ${pendingCount}`);
+        document.getElementById('pendingCount').textContent = pendingCount;
+        
+        // TODO: Dodać statystyki zatwierdzonych i odrzuconych
+        document.getElementById('approvedCount').textContent = '0';
+        document.getElementById('rejectedCount').textContent = '0';
+      } catch (error) {
+        console.error('❌ Błąd ładowania statystyk:', error);
+        document.getElementById('pendingCount').textContent = '?';
+        document.getElementById('approvedCount').textContent = '?';
+        document.getElementById('rejectedCount').textContent = '?';
+      }
+    }
+    
+    // Załaduj wnioski o szkolenia
+    async function loadTrainings() {
+      const container = document.getElementById('tab-trainings');
+      container.innerHTML = '<div class="loading">Ładowanie wniosków o szkolenia...</div>';
+      
+      try {
+        // Pobierz szkolenia ze statusem 'planned' (oczekujące na zatwierdzenie)
+        const res = await window.api.request('/hr-training/pending');
+        const trainings = res.trainings || [];
+        
+        if (trainings.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div style="font-size: 3rem;">🎓</div>
+              <h3>Brak oczekujących wniosków o szkolenia</h3>
+              <p>Wszystko aktualne!</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = trainings.map(t => `
+          <div class="request-card">
+            <div class="request-header">
+              <div>
+                <div class="request-title">${t.employee_name || 'Pracownik'}</div>
+                <div class="request-employee">${t.title}</div>
+              </div>
+              <span class="request-badge badge-training">🎓 Szkolenie</span>
+            </div>
+            
+            <div class="request-details">
+              <div class="detail-item">
+                <div class="detail-label">Typ szkolenia</div>
+                <div class="detail-value">${getTrainingType(t.training_type)}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Dostawca</div>
+                <div class="detail-value">${t.provider || '-'}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Koszt</div>
+                <div class="detail-value">${t.cost ? t.cost + ' PLN' : '-'}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Data rozpoczęcia</div>
+                <div class="detail-value">${t.start_date ? new Date(t.start_date).toLocaleDateString('pl-PL') : '-'}</div>
+              </div>
+            </div>
+            
+            ${t.description ? `<div style="padding: 10px; background: #e8f5e9; border-left: 3px solid #66BB6A; border-radius: 4px; margin: 10px 0;"><strong>Opis:</strong> ${t.description}</div>` : ''}
+            
+            <div class="request-actions">
+              <button class="btn btn-approve" onclick="approveTraining(${t.id})">
+                ✓ Zatwierdź
+              </button>
+              <button class="btn btn-reject" onclick="rejectTraining(${t.id})">
+                ✗ Odrzuć
+              </button>
+            </div>
+          </div>
+        `).join('');
+        
+      } catch (error) {
+        console.error('❌ Błąd ładowania szkoleń:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Błąd ładowania wniosków o szkolenia</h3>
+            <p>${error.message}</p>
+            <button onclick="loadTrainings()" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px;">
+              🔄 Spróbuj ponownie
+            </button>
+          </div>
+        `;
+      }
+    }
+    
+    // Załaduj wnioski o pracę zdalną
+    async function loadRemoteWork() {
+      const container = document.getElementById('tab-remote');
+      container.innerHTML = '<div class="loading">Ładowanie wniosków o pracę zdalną...</div>';
+      
+      try {
+        // Pobierz tickety z typem praca_zdalna lub remote
+        const res = await window.api.request('/tickets');
+        const allTickets = res.tickets || [];
+        
+        // Filtruj tylko wnioski o pracę zdalną które są nowe (oczekujące)
+        const remoteTickets = allTickets.filter(t => 
+          (t.ticket_type?.toLowerCase().includes('praca_zdalna') || 
+           t.ticket_type?.toLowerCase().includes('remote') ||
+           t.title?.toLowerCase().includes('praca zdalna')) &&
+          t.department?.toLowerCase() === 'hr' &&
+          t.status === 'Nowy'
+        );
+        
+        if (remoteTickets.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div style="font-size: 3rem;">🏠</div>
+              <h3>Brak oczekujących wniosków o pracę zdalną</h3>
+              <p>Wszystko aktualne!</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = remoteTickets.map(t => {
+          // Parsuj details
+          let details = {};
+          try {
+            if (typeof t.details === 'string') {
+              details = JSON.parse(t.details);
+              if (typeof details === 'string') details = JSON.parse(details);
+            } else {
+              details = t.details || {};
+            }
+          } catch (e) {
+            details = { opis: t.details };
+          }
+          
+          return `
+            <div class="request-card">
+              <div class="request-header">
+                <div>
+                  <div class="request-title">${t.requester_name || 'Pracownik'}</div>
+                  <div class="request-employee">${t.ticket_number}</div>
+                </div>
+                <span class="request-badge" style="background: #9C27B0; color: white;">🏠 Praca zdalna</span>
+              </div>
+              
+              <div class="request-details">
+                <div class="detail-item">
+                  <div class="detail-label">Data</div>
+                  <div class="detail-value">${details.date || details.dateFrom || '-'}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Powód</div>
+                  <div class="detail-value">${details.reason || details.powod || '-'}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Data zgłoszenia</div>
+                  <div class="detail-value">${t.created_at ? new Date(t.created_at).toLocaleDateString('pl-PL') : '-'}</div>
+                </div>
+              </div>
+              
+              <div class="request-actions">
+                <button class="btn btn-approve" onclick="approveRemoteWork(${t.id})">
+                  ✓ Zatwierdź
+                </button>
+                <button class="btn btn-reject" onclick="rejectRemoteWork(${t.id})">
+                  ✗ Odrzuć
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+        
+      } catch (error) {
+        console.error('❌ Błąd ładowania pracy zdalnej:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Błąd ładowania wniosków o pracę zdalną</h3>
+            <p>${error.message}</p>
+            <button onclick="loadRemoteWork()" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px;">
+              🔄 Spróbuj ponownie
+            </button>
+          </div>
+        `;
+      }
+    }
+    
+    // Zatwierdź pracę zdalną
+    async function approveRemoteWork(ticketId) {
+      if (!confirm('Czy na pewno chcesz zatwierdzić ten wniosek o pracę zdalną?')) return;
+      
+      try {
+        const res = await window.api.request(`/tickets/${ticketId}/hr-approve`, {
+          method: 'PUT',
+          body: JSON.stringify({ approved: true, hr_user_id: getCurrentUserId() })
+        });
+        if (res.success) {
+          alert('✅ Wniosek o pracę zdalną zatwierdzony!');
+          loadRemoteWork();
+          updateStats();
+        }
+      } catch (error) {
+        alert('❌ Błąd: ' + error.message);
+      }
+    }
+    
+    // Odrzuć pracę zdalną
+    async function rejectRemoteWork(ticketId) {
+      const reason = prompt('Podaj powód odrzucenia:');
+      if (!reason) return;
+      
+      try {
+        const res = await window.api.request(`/tickets/${ticketId}/hr-approve`, {
+          method: 'PUT',
+          body: JSON.stringify({ approved: false, hr_user_id: getCurrentUserId() })
+        });
+        
+        // Dodaj notatkę z powodem
+        await window.api.request(`/tickets/${ticketId}/status`, {
+          method: 'PUT',
+          body: JSON.stringify({ status: 'Odrzucony', admin_note: reason })
+        });
+        
+        if (res.success) {
+          alert('✅ Wniosek o pracę zdalną odrzucony');
+          loadRemoteWork();
+          updateStats();
+        }
+      } catch (error) {
+        alert('❌ Błąd: ' + error.message);
+      }
+    }
+    
+    // Helper: pobierz ID aktualnego użytkownika
+    function getCurrentUserId() {
+      try {
+        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        return user.id || user.userId || 1;
+      } catch (e) {
+        return 1;
+      }
+    }
+    
+    // Załaduj wnioski o zaświadczenia
+    async function loadCertificates() {
+      const container = document.getElementById('tab-certificates');
+      container.innerHTML = '<div class="loading">Ładowanie wniosków o zaświadczenia...</div>';
+      
+      try {
+        const res = await window.api.request('/tickets');
+        const allTickets = res.tickets || [];
+        
+        // Filtruj tylko wnioski o zaświadczenia które są nowe (oczekujące)
+        const certTickets = allTickets.filter(t => 
+          (t.ticket_type?.toLowerCase().includes('zaswiadczenie') || 
+           t.ticket_type?.toLowerCase().includes('certificate') ||
+           t.title?.toLowerCase().includes('zaświadczenie')) &&
+          t.department?.toLowerCase() === 'hr' &&
+          t.status === 'Nowy'
+        );
+        
+        if (certTickets.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div style="font-size: 3rem;">📄</div>
+              <h3>Brak oczekujących wniosków o zaświadczenia</h3>
+              <p>Wszystko aktualne!</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = certTickets.map(t => {
+          // Parsuj details
+          let details = {};
+          try {
+            if (typeof t.details === 'string') {
+              details = JSON.parse(t.details);
+              if (typeof details === 'string') details = JSON.parse(details);
+            } else {
+              details = t.details || {};
+            }
+          } catch (e) {
+            details = { opis: t.details };
+          }
+          
+          return `
+            <div class="request-card">
+              <div class="request-header">
+                <div>
+                  <div class="request-title">${t.requester_name || 'Pracownik'}</div>
+                  <div class="request-employee">${t.ticket_number}</div>
+                </div>
+                <span class="request-badge" style="background: #2196F3; color: white;">📄 Zaświadczenie</span>
+              </div>
+              
+              <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #4CAF50;">
+                <strong style="color: #2e7d32;">📋 Typ:</strong> 
+                <span style="font-weight: 600; color: #1a1a1a;">${details.certificateType || details.typZaswiadczenia || t.title || 'Nie określono'}</span>
+              </div>
+              
+              <div class="request-details">
+                <div class="detail-item">
+                  <div class="detail-label">Cel</div>
+                  <div class="detail-value">${details.purpose || details.cel || '-'}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Język</div>
+                  <div class="detail-value">${details.language || details.jezyk || 'Polski'}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Data zgłoszenia</div>
+                  <div class="detail-value">${t.created_at ? new Date(t.created_at).toLocaleDateString('pl-PL') : '-'}</div>
+                </div>
+              </div>
+              
+              ${details.additionalInfo ? `<div style="padding: 10px; background: #e3f2fd; border-left: 3px solid #2196F3; border-radius: 4px; margin: 10px 0;"><strong>Dodatkowe info:</strong> ${details.additionalInfo}</div>` : ''}
+              
+              <div class="request-actions">
+                <button class="btn btn-approve" onclick="approveCertificate(${t.id})">
+                  ✓ Zatwierdź
+                </button>
+                <button class="btn btn-reject" onclick="rejectCertificate(${t.id})">
+                  ✗ Odrzuć
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+        
+      } catch (error) {
+        console.error('❌ Błąd ładowania zaświadczeń:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Błąd ładowania wniosków o zaświadczenia</h3>
+            <p>${error.message}</p>
+            <button onclick="loadCertificates()" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px;">
+              🔄 Spróbuj ponownie
+            </button>
+          </div>
+        `;
+      }
+    }
+    
+    // Zatwierdź zaświadczenie - pokaż modal do generowania
+    async function approveCertificate(ticketId) {
+      // Pobierz dane ticketu
+      const res = await window.api.request('/tickets');
+      const ticket = res.tickets?.find(t => t.id === ticketId);
+      if (!ticket) {
+        alert('❌ Nie znaleziono ticketu');
+        return;
+      }
+      
+      // Parsuj details
+      let details = {};
+      try {
+        if (typeof ticket.details === 'string') {
+          details = JSON.parse(ticket.details);
+          if (typeof details === 'string') details = JSON.parse(details);
+        } else {
+          details = ticket.details || {};
+        }
+      } catch (e) {
+        details = {};
+      }
+      
+      // Pokaż modal do generowania zaświadczenia
+      showCertificateGeneratorModal(ticketId, ticket, details);
+    }
+    
+    // Modal generowania zaświadczenia
+    function showCertificateGeneratorModal(ticketId, ticket, details) {
+      const existingModal = document.getElementById('certGeneratorModal');
+      if (existingModal) existingModal.remove();
+      
+      const today = new Date().toISOString().split('T')[0];
+      
+      const modalHTML = `
+        <div id="certGeneratorModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;" onclick="if(event.target === this) this.remove()">
+          <div style="background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
+            <h3 style="margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px;">
+              📄 Generuj zaświadczenie
+            </h3>
+            
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+              <strong>Pracownik:</strong> ${ticket.requester_name || 'N/A'}<br>
+              <strong>Cel:</strong> ${details.purpose || details.cel || 'Nie podano'}<br>
+              <strong>Język:</strong> ${details.language || details.jezyk || 'Polski'}
+            </div>
+            
+            <div style="margin-bottom: 15px; padding: 12px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4CAF50;">
+              <strong style="color: #2e7d32;">📋 Pracownik wybrał:</strong><br>
+              <span style="font-size: 1.1rem; font-weight: 600; color: #1a1a1a;">${details.certificateType || details.typZaswiadczenia || 'Nie określono'}</span>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 600;">Typ zaświadczenia do wygenerowania</label>
+              <select id="certType" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                <optgroup label="📋 Zatrudnienie i zarobki">
+                  <option value="Zaświadczenie o zatrudnieniu" ${(details.certificateType || '').includes('zatrudnieniu') && !(details.certificateType || '').includes('zarobkach') ? 'selected' : ''}>Zaświadczenie o zatrudnieniu</option>
+                  <option value="Zaświadczenie o zarobkach" ${(details.certificateType || '').includes('zarobkach') && !(details.certificateType || '').includes('zatrudnieniu') ? 'selected' : ''}>Zaświadczenie o zarobkach</option>
+                  <option value="Zaświadczenie o zatrudnieniu i zarobkach" ${(details.certificateType || '').includes('zatrudnieniu i zarobkach') ? 'selected' : ''}>Zaświadczenie o zatrudnieniu i zarobkach</option>
+                  <option value="Zaświadczenie o dochodach (PIT)">Zaświadczenie o dochodach (PIT)</option>
+                </optgroup>
+                <optgroup label="📅 Staż i okres pracy">
+                  <option value="Zaświadczenie o stażu pracy" ${(details.certificateType || '').includes('stażu') ? 'selected' : ''}>Zaświadczenie o stażu pracy</option>
+                  <option value="Zaświadczenie o okresie zatrudnienia" ${(details.certificateType || '').includes('okresie') ? 'selected' : ''}>Zaświadczenie o okresie zatrudnienia</option>
+                  <option value="Świadectwo pracy (kopia)" ${(details.certificateType || '').includes('Świadectwo') ? 'selected' : ''}>Świadectwo pracy (kopia)</option>
+                </optgroup>
+                <optgroup label="🏥 Ubezpieczenia i ZUS">
+                  <option value="Zaświadczenie ZUS Z-3" ${(details.certificateType || '').includes('ZUS') ? 'selected' : ''}>Zaświadczenie ZUS Z-3</option>
+                  <option value="Zaświadczenie o odprowadzanych składkach" ${(details.certificateType || '').includes('składkach') ? 'selected' : ''}>Zaświadczenie o odprowadzanych składkach</option>
+                  <option value="Druk RMUA" ${(details.certificateType || '').includes('RMUA') ? 'selected' : ''}>Druk RMUA</option>
+                </optgroup>
+                <optgroup label="🏖️ Urlopy">
+                  <option value="Zaświadczenie o wykorzystanym urlopie" ${(details.certificateType || '').includes('urlopie') && !(details.certificateType || '').includes('macierzyńskim') ? 'selected' : ''}>Zaświadczenie o wykorzystanym urlopie</option>
+                  <option value="Zaświadczenie o urlopie macierzyńskim/rodzicielskim" ${(details.certificateType || '').includes('macierzyńskim') ? 'selected' : ''}>Zaświadczenie o urlopie macierzyńskim/rodzicielskim</option>
+                </optgroup>
+                <optgroup label="📝 Inne">
+                  <option value="Zaświadczenie do przedszkola/żłobka" ${(details.certificateType || '').includes('przedszkola') ? 'selected' : ''}>Zaświadczenie do przedszkola/żłobka</option>
+                  <option value="Zaświadczenie do MOPS/GOPS" ${(details.certificateType || '').includes('MOPS') ? 'selected' : ''}>Zaświadczenie do MOPS/GOPS</option>
+                  <option value="Zaświadczenie do sądu" ${(details.certificateType || '').includes('sądu') ? 'selected' : ''}>Zaświadczenie do sądu</option>
+                  <option value="Referencje/List polecający" ${(details.certificateType || '').includes('Referencje') ? 'selected' : ''}>Referencje/List polecający</option>
+                  <option value="Inne zaświadczenie" ${(details.certificateType || '').includes('Inne') ? 'selected' : ''}>Inne zaświadczenie</option>
+                </optgroup>
+              </select>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 600;">Data wystawienia</label>
+              <input type="date" id="certDate" value="${today}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 600;">Dodatkowe informacje (opcjonalne)</label>
+              <textarea id="certNotes" rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;" placeholder="Np. okres zatrudnienia, stanowisko..."></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+              <button onclick="document.getElementById('certGeneratorModal').remove()" 
+                      style="padding: 12px 24px; background: #999; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                Anuluj
+              </button>
+              <button onclick="generateAndApproveCertificate(${ticketId})" 
+                      style="padding: 12px 24px; background: #66BB6A; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                ✓ Wygeneruj i zatwierdź
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    
+    // Wygeneruj i zatwierdź zaświadczenie
+    async function generateAndApproveCertificate(ticketId) {
+      const certType = document.getElementById('certType').value;
+      const certDate = document.getElementById('certDate').value;
+      const certNotes = document.getElementById('certNotes').value;
+      
+      try {
+        // Zatwierdź ticket
+        await window.api.request(`/tickets/${ticketId}/hr-approve`, {
+          method: 'PUT',
+          body: JSON.stringify({ approved: true, hr_user_id: getCurrentUserId() })
+        });
+        
+        // Dodaj notatkę z informacją o wygenerowanym zaświadczeniu
+        const adminNote = `✅ Wygenerowano: ${certType}\n📅 Data wystawienia: ${certDate}\n${certNotes ? '📝 Notatka: ' + certNotes : ''}`;
+        
+        await window.api.request(`/tickets/${ticketId}/status`, {
+          method: 'PUT',
+          body: JSON.stringify({ 
+            status: 'Zakończony', 
+            admin_note: adminNote 
+          })
+        });
+        
+        document.getElementById('certGeneratorModal').remove();
+        alert('✅ Zaświadczenie wygenerowane i wniosek zatwierdzony!');
+        loadCertificates();
+        updateStats();
+        
+      } catch (error) {
+        alert('❌ Błąd: ' + error.message);
+      }
+    }
+    
+    // Odrzuć zaświadczenie
+    async function rejectCertificate(ticketId) {
+      const reason = prompt('Podaj powód odrzucenia:');
+      if (!reason) return;
+      
+      try {
+        const res = await window.api.request(`/tickets/${ticketId}/hr-approve`, {
+          method: 'PUT',
+          body: JSON.stringify({ approved: false, hr_user_id: getCurrentUserId() })
+        });
+        
+        await window.api.request(`/tickets/${ticketId}/status`, {
+          method: 'PUT',
+          body: JSON.stringify({ status: 'Odrzucony', admin_note: reason })
+        });
+        
+        if (res.success) {
+          alert('✅ Wniosek o zaświadczenie odrzucony');
+          loadCertificates();
+          updateStats();
+        }
+      } catch (error) {
+        alert('❌ Błąd: ' + error.message);
+      }
+    }
+    
+    // Zatwierdź szkolenie - z modalem na notatkę
+    function approveTraining(trainingId) {
+      showApprovalModal('training', trainingId, 'Zatwierdź szkolenie', 'Notatka dla pracownika (opcjonalna):', async (notes) => {
+        try {
+          const res = await window.api.request(`/hr-training/${trainingId}/approve`, { 
+            method: 'POST',
+            body: JSON.stringify({ approval_notes: notes })
+          });
+          if (res.success) {
+            alert('✅ Szkolenie zatwierdzone!');
+            loadTrainings();
+          }
+        } catch (error) {
+          alert('❌ Błąd: ' + error.message);
+        }
+      });
+    }
+    
+    // Odrzuć szkolenie - z modalem na powód
+    function rejectTraining(trainingId) {
+      showApprovalModal('training', trainingId, 'Odrzuć szkolenie', 'Powód odrzucenia (wymagany):', async (reason) => {
+        if (!reason) {
+          alert('Musisz podać powód odrzucenia!');
+          return;
+        }
+        try {
+          const res = await window.api.request(`/hr-training/${trainingId}/reject`, {
+            method: 'POST',
+            body: JSON.stringify({ rejection_reason: reason })
+          });
+          if (res.success) {
+            alert('✅ Szkolenie odrzucone');
+            loadTrainings();
+          }
+        } catch (error) {
+          alert('❌ Błąd: ' + error.message);
+        }
+      }, true);
+    }
+    
+    // Uniwersalny modal do zatwierdzania/odrzucania
+    function showApprovalModal(type, id, title, label, onSubmit, required = false) {
+      const existingModal = document.getElementById('approvalModal');
+      if (existingModal) existingModal.remove();
+      
+      const modalHTML = `
+        <div id="approvalModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;" onclick="if(event.target === this) this.remove()">
+          <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%;" onclick="event.stopPropagation()">
+            <h3 style="margin: 0 0 20px 0;">${title}</h3>
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 600;">${label}</label>
+              <textarea id="approvalNotes" rows="4" ${required ? 'required' : ''} 
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;"
+                        placeholder="${required ? 'Podaj powód...' : 'Opcjonalna notatka...'}"></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+              <button onclick="document.getElementById('approvalModal').remove()" 
+                      style="padding: 10px 20px; background: #999; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                Anuluj
+              </button>
+              <button id="approvalSubmitBtn" 
+                      style="padding: 10px 20px; background: ${required ? '#EF5350' : '#66BB6A'}; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                ${required ? '✗ Odrzuć' : '✓ Zatwierdź'}
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+      
+      document.getElementById('approvalSubmitBtn').onclick = () => {
+        const notes = document.getElementById('approvalNotes').value.trim();
+        document.getElementById('approvalModal').remove();
+        onSubmit(notes);
+      };
+      
+      document.getElementById('approvalNotes').focus();
+    }
+    
+    // Helper: typ szkolenia
+    function getTrainingType(type) {
+      const types = {
+        'course': '📚 Kurs',
+        'certification': '📜 Certyfikacja',
+        'conference': '🎤 Konferencja',
+        'workshop': '🛠️ Warsztat',
+        'webinar': '💻 Webinar',
+        'other': '📝 Inne'
+      };
+      return types[type] || type;
+    }
+    
+    // Załaduj dokumenty do weryfikacji
+    async function loadDocuments() {
+      const container = document.getElementById('tab-documents');
+      container.innerHTML = '<div class="loading">Ładowanie dokumentów...</div>';
+      
+      try {
+        const res = await window.api.request('/hr-documents/pending');
+        const documents = res.documents || [];
+        
+        if (documents.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div style="font-size: 3rem;">📄</div>
+              <h3>Brak dokumentów do weryfikacji</h3>
+              <p>Wszystko aktualne!</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = documents.map(d => `
+          <div class="request-card">
+            <div class="request-header">
+              <div>
+                <div class="request-title">${d.employee_name || 'Pracownik'}</div>
+                <div class="request-employee">${d.title}</div>
+              </div>
+              <span class="request-badge badge-document">📄 Dokument</span>
+            </div>
+            
+            <div class="request-details">
+              <div class="detail-item">
+                <div class="detail-label">Typ dokumentu</div>
+                <div class="detail-value">${getDocumentType(d.document_type)}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Data wystawienia</div>
+                <div class="detail-value">${d.issue_date ? new Date(d.issue_date).toLocaleDateString('pl-PL') : '-'}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Ważny do</div>
+                <div class="detail-value">${d.expiry_date ? new Date(d.expiry_date).toLocaleDateString('pl-PL') : '-'}</div>
+              </div>
+            </div>
+            
+            <div class="request-actions">
+              <a href="/api/hr-documents/${d.id}/download" target="_blank" class="btn btn-view">📥 Pobierz</a>
+              <button class="btn btn-approve" onclick="verifyDocument(${d.id})">✓ Zweryfikuj</button>
+            </div>
+          </div>
+        `).join('');
+        
+      } catch (error) {
+        console.error('❌ Błąd ładowania dokumentów:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Błąd ładowania dokumentów</h3>
+            <p>${error.message}</p>
+            <button onclick="loadDocuments()" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px;">
+              🔄 Spróbuj ponownie
+            </button>
+          </div>
+        `;
+      }
+    }
+    
+    // Zweryfikuj dokument
+    async function verifyDocument(docId) {
+      if (!confirm('Czy potwierdzasz weryfikację tego dokumentu?')) return;
+      
+      try {
+        const res = await window.api.request(`/hr-documents/${docId}/verify`, { method: 'POST' });
+        if (res.success) {
+          alert('✅ Dokument zweryfikowany!');
+          loadDocuments();
+        }
+      } catch (error) {
+        alert('❌ Błąd: ' + error.message);
+      }
+    }
+    
+    // Helper: typ dokumentu
+    function getDocumentType(type) {
+      const types = {
+        'contract': '📝 Umowa',
+        'annex': '📑 Aneks',
+        'certificate': '🎓 Certyfikat',
+        'diploma': '🎓 Dyplom',
+        'id_card': '🪪 Dowód',
+        'medical_exam': '🏥 Badania',
+        'safety_training': '⚠️ BHP',
+        'nda': '🔒 NDA',
+        'other': '📄 Inne'
+      };
+      return types[type] || type;
+    }
+    
+    // Załaduj wszystkie tickety HR
+    async function loadAllTickets() {
+      const container = document.getElementById('tab-tickets');
+      container.innerHTML = '<div class="loading">Ładowanie ticketów HR...</div>';
+      
+      try {
+        const res = await window.api.request('/tickets?department=HR');
+        const tickets = res.tickets || [];
+        
+        if (tickets.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div style="font-size: 3rem;">🎫</div>
+              <h3>Brak ticketów HR</h3>
+              <p>Brak zgłoszeń do obsługi</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = tickets.map(t => `
+          <div class="request-card">
+            <div class="request-header">
+              <div>
+                <div class="request-title">${t.title}</div>
+                <div class="request-employee">${t.user_name || ''} • ${t.ticket_number}</div>
+              </div>
+              <span class="request-badge" style="background: ${getTicketStatusColor(t.status)}; color: white;">
+                ${t.status}
+              </span>
+            </div>
+            
+            <div class="request-details">
+              <div class="detail-item">
+                <div class="detail-label">Typ</div>
+                <div class="detail-value">${t.ticket_type || '-'}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Priorytet</div>
+                <div class="detail-value">${t.priority || 'normal'}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Data utworzenia</div>
+                <div class="detail-value">${new Date(t.created_at).toLocaleDateString('pl-PL')}</div>
+              </div>
+            </div>
+            
+            ${t.details ? `<div style="padding: 10px; background: #f5f5f5; border-radius: 4px; margin: 10px 0; font-size: 0.9rem;">${t.details}</div>` : ''}
+          </div>
+        `).join('');
+        
+      } catch (error) {
+        console.error('❌ Błąd ładowania ticketów:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Błąd ładowania ticketów</h3>
+            <p>${error.message}</p>
+            <button onclick="loadAllTickets()" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px;">
+              🔄 Spróbuj ponownie
+            </button>
+          </div>
+        `;
+      }
+    }
+    
+    // Helper: kolor statusu ticketu
+    function getTicketStatusColor(status) {
+      const colors = {
+        'Nowy': '#FFA726',
+        'W trakcie': '#42A5F5',
+        'Rozwiązany': '#66BB6A',
+        'Zamknięty': '#78909C',
+        'open': '#FFA726',
+        'in_progress': '#42A5F5',
+        'resolved': '#66BB6A',
+        'closed': '#78909C'
+      };
+      return colors[status] || '#999';
+    }
+    
+    // ============ GRAFIK PRACY ============
+    let currentScheduleYear = new Date().getFullYear();
+    let currentScheduleMonth = new Date().getMonth() + 1;
+    let scheduleData = null;
+    
+    const SCHEDULE_STATUSES = {
+      'praca': { label: 'W pracy', color: '#4CAF50', icon: '🏢' },
+      'zdalna': { label: 'Praca zdalna', color: '#2196F3', icon: '🏠' },
+      'urlop': { label: 'Urlop', color: '#FF9800', icon: '🏖️' },
+      'choroba': { label: 'Zwolnienie L4', color: '#F44336', icon: '🏥' },
+      'wolne': { label: 'Dzień wolny', color: '#9C27B0', icon: '📅' },
+      'nieobecny': { label: 'Nieobecny', color: '#757575', icon: '❌' },
+      'delegacja': { label: 'Delegacja', color: '#00BCD4', icon: '✈️' }
+    };
+    
+    async function loadSchedule() {
+      const container = document.getElementById('tab-schedule');
+      container.innerHTML = '<div class="loading">Ładowanie grafiku pracy...</div>';
+      
+      try {
+        const res = await window.api.request(`/work-schedule/month/${currentScheduleYear}/${currentScheduleMonth}`);
+        scheduleData = res;
+        
+        const monthNames = ['', 'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 
+                           'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+        const dayNames = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So'];
+        
+        // Grupuj dane po użytkownikach
+        const userSchedules = {};
+        res.users.forEach(u => {
+          userSchedules[u.id] = {
+            user: u,
+            days: res.schedule.filter(s => s.user_id === u.id)
+          };
+        });
+        
+        // Oblicz statystyki dnia dzisiejszego
+        const today = new Date().toISOString().split('T')[0];
+        const todaySchedule = res.schedule.filter(s => s.date === today);
+        
+        // Jeśli brak wpisów na dziś, policz z użytkowników (domyślnie wszyscy w pracy w dni robocze)
+        const dayOfWeek = new Date().getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        
+        const todayStats = {
+          atWork: todaySchedule.length > 0 
+            ? todaySchedule.filter(s => s.status === 'praca').length 
+            : (isWeekend ? 0 : res.users.length),
+          remote: todaySchedule.filter(s => s.status === 'zdalna').length,
+          vacation: todaySchedule.filter(s => s.status === 'urlop').length,
+          sick: todaySchedule.filter(s => s.status === 'choroba').length,
+          absent: isWeekend && todaySchedule.length === 0 
+            ? res.users.length 
+            : todaySchedule.filter(s => ['nieobecny', 'wolne', 'delegacja'].includes(s.status)).length
+        };
+        
+        container.innerHTML = `
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <div style="display: flex; align-items: center; gap: 15px;">
+                <button onclick="changeScheduleMonth(-1)" style="padding: 10px 15px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2rem;">◀</button>
+                <h2 style="margin: 0; min-width: 200px; text-align: center;">${monthNames[currentScheduleMonth]} ${currentScheduleYear}</h2>
+                <button onclick="changeScheduleMonth(1)" style="padding: 10px 15px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2rem;">▶</button>
+              </div>
+              <button onclick="showTodayView()" style="padding: 10px 20px; background: #10B981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                📅 Widok dzisiejszy
+              </button>
+            </div>
+            
+            <!-- Statystyki dzisiejsze -->
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px;">
+              <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 2rem; font-weight: bold; color: #4CAF50;">${todayStats.atWork}</div>
+                <div style="color: #2e7d32;">🏢 W pracy</div>
+              </div>
+              <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 2rem; font-weight: bold; color: #2196F3;">${todayStats.remote}</div>
+                <div style="color: #1565c0;">🏠 Zdalnie</div>
+              </div>
+              <div style="background: #fff3e0; padding: 15px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 2rem; font-weight: bold; color: #FF9800;">${todayStats.vacation}</div>
+                <div style="color: #e65100;">🏖️ Urlop</div>
+              </div>
+              <div style="background: #ffebee; padding: 15px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 2rem; font-weight: bold; color: #F44336;">${todayStats.sick}</div>
+                <div style="color: #c62828;">🏥 Choroba</div>
+              </div>
+              <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 2rem; font-weight: bold; color: #9C27B0;">${todayStats.absent}</div>
+                <div style="color: #6a1b9a;">❌ Nieobecni</div>
+              </div>
+            </div>
+            
+            <!-- Legenda -->
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 8px;">
+              ${Object.entries(SCHEDULE_STATUSES).map(([key, val]) => `
+                <span style="display: flex; align-items: center; gap: 5px;">
+                  <span style="width: 20px; height: 20px; background: ${val.color}; border-radius: 4px;"></span>
+                  ${val.icon} ${val.label}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+          
+          <!-- Tabela grafiku -->
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+              <thead>
+                <tr style="background: #f5f5f5;">
+                  <th style="padding: 10px; border: 1px solid #ddd; position: sticky; left: 0; background: #f5f5f5; min-width: 150px;">Pracownik</th>
+                  ${Array.from({length: new Date(currentScheduleYear, currentScheduleMonth, 0).getDate()}, (_, i) => {
+                    const date = new Date(currentScheduleYear, currentScheduleMonth - 1, i + 1);
+                    const dayOfWeek = date.getDay();
+                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                    const isToday = date.toISOString().split('T')[0] === today;
+                    return `<th style="padding: 5px; border: 1px solid #ddd; min-width: 35px; text-align: center; ${isWeekend ? 'background: #ffebee;' : ''} ${isToday ? 'background: #bbdefb; font-weight: bold;' : ''}">
+                      <div style="font-size: 0.7rem; color: #666;">${dayNames[dayOfWeek]}</div>
+                      <div>${i + 1}</div>
+                    </th>`;
+                  }).join('')}
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.values(userSchedules).map(({user, days}) => `
+                  <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd; position: sticky; left: 0; background: white; font-weight: 500;">
+                      ${user.name}
+                      <div style="font-size: 0.75rem; color: #666;">${user.department || ''}</div>
+                    </td>
+                    ${days.map(day => {
+                      const statusInfo = SCHEDULE_STATUSES[day.status] || SCHEDULE_STATUSES['praca'];
+                      const isToday = day.date === today;
+                      return `
+                        <td onclick="editScheduleEntry(${user.id}, '${day.date}', '${day.status}')" 
+                            style="padding: 2px; border: 1px solid #ddd; text-align: center; cursor: pointer; background: ${statusInfo.color}20; ${isToday ? 'box-shadow: inset 0 0 0 2px #1976D2;' : ''}"
+                            title="${user.name} - ${day.date}\n${statusInfo.label}${day.notes ? '\n' + day.notes : ''}">
+                          <span style="font-size: 0.9rem;">${statusInfo.icon}</span>
+                        </td>
+                      `;
+                    }).join('')}
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+        
+      } catch (error) {
+        console.error('❌ Błąd ładowania grafiku:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Błąd ładowania grafiku</h3>
+            <p>${error.message}</p>
+            <button onclick="loadSchedule()" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px;">
+              🔄 Spróbuj ponownie
+            </button>
+          </div>
+        `;
+      }
+    }
+    
+    function changeScheduleMonth(delta) {
+      currentScheduleMonth += delta;
+      if (currentScheduleMonth > 12) {
+        currentScheduleMonth = 1;
+        currentScheduleYear++;
+      } else if (currentScheduleMonth < 1) {
+        currentScheduleMonth = 12;
+        currentScheduleYear--;
+      }
+      loadSchedule();
+    }
+    
+    function editScheduleEntry(userId, date, currentStatus) {
+      const user = scheduleData.users.find(u => u.id === userId);
+      const statusOptions = Object.entries(SCHEDULE_STATUSES).map(([key, val]) => 
+        `<option value="${key}" ${key === currentStatus ? 'selected' : ''}>${val.icon} ${val.label}</option>`
+      ).join('');
+      
+      const modalHTML = `
+        <div id="editScheduleModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+          <div style="background: white; border-radius: 12px; padding: 30px; max-width: 400px; width: 90%;">
+            <h3 style="margin: 0 0 20px 0;">📅 Edytuj grafik</h3>
+            
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+              <strong>${user?.name || 'Pracownik'}</strong><br>
+              <span style="color: #666;">${date}</span>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 600;">Status</label>
+              <select id="scheduleStatus" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                ${statusOptions}
+              </select>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 600;">Godzina rozpoczęcia</label>
+              <input type="time" id="scheduleStartTime" value="09:00" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 600;">Godzina zakończenia</label>
+              <input type="time" id="scheduleEndTime" value="17:00" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 600;">Notatka (opcjonalna)</label>
+              <textarea id="scheduleNotes" rows="2" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;" placeholder="Np. powód nieobecności..."></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+              <button onclick="document.getElementById('editScheduleModal').remove()" 
+                      style="padding: 12px 24px; background: #999; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                Anuluj
+              </button>
+              <button onclick="saveScheduleEntry(${userId}, '${date}')" 
+                      style="padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                💾 Zapisz
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    
+    async function saveScheduleEntry(userId, date) {
+      const status = document.getElementById('scheduleStatus').value;
+      const startTime = document.getElementById('scheduleStartTime').value;
+      const endTime = document.getElementById('scheduleEndTime').value;
+      const notes = document.getElementById('scheduleNotes').value;
+      
+      try {
+        await window.api.request('/work-schedule/entry', {
+          method: 'PUT',
+          body: JSON.stringify({
+            user_id: userId,
+            date: date,
+            status: status,
+            start_time: startTime,
+            end_time: endTime,
+            notes: notes
+          })
+        });
+        
+        document.getElementById('editScheduleModal').remove();
+        loadSchedule();
+        
+      } catch (error) {
+        alert('❌ Błąd: ' + error.message);
+      }
+    }
+    
+    async function showTodayView() {
+      const today = new Date().toISOString().split('T')[0];
+      const container = document.getElementById('tab-schedule');
+      container.innerHTML = '<div class="loading">Ładowanie widoku dzisiejszego...</div>';
+      
+      try {
+        const res = await window.api.request(`/work-schedule/day/${today}`);
+        
+        container.innerHTML = `
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h2 style="margin: 0;">📅 Dzisiaj: ${new Date().toLocaleDateString('pl-PL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
+              <button onclick="loadSchedule()" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                📆 Widok miesięczny
+              </button>
+            </div>
+            
+            <!-- Statystyki -->
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px;">
+              <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: bold; color: #4CAF50;">${res.stats.atWork}</div>
+                <div style="color: #2e7d32; font-weight: 600;">🏢 W pracy</div>
+              </div>
+              <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: bold; color: #2196F3;">${res.stats.remote}</div>
+                <div style="color: #1565c0; font-weight: 600;">🏠 Zdalnie</div>
+              </div>
+              <div style="background: #fff3e0; padding: 20px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: bold; color: #FF9800;">${res.stats.vacation}</div>
+                <div style="color: #e65100; font-weight: 600;">🏖️ Urlop</div>
+              </div>
+              <div style="background: #ffebee; padding: 20px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: bold; color: #F44336;">${res.stats.sick}</div>
+                <div style="color: #c62828; font-weight: 600;">🏥 Choroba</div>
+              </div>
+              <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: bold; color: #9C27B0;">${res.stats.absent}</div>
+                <div style="color: #6a1b9a; font-weight: 600;">❌ Nieobecni</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Lista pracowników -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+            ${res.schedule.map(s => `
+              <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid ${SCHEDULE_STATUSES[s.status].color};">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                  <div>
+                    <div style="font-weight: 600; font-size: 1.1rem;">${s.user_name}</div>
+                    <div style="color: #666; font-size: 0.9rem;">${s.department || ''} ${s.position ? '• ' + s.position : ''}</div>
+                  </div>
+                  <span style="padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; background: ${SCHEDULE_STATUSES[s.status].color}; color: white;">
+                    ${SCHEDULE_STATUSES[s.status].icon} ${SCHEDULE_STATUSES[s.status].label}
+                  </span>
+                </div>
+                ${s.status === 'praca' || s.status === 'zdalna' ? `
+                  <div style="margin-top: 10px; color: #333; font-size: 0.9rem;">
+                    ⏰ ${s.start_time} - ${s.end_time} (przerwa: ${s.break_minutes} min)
+                  </div>
+                ` : ''}
+                ${s.notes ? `<div style="margin-top: 8px; padding: 8px; background: #f5f5f5; border-radius: 4px; font-size: 0.85rem;">📝 ${s.notes}</div>` : ''}
+                <button onclick="editScheduleEntry(${s.user_id}, '${today}', '${s.status}')" 
+                        style="margin-top: 10px; padding: 6px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">
+                  ✏️ Edytuj
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        
+      } catch (error) {
+        console.error('❌ Błąd:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Błąd ładowania</h3>
+            <p>${error.message}</p>
+            <button onclick="loadSchedule()" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer;">
+              🔄 Spróbuj ponownie
+            </button>
+          </div>
+        `;
+      }
+    }
+    
+    // ============ RAPORT OBECNOŚCI ============
+    let reportYear = new Date().getFullYear();
+    let reportMonth = new Date().getMonth() + 1;
+    
+    async function loadScheduleReport() {
+      const container = document.getElementById('tab-schedule-report');
+      container.innerHTML = '<div class="loading">Generowanie raportu...</div>';
+      
+      try {
+        const res = await window.api.request(`/work-schedule/month/${reportYear}/${String(reportMonth).padStart(2, '0')}`);
+        
+        const monthNames = ['', 'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 
+                           'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+        
+        // Oblicz statystyki dla każdego pracownika
+        const userStats = res.users.map(user => {
+          const userSchedule = res.schedule.filter(s => s.user_id === user.id);
+          
+          const workDays = userSchedule.filter(s => s.status === 'praca').length;
+          const remoteDays = userSchedule.filter(s => s.status === 'zdalna').length;
+          const vacationDays = userSchedule.filter(s => s.status.startsWith('urlop')).length;
+          const sickDays = userSchedule.filter(s => s.status === 'choroba').length;
+          const absentDays = userSchedule.filter(s => s.status === 'nieobecny').length;
+          const delegationDays = userSchedule.filter(s => s.status === 'delegacja').length;
+          const freeDays = userSchedule.filter(s => s.status === 'wolne').length;
+          
+          // Oblicz godziny pracy (8h na dzień roboczy)
+          const workHours = (workDays + remoteDays) * 8;
+          
+          return {
+            ...user,
+            workDays,
+            remoteDays,
+            vacationDays,
+            sickDays,
+            absentDays,
+            delegationDays,
+            freeDays,
+            workHours,
+            totalActiveDays: workDays + remoteDays + delegationDays
+          };
+        });
+        
+        // Podsumowanie ogólne
+        const totalStats = {
+          totalWorkDays: userStats.reduce((sum, u) => sum + u.workDays, 0),
+          totalRemoteDays: userStats.reduce((sum, u) => sum + u.remoteDays, 0),
+          totalVacationDays: userStats.reduce((sum, u) => sum + u.vacationDays, 0),
+          totalSickDays: userStats.reduce((sum, u) => sum + u.sickDays, 0),
+          totalAbsentDays: userStats.reduce((sum, u) => sum + u.absentDays, 0),
+          totalWorkHours: userStats.reduce((sum, u) => sum + u.workHours, 0)
+        };
+        
+        container.innerHTML = `
+          <div style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+              <div style="display: flex; align-items: center; gap: 15px;">
+                <button onclick="changeReportMonth(-1)" style="padding: 10px 15px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2rem;">◀</button>
+                <h2 style="margin: 0; min-width: 250px; text-align: center;">📊 Raport: ${monthNames[reportMonth]} ${reportYear}</h2>
+                <button onclick="changeReportMonth(1)" style="padding: 10px 15px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2rem;">▶</button>
+              </div>
+              <button onclick="exportReportCSV()" style="padding: 10px 20px; background: #10B981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                📥 Eksportuj CSV
+              </button>
+            </div>
+            
+            <!-- Podsumowanie ogólne -->
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-bottom: 30px;">
+              <div style="background: linear-gradient(135deg, #4CAF50, #66BB6A); padding: 20px; border-radius: 12px; text-align: center; color: white;">
+                <div style="font-size: 2rem; font-weight: bold;">${totalStats.totalWorkDays}</div>
+                <div>🏢 Dni w biurze</div>
+              </div>
+              <div style="background: linear-gradient(135deg, #2196F3, #42A5F5); padding: 20px; border-radius: 12px; text-align: center; color: white;">
+                <div style="font-size: 2rem; font-weight: bold;">${totalStats.totalRemoteDays}</div>
+                <div>🏠 Dni zdalnie</div>
+              </div>
+              <div style="background: linear-gradient(135deg, #FF9800, #FFB74D); padding: 20px; border-radius: 12px; text-align: center; color: white;">
+                <div style="font-size: 2rem; font-weight: bold;">${totalStats.totalVacationDays}</div>
+                <div>🏖️ Dni urlopu</div>
+              </div>
+              <div style="background: linear-gradient(135deg, #F44336, #EF5350); padding: 20px; border-radius: 12px; text-align: center; color: white;">
+                <div style="font-size: 2rem; font-weight: bold;">${totalStats.totalSickDays}</div>
+                <div>🏥 Dni choroby</div>
+              </div>
+              <div style="background: linear-gradient(135deg, #757575, #9E9E9E); padding: 20px; border-radius: 12px; text-align: center; color: white;">
+                <div style="font-size: 2rem; font-weight: bold;">${totalStats.totalAbsentDays}</div>
+                <div>❌ Nieobecności</div>
+              </div>
+              <div style="background: linear-gradient(135deg, #9C27B0, #AB47BC); padding: 20px; border-radius: 12px; text-align: center; color: white;">
+                <div style="font-size: 2rem; font-weight: bold;">${totalStats.totalWorkHours}h</div>
+                <div>⏰ Godzin pracy</div>
+              </div>
+            </div>
+            
+            <!-- Tabela szczegółowa -->
+            <div style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="background: #f8f9fa;">
+                    <th style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6;">Pracownik</th>
+                    <th style="padding: 15px; text-align: center; border-bottom: 2px solid #dee2e6;">🏢 Biuro</th>
+                    <th style="padding: 15px; text-align: center; border-bottom: 2px solid #dee2e6;">🏠 Zdalnie</th>
+                    <th style="padding: 15px; text-align: center; border-bottom: 2px solid #dee2e6;">🏖️ Urlop</th>
+                    <th style="padding: 15px; text-align: center; border-bottom: 2px solid #dee2e6;">🏥 Choroba</th>
+                    <th style="padding: 15px; text-align: center; border-bottom: 2px solid #dee2e6;">✈️ Delegacja</th>
+                    <th style="padding: 15px; text-align: center; border-bottom: 2px solid #dee2e6;">❌ Nieobecny</th>
+                    <th style="padding: 15px; text-align: center; border-bottom: 2px solid #dee2e6;">⏰ Godziny</th>
+                    <th style="padding: 15px; text-align: center; border-bottom: 2px solid #dee2e6;">📊 Aktywność</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${userStats.map(user => {
+                    const daysInMonth = new Date(reportYear, reportMonth, 0).getDate();
+                    const workingDays = daysInMonth - user.freeDays; // Dni robocze
+                    const activityPercent = workingDays > 0 ? Math.round((user.totalActiveDays / workingDays) * 100) : 0;
+                    const activityColor = activityPercent >= 90 ? '#4CAF50' : activityPercent >= 70 ? '#FF9800' : '#F44336';
+                    
+                    return `
+                      <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 12px 15px;">
+                          <strong>${user.name}</strong>
+                          <div style="font-size: 0.8rem; color: #666;">${user.department || user.email}</div>
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                          <span style="background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 20px; font-weight: 600;">${user.workDays}</span>
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                          <span style="background: #e3f2fd; color: #1565c0; padding: 4px 12px; border-radius: 20px; font-weight: 600;">${user.remoteDays}</span>
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                          <span style="background: #fff3e0; color: #e65100; padding: 4px 12px; border-radius: 20px; font-weight: 600;">${user.vacationDays}</span>
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                          <span style="background: ${user.sickDays > 0 ? '#ffebee' : '#f5f5f5'}; color: ${user.sickDays > 0 ? '#c62828' : '#999'}; padding: 4px 12px; border-radius: 20px; font-weight: 600;">${user.sickDays}</span>
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                          <span style="background: #e0f7fa; color: #00838f; padding: 4px 12px; border-radius: 20px; font-weight: 600;">${user.delegationDays}</span>
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                          <span style="background: ${user.absentDays > 0 ? '#ffebee' : '#f5f5f5'}; color: ${user.absentDays > 0 ? '#c62828' : '#999'}; padding: 4px 12px; border-radius: 20px; font-weight: 600;">${user.absentDays}</span>
+                        </td>
+                        <td style="padding: 12px; text-align: center; font-weight: 600;">${user.workHours}h</td>
+                        <td style="padding: 12px; text-align: center;">
+                          <div style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+                            <div style="width: 60px; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                              <div style="width: ${activityPercent}%; height: 100%; background: ${activityColor};"></div>
+                            </div>
+                            <span style="font-weight: 600; color: ${activityColor};">${activityPercent}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Legenda -->
+            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+              <strong>📌 Legenda:</strong>
+              <span style="margin-left: 15px;">Aktywność = (Dni w biurze + Zdalnie + Delegacja) / Dni robocze × 100%</span>
+              <span style="margin-left: 20px; color: #4CAF50;">● ≥90% Świetnie</span>
+              <span style="margin-left: 10px; color: #FF9800;">● 70-89% OK</span>
+              <span style="margin-left: 10px; color: #F44336;">● <70% Uwaga</span>
+            </div>
+          </div>
+        `;
+        
+        // Zapisz dane do eksportu
+        window.reportData = { userStats, reportYear, reportMonth, monthNames };
+        
+      } catch (error) {
+        console.error('❌ Błąd ładowania raportu:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Błąd ładowania raportu</h3>
+            <p>${error.message}</p>
+            <button onclick="loadScheduleReport()" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer;">
+              🔄 Spróbuj ponownie
+            </button>
+          </div>
+        `;
+      }
+    }
+    
+    function changeReportMonth(delta) {
+      reportMonth += delta;
+      if (reportMonth > 12) {
+        reportMonth = 1;
+        reportYear++;
+      } else if (reportMonth < 1) {
+        reportMonth = 12;
+        reportYear--;
+      }
+      loadScheduleReport();
+    }
+    
+    function exportReportCSV() {
+      if (!window.reportData) {
+        alert('Brak danych do eksportu');
+        return;
+      }
+      
+      const { userStats, reportYear, reportMonth, monthNames } = window.reportData;
+      
+      let csv = 'Pracownik,Email,Dni w biurze,Dni zdalnie,Urlop,Choroba,Delegacja,Nieobecność,Godziny pracy,Aktywność %\n';
+      
+      userStats.forEach(user => {
+        const daysInMonth = new Date(reportYear, reportMonth, 0).getDate();
+        const workingDays = daysInMonth - user.freeDays;
+        const activityPercent = workingDays > 0 ? Math.round((user.totalActiveDays / workingDays) * 100) : 0;
+        
+        csv += `"${user.name}","${user.email}",${user.workDays},${user.remoteDays},${user.vacationDays},${user.sickDays},${user.delegationDays},${user.absentDays},${user.workHours},${activityPercent}\n`;
+      });
+      
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `raport_obecnosci_${monthNames[reportMonth]}_${reportYear}.csv`;
+      link.click();
+    }
+    
+    // ============ REZERWACJE BIURA ============
+    let bookingsDate = new Date().toISOString().split('T')[0];
+    let bookingsViewMode = 'day';
+    let bookingsYear = new Date().getFullYear();
+    let bookingsMonth = new Date().getMonth() + 1;
+    
+    async function loadOfficeBookings() {
+      const container = document.getElementById('tab-office-bookings');
+      container.innerHTML = '<div class="loading">Ładowanie rezerwacji...</div>';
+      
+      try {
+        const [resourcesRes, bookingsRes, summaryRes] = await Promise.all([
+          window.api.request('/office-booking/resources'),
+          window.api.request(`/office-booking/bookings/${bookingsDate}`),
+          window.api.request(`/office-booking/summary/${bookingsDate}`)
+        ]);
+        
+        const resources = resourcesRes.resources || [];
+        const bookings = bookingsRes.bookings || [];
+        const summary = summaryRes;
+        
+        const formattedDate = new Date(bookingsDate).toLocaleDateString('pl-PL', { 
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+        });
+        
+        container.innerHTML = `
+          <div style="padding: 20px;">
+            <!-- Przełącznik widoku -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+              <button onclick="bookingsViewMode = 'day'; loadOfficeBookings();" 
+                      style="padding: 10px 20px; background: ${bookingsViewMode === 'day' ? '#3B82F6' : '#e0e0e0'}; color: ${bookingsViewMode === 'day' ? 'white' : '#333'}; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                📅 Widok dzienny
+              </button>
+              <button onclick="bookingsViewMode = 'month'; loadOfficeBookingsMonth();" 
+                      style="padding: 10px 20px; background: ${bookingsViewMode === 'month' ? '#3B82F6' : '#e0e0e0'}; color: ${bookingsViewMode === 'month' ? 'white' : '#333'}; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                📆 Widok miesięczny
+              </button>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+              <div style="display: flex; align-items: center; gap: 15px;">
+                <button onclick="changeBookingsDate(-1)" style="padding: 10px 15px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2rem;">◀</button>
+                <div>
+                  <h2 style="margin: 0;">🏢 Rezerwacje biura</h2>
+                  <p style="margin: 5px 0 0 0; color: #666;">${formattedDate}</p>
+                </div>
+                <button onclick="changeBookingsDate(1)" style="padding: 10px 15px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2rem;">▶</button>
+              </div>
+              <input type="date" value="${bookingsDate}" onchange="bookingsDate = this.value; loadOfficeBookings();" 
+                     style="padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
+            </div>
+            
+            <!-- Podsumowanie -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px;">
+              <div style="background: linear-gradient(135deg, #4CAF50, #66BB6A); padding: 20px; border-radius: 12px; text-align: center; color: white;">
+                <div style="font-size: 2rem; font-weight: bold;">${summary.desks?.available || 0}/${summary.desks?.total || 3}</div>
+                <div>🪑 Biurka wolne</div>
+              </div>
+              <div style="background: linear-gradient(135deg, #2196F3, #42A5F5); padding: 20px; border-radius: 12px; text-align: center; color: white;">
+                <div style="font-size: 2rem; font-weight: bold;">${summary.desks?.booked || 0}</div>
+                <div>🪑 Biurka zajęte</div>
+              </div>
+              <div style="background: linear-gradient(135deg, #9C27B0, #AB47BC); padding: 20px; border-radius: 12px; text-align: center; color: white;">
+                <div style="font-size: 2rem; font-weight: bold;">${summary.conference_rooms?.available || 0}/${summary.conference_rooms?.total || 1}</div>
+                <div>🏛️ Sale wolne</div>
+              </div>
+              <div style="background: linear-gradient(135deg, #FF9800, #FFB74D); padding: 20px; border-radius: 12px; text-align: center; color: white;">
+                <div style="font-size: 2rem; font-weight: bold;">${bookings.length}</div>
+                <div>📋 Rezerwacji</div>
+              </div>
+            </div>
+            
+            <!-- Zasoby i ich status -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 25px;">
+              ${resources.map(r => {
+                const resourceBookings = bookings.filter(b => b.resource_id === r.id);
+                const isBooked = resourceBookings.length > 0;
+                return `
+                  <div style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; border-left: 4px solid ${isBooked ? '#FF9800' : '#4CAF50'};">
+                    <div style="padding: 15px; background: ${isBooked ? '#fff3e0' : '#e8f5e9'};">
+                      <h4 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        ${r.type === 'desk' ? '🪑' : '🏛️'} ${r.name}
+                        <span style="font-size: 0.8rem; padding: 4px 8px; border-radius: 20px; background: ${isBooked ? '#FF9800' : '#4CAF50'}; color: white;">
+                          ${isBooked ? 'Zajęte' : 'Wolne'}
+                        </span>
+                      </h4>
+                      ${r.type === 'conference_room' ? `<p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #666;">Pojemność: ${r.capacity} osób</p>` : ''}
+                    </div>
+                    <div style="padding: 15px;">
+                      ${resourceBookings.length === 0 ? `
+                        <p style="color: #666; margin: 0;">Brak rezerwacji na ten dzień</p>
+                      ` : resourceBookings.map(b => `
+                        <div style="padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px;">
+                          <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>${b.user_name}</strong>
+                            <span style="color: #666; font-size: 0.9rem;">⏰ ${b.start_time.substring(0,5)} - ${b.end_time.substring(0,5)}</span>
+                          </div>
+                          ${b.purpose ? `<p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #666;">📝 ${b.purpose}</p>` : ''}
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+            
+            <!-- Lista wszystkich rezerwacji -->
+            <div style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+              <h4 style="margin: 0; padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #eee;">📋 Wszystkie rezerwacje na ${formattedDate}</h4>
+              ${bookings.length === 0 ? `
+                <div style="padding: 30px; text-align: center; color: #666;">
+                  <div style="font-size: 3rem; margin-bottom: 10px;">📭</div>
+                  <p>Brak rezerwacji na ten dzień</p>
+                </div>
+              ` : `
+                <table style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="background: #f8f9fa;">
+                      <th style="padding: 12px; text-align: left;">Pracownik</th>
+                      <th style="padding: 12px; text-align: left;">Zasób</th>
+                      <th style="padding: 12px; text-align: center;">Godziny</th>
+                      <th style="padding: 12px; text-align: left;">Cel</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${bookings.map(b => `
+                      <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 12px;">
+                          <strong>${b.user_name}</strong>
+                          <div style="font-size: 0.8rem; color: #666;">${b.user_email}</div>
+                        </td>
+                        <td style="padding: 12px;">
+                          ${b.resource_type === 'desk' ? '🪑' : '🏛️'} ${b.resource_name}
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                          <span style="background: #e3f2fd; color: #1565c0; padding: 4px 10px; border-radius: 20px;">
+                            ${b.start_time.substring(0,5)} - ${b.end_time.substring(0,5)}
+                          </span>
+                        </td>
+                        <td style="padding: 12px; color: #666;">${b.purpose || '-'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              `}
+            </div>
+          </div>
+        `;
+        
+      } catch (error) {
+        console.error('❌ Błąd ładowania rezerwacji:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Błąd ładowania rezerwacji</h3>
+            <p>${error.message}</p>
+            <button onclick="loadOfficeBookings()" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer;">
+              🔄 Spróbuj ponownie
+            </button>
+          </div>
+        `;
+      }
+    }
+    
+    function changeBookingsDate(delta) {
+      const date = new Date(bookingsDate);
+      date.setDate(date.getDate() + delta);
+      bookingsDate = date.toISOString().split('T')[0];
+      loadOfficeBookings();
+    }
+    
+    async function loadOfficeBookingsMonth() {
+      const container = document.getElementById('tab-office-bookings');
+      container.innerHTML = '<div class="loading">Ładowanie kalendarza rezerwacji...</div>';
+      
+      try {
+        const resourcesRes = await window.api.request('/office-booking/resources');
+        const resources = resourcesRes.resources || [];
+        
+        const monthNames = ['', 'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 
+                           'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+        const dayNames = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So'];
+        
+        const daysInMonth = new Date(bookingsYear, bookingsMonth, 0).getDate();
+        const firstDay = new Date(bookingsYear, bookingsMonth - 1, 1).getDay();
+        
+        // Pobierz rezerwacje dla całego miesiąca
+        const allBookings = [];
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = `${bookingsYear}-${String(bookingsMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          try {
+            const res = await window.api.request(`/office-booking/bookings/${dateStr}`);
+            if (res.bookings && res.bookings.length > 0) {
+              res.bookings.forEach(b => allBookings.push({ ...b, date: dateStr }));
+            }
+          } catch (e) {}
+        }
+        
+        // Grupuj rezerwacje po dacie
+        const bookingsByDate = {};
+        allBookings.forEach(b => {
+          if (!bookingsByDate[b.date]) bookingsByDate[b.date] = [];
+          bookingsByDate[b.date].push(b);
+        });
+        
+        container.innerHTML = `
+          <div style="padding: 20px;">
+            <!-- Przełącznik widoku -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+              <button onclick="bookingsViewMode = 'day'; loadOfficeBookings();" 
+                      style="padding: 10px 20px; background: #e0e0e0; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                📅 Widok dzienny
+              </button>
+              <button onclick="bookingsViewMode = 'month'; loadOfficeBookingsMonth();" 
+                      style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                📆 Widok miesięczny
+              </button>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+              <div style="display: flex; align-items: center; gap: 15px;">
+                <button onclick="changeBookingsMonth(-1)" style="padding: 10px 15px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2rem;">◀</button>
+                <h2 style="margin: 0; min-width: 250px; text-align: center;">🏢 ${monthNames[bookingsMonth]} ${bookingsYear}</h2>
+                <button onclick="changeBookingsMonth(1)" style="padding: 10px 15px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2rem;">▶</button>
+              </div>
+              <div style="background: #e8f5e9; padding: 10px 20px; border-radius: 8px; color: #2e7d32; font-weight: 600;">
+                📋 Łącznie rezerwacji: ${allBookings.length}
+              </div>
+            </div>
+            
+            <!-- Legenda -->
+            <div style="display: flex; gap: 20px; margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 8px;">
+              <span style="display: flex; align-items: center; gap: 5px;">
+                <span style="width: 20px; height: 20px; background: #e8f5e9; border-radius: 4px; border: 1px solid #4CAF50;"></span>
+                Wolne
+              </span>
+              <span style="display: flex; align-items: center; gap: 5px;">
+                <span style="width: 20px; height: 20px; background: #fff3e0; border-radius: 4px; border: 1px solid #FF9800;"></span>
+                Częściowo zajęte
+              </span>
+              <span style="display: flex; align-items: center; gap: 5px;">
+                <span style="width: 20px; height: 20px; background: #ffebee; border-radius: 4px; border: 1px solid #F44336;"></span>
+                W pełni zajęte
+              </span>
+            </div>
+            
+            <!-- Kalendarz -->
+            <div style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+              <div style="display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa;">
+                ${dayNames.map(d => `<div style="padding: 12px; text-align: center; font-weight: 600; color: #666;">${d}</div>`).join('')}
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(7, 1fr);">
+                ${(() => {
+                  let html = '';
+                  // Puste komórki przed pierwszym dniem
+                  for (let i = 0; i < firstDay; i++) {
+                    html += '<div style="padding: 10px; min-height: 80px; background: #fafafa;"></div>';
+                  }
+                  // Dni miesiąca
+                  for (let day = 1; day <= daysInMonth; day++) {
+                    const dateStr = `${bookingsYear}-${String(bookingsMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const dayBookings = bookingsByDate[dateStr] || [];
+                    const isWeekend = new Date(dateStr).getDay() === 0 || new Date(dateStr).getDay() === 6;
+                    const isToday = dateStr === new Date().toISOString().split('T')[0];
+                    
+                    let bgColor = '#e8f5e9'; // Wolne
+                    let borderColor = '#4CAF50';
+                    if (dayBookings.length >= resources.length) {
+                      bgColor = '#ffebee'; borderColor = '#F44336'; // W pełni zajęte
+                    } else if (dayBookings.length > 0) {
+                      bgColor = '#fff3e0'; borderColor = '#FF9800'; // Częściowo
+                    }
+                    if (isWeekend) {
+                      bgColor = '#f5f5f5'; borderColor = '#9e9e9e';
+                    }
+                    
+                    html += `
+                      <div style="padding: 8px; min-height: 80px; background: ${bgColor}; border: 1px solid #eee; ${isToday ? 'border: 2px solid #1976D2;' : ''} cursor: pointer;"
+                           onclick="bookingsDate = '${dateStr}'; bookingsViewMode = 'day'; loadOfficeBookings();"
+                           title="${dayBookings.length} rezerwacji">
+                        <div style="font-weight: ${isToday ? 'bold' : 'normal'}; color: ${isToday ? '#1976D2' : '#333'}; margin-bottom: 5px;">${day}</div>
+                        ${dayBookings.length > 0 ? `
+                          <div style="font-size: 0.75rem;">
+                            ${dayBookings.slice(0, 2).map(b => `
+                              <div style="background: white; padding: 2px 4px; border-radius: 4px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid ${borderColor};">
+                                ${b.resource_type === 'desk' ? '🪑' : '🏛️'} ${b.user_name.split(' ')[0]}
+                              </div>
+                            `).join('')}
+                            ${dayBookings.length > 2 ? `<div style="color: #666; font-size: 0.7rem;">+${dayBookings.length - 2} więcej</div>` : ''}
+                          </div>
+                        ` : isWeekend ? '<div style="font-size: 0.7rem; color: #999;">Weekend</div>' : ''}
+                      </div>
+                    `;
+                  }
+                  return html;
+                })()}
+              </div>
+            </div>
+            
+            <!-- Lista rezerwacji w miesiącu -->
+            <div style="margin-top: 25px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+              <h4 style="margin: 0; padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #eee;">📋 Wszystkie rezerwacje w ${monthNames[bookingsMonth]}</h4>
+              ${allBookings.length === 0 ? `
+                <div style="padding: 30px; text-align: center; color: #666;">
+                  <div style="font-size: 3rem; margin-bottom: 10px;">📭</div>
+                  <p>Brak rezerwacji w tym miesiącu</p>
+                </div>
+              ` : `
+                <table style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="background: #f8f9fa;">
+                      <th style="padding: 12px; text-align: left;">Data</th>
+                      <th style="padding: 12px; text-align: left;">Pracownik</th>
+                      <th style="padding: 12px; text-align: left;">Zasób</th>
+                      <th style="padding: 12px; text-align: center;">Godziny</th>
+                      <th style="padding: 12px; text-align: left;">Cel</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${allBookings.sort((a, b) => a.date.localeCompare(b.date)).map(b => `
+                      <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 12px;">
+                          <strong>${new Date(b.date).toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' })}</strong>
+                        </td>
+                        <td style="padding: 12px;">${b.user_name}</td>
+                        <td style="padding: 12px;">${b.resource_type === 'desk' ? '🪑' : '🏛️'} ${b.resource_name}</td>
+                        <td style="padding: 12px; text-align: center;">
+                          <span style="background: #e3f2fd; color: #1565c0; padding: 4px 10px; border-radius: 20px;">
+                            ${b.start_time.substring(0,5)} - ${b.end_time.substring(0,5)}
+                          </span>
+                        </td>
+                        <td style="padding: 12px; color: #666;">${b.purpose || '-'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              `}
+            </div>
+          </div>
+        `;
+        
+      } catch (error) {
+        console.error('❌ Błąd ładowania kalendarza:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Błąd ładowania kalendarza</h3>
+            <p>${error.message}</p>
+          </div>
+        `;
+      }
+    }
+    
+    function changeBookingsMonth(delta) {
+      bookingsMonth += delta;
+      if (bookingsMonth > 12) {
+        bookingsMonth = 1;
+        bookingsYear++;
+      } else if (bookingsMonth < 1) {
+        bookingsMonth = 12;
+        bookingsYear--;
+      }
+      loadOfficeBookingsMonth();
+    }
+    
+    // Inicjalizacja
+    window.addEventListener('DOMContentLoaded', () => {
+      console.log('🚀 HR Panel - DOMContentLoaded - inicjalizacja...');
+      console.log('🔑 Token z localStorage:', localStorage.getItem('token') ? 'EXISTS' : 'BRAK');
+      
+      // Sprawdź czy użytkownik jest zalogowany
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.warn('⚠️ Brak tokenu - użytkownik niezalogowany!');
+        document.getElementById('tab-vacations').innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Nie jesteś zalogowany</h3>
+            <p>Musisz się zalogować jako HR lub Admin</p>
+            <a href="/index.html" style="padding: 10px 20px; background: #3B82F6; color: white; text-decoration: none; border-radius: 8px; display: inline-block; margin-top: 20px;">
+              Przejdź do logowania
+            </a>
+          </div>
+        `;
+        return;
+      }
+      
+      console.log('✅ Token istnieje, ładuję dane...');
+      loadVacations();
+      updateStats();
+    });
+  </script>
+</body>
+</html>

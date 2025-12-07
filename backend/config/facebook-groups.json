@@ -1,0 +1,48 @@
+{
+  "groups": {
+    "budowlane_remonty": [
+      "https://www.facebook.com/groups/6093095214105530",
+      "https://www.facebook.com/groups/438476696186605",
+      "https://www.facebook.com/groups/budowadomuporadyizdjecia",
+      "https://www.facebook.com/groups/1557417427838669"
+    ],
+    "oszusci_firmy": [
+      "https://www.facebook.com/groups/czarnalistafirm",
+      "https://www.facebook.com/groups/184960755041616",
+      "https://www.facebook.com/groups/nierzetelnikontrahenci",
+      "https://www.facebook.com/groups/1644488685783395"
+    ],
+    "transport_spedycja": [
+      "https://www.facebook.com/groups/spedytorzy.przewoznicy",
+      "https://www.facebook.com/groups/transportilogistyka",
+      "https://www.facebook.com/groups/przewoznicypolscy"
+    ],
+    "it_freelance": [
+      "https://www.facebook.com/groups/238287939557372",
+      "https://www.facebook.com/groups/praca.it.polska",
+      "https://www.facebook.com/groups/polscy.programisci"
+    ],
+    "handel_przedsiebiorcy": [
+      "https://www.facebook.com/groups/przedsiebiorcypl",
+      "https://www.facebook.com/groups/maladzialalnosc",
+      "https://www.facebook.com/groups/bizneswpolsce"
+    ],
+    "prawo_windykacja": [
+      "https://www.facebook.com/groups/windykacjadlugow",
+      "https://www.facebook.com/groups/prawodlabiznesu",
+      "https://www.facebook.com/groups/problemyprawne"
+    ]
+  },
+  "instrukcja": {
+    "jak_znalezc_grupy": [
+      "1. Otwórz Facebook i zaloguj się",
+      "2. W wyszukiwarce wpisz: 'oszuści budowlani' lub 'czarna lista firm'",
+      "3. Kliknij zakładkę 'Grupy'",
+      "4. Skopiuj URL grupy (z paska adresu)"
+    ],
+    "format_url": [
+      "https://www.facebook.com/groups/123456789",
+      "https://www.facebook.com/groups/nazwa-grupy"
+    ]
+  }
+}
