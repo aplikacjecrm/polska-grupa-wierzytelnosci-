@@ -3,7 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const db = require('../database/db');
 
 // POST /api/setup/create-admin
