@@ -25,15 +25,15 @@ if (fs.existsSync(VOLUME_DB_PATH)) {
     console.log('[DB INIT] VOLUME DB size:', volSize, 'bytes (', (volSize/1024/1024).toFixed(2), 'MB)');
 }
 
-// SEED DATABASE: If Volume DB is small (<10MB) and Seed DB is large (>10MB), copy it
+// SEED DATABASE: Skopiuj seed DB jeśli volume jest pusty/mały LUB seed jest nowszy
 if (isRailway && fs.existsSync(SEED_DB_PATH)) {
     const volumeSize = fs.existsSync(VOLUME_DB_PATH) ? fs.statSync(VOLUME_DB_PATH).size : 0;
     const seedSize = fs.statSync(SEED_DB_PATH).size;
     
     console.log('[DB INIT] Checking: Volume size:', volumeSize, 'Seed size:', seedSize);
     
-    // If volume DB is small and seed DB is larger, copy it
-    if (seedSize > 10000000 && volumeSize < 10000000) {
+    // Kopiuj jeśli seed DB ma jakiekolwiek dane (>100KB) i (volume nie istnieje LUB jest pusty <100KB)
+    if (seedSize > 100000 && volumeSize < 100000) {
         console.log('[DB INIT] COPYING seed database to Volume...');
         try {
             // Ensure /app/data directory exists

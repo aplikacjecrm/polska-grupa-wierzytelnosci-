@@ -5,6 +5,9 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const db = require('../database/db');
+const fs = require('fs');
+const fs = require('fs');
+const path = require('path');
 
 // POST /api/setup/create-admin
 router.post('/create-admin', async (req, res) => {
@@ -44,6 +47,35 @@ router.post('/create-admin', async (req, res) => {
                 });
             });
         });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/setup/reset-volume-db
+// Usuwa bazę z volume, żeby wymusić kopiowanie z seed przy restarcie
+router.post('/reset-volume-db', async (req, res) => {
+    try {
+        const isRailway = process.env.RAILWAY_ENVIRONMENT === 'production' || process.env.NODE_ENV === 'production';
+        
+        if (!isRailway) {
+            return res.status(400).json({ error: 'Ten endpoint działa tylko na Railway!' });
+        }
+        
+        const volumeDbPath = '/app/data/komunikator.db';
+        
+        if (fs.existsSync(volumeDbPath)) {
+            fs.unlinkSync(volumeDbPath);
+            res.json({
+                success: true,
+                message: 'Baza volume usunięta! Zrestartuj aplikację na Railway, a seed database zostanie skopiowany.'
+            });
+        } else {
+            res.json({
+                success: true,
+                message: 'Baza volume nie istnieje - seed zostanie skopiowany przy następnym starcie.'
+            });
+        }
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
