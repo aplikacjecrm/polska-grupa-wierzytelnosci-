@@ -6,8 +6,6 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const db = require('../database/db');
 const fs = require('fs');
-const fs = require('fs');
-const path = require('path');
 
 // POST /api/setup/create-admin
 router.post('/create-admin', async (req, res) => {
