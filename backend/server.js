@@ -29,6 +29,7 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const authRoutes = require('./routes/auth');
+const setupAdminRoutes = require('./routes/setup-admin'); // TYMCZASOWY - usuń po użyciu!
 const mailRoutes = require('./routes/mail');
 const emailsRoutes = require('./routes/emails');
 const chatRoutes = require('./routes/chat');
@@ -172,6 +173,8 @@ async function startBackendServer() {
 
   // Routes
   app.use('/api/auth', authRoutes);
+  app.use('/api/setup', setupAdminRoutes); // TYMCZASOWY - usuń po utworzeniu admina!
+  console.log('⚠️  SETUP ENDPOINT ACTIVE: POST /api/setup/create-admin');
   app.use('/api/mail', mailRoutes);
   app.use('/api/emails', emailsRoutes);
   app.use('/api/chat', chatRoutes);
