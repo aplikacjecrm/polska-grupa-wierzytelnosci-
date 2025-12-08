@@ -345,7 +345,7 @@ async loadComments() {
 
 // Pobierz dokument
 async downloadDocument(docId) {
-    window.open(`https://web-production-7504.up.railway.app/api/documents/download/${docId}`, '_blank');
+    window.open(`https://web-production-ef868.up.railway.app/api/documents/download/${docId}`, '_blank');
 }
 
 // Zamknij modal

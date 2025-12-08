@@ -10,7 +10,7 @@ class SocketManager {
             this.socket.disconnect();
         }
 
-        this.socket = io('https://web-production-7504.up.railway.app');
+        this.socket = io('https://web-production-ef868.up.railway.app');
 
         this.socket.on('connect', () => {
             console.log('✅ Połączono z serwerem Socket.IO');

@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 fileFormData.append('description', `Dokument sprawy: ${file.name}`);
                                 
                                 const token = localStorage.getItem('token');
-                                const uploadResponse = await fetch(`https://web-production-7504.up.railway.app/api/cases/${savedCaseId}/documents`, {
+                                const uploadResponse = await fetch(`https://web-production-ef868.up.railway.app/api/cases/${savedCaseId}/documents`, {
                                     method: 'POST',
                                     headers: {
                                         'Authorization': `Bearer ${token}`

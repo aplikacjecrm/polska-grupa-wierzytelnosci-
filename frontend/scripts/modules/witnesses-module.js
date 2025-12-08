@@ -1015,7 +1015,7 @@ window.witnessesModule = {
     // Załaduj załączniki dla konkretnego zeznania
     loadTestimonyAttachments: async function(witnessId, testimonyId, caseId, versionNumber) {
         try {
-            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-7504.up.railway.app';
+            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
             const token = localStorage.getItem('token');
             
             // Pobierz załączniki dla tego zeznania (filtruj po entity_type=testimony i entity_id=testimonyId)
@@ -1118,7 +1118,7 @@ window.witnessesModule = {
             formData.append('title', titleInput.value.trim());
             formData.append('category', 'zeznanie');
             
-            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-7504.up.railway.app';
+            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
             const token = localStorage.getItem('token');
             
             const response = await fetch(`${apiUrl}/attachments/upload`, {
@@ -1149,7 +1149,7 @@ window.witnessesModule = {
         if (!confirm('Czy na pewno chcesz usunąć ten załącznik?')) return;
         
         try {
-            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-7504.up.railway.app';
+            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
             const token = localStorage.getItem('token');
             
             const response = await fetch(`${apiUrl}/attachments/${attachmentId}`, {
@@ -1684,7 +1684,7 @@ window.witnessesModule = {
                     
                     // Upload
                     const token = localStorage.getItem('token');
-                    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-7504.up.railway.app';
+                    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
                     const uploadResponse = await fetch(`${apiUrl}/attachments/upload`, {
                         method: 'POST',
                         headers: {
@@ -1797,7 +1797,7 @@ window.witnessesModule = {
             if (testimony.testimony_type === 'recorded') {
                 try {
                     // Pobierz załączniki bezpośrednio dla tego zeznania (entity_type=testimony)
-                    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-7504.up.railway.app';
+                    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
                     const token = localStorage.getItem('token');
                     
                     const attachResp = await fetch(`${apiUrl}/attachments?entity_type=testimony&entity_id=${testimonyId}`, {
@@ -1826,7 +1826,7 @@ window.witnessesModule = {
             let recordingStreamUrl = null;
             if (recordingAttachment) {
                 const token = localStorage.getItem('token');
-                const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-7504.up.railway.app';
+                const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
                 // Użyj bezpośredniego URL z tokenem - serwer obsługuje Range requests dla streamingu
                 recordingStreamUrl = `${apiUrl}/attachments/${recordingAttachment.id}/download?token=${token}`;
                 console.log('📹 Streaming URL nagrania:', recordingStreamUrl);

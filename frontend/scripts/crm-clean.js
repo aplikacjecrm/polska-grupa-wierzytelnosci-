@@ -2,7 +2,7 @@
 window.getApiBaseUrl = function() {
     return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3500/api'
-        : 'https://web-production-7504.up.railway.app/api';
+        : 'https://web-production-ef868.up.railway.app/api';
 };
 
 class CRMManager {
@@ -1905,7 +1905,7 @@ class CRMManager {
                         fileFormData.append('file', file);
                         fileFormData.append('category', 'identity'); // Domyślna kategoria
                         
-                        await fetch(`https://web-production-7504.up.railway.app/api/clients/${clientId}/files`, {
+                        await fetch(`https://web-production-ef868.up.railway.app/api/clients/${clientId}/files`, {
                             method: 'POST',
                             headers: {
                                 'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -2655,7 +2655,7 @@ class CRMManager {
             console.log('   - Plik:', docFile ? docFile.name : 'BRAK');
             console.log('   - Token:', localStorage.getItem('token') ? 'OK' : 'BRAK');
             
-            const apiUrl = window.api?.baseURL || 'https://web-production-7504.up.railway.app/api';
+            const apiUrl = window.api?.baseURL || 'https://web-production-ef868.up.railway.app/api';
             console.log('   - API URL:', apiUrl);
             
             const response = await fetch(`${apiUrl}/cases/${caseId}/documents`, {
@@ -3767,7 +3767,7 @@ class CRMManager {
                 
                 const token = localStorage.getItem('token');
                 
-                const fileResponse = await fetch('https://web-production-7504.up.railway.app/api/comments/upload', {
+                const fileResponse = await fetch('https://web-production-ef868.up.railway.app/api/comments/upload', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`

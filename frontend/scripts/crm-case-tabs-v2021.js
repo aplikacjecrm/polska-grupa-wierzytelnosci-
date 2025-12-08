@@ -6770,7 +6770,7 @@ window.downloadDocument = async function(caseId, docId) {
         // Dynamiczny URL - localhost lub produkcja
         const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:3500/api'
-            : 'https://web-production-7504.up.railway.app/api';
+            : 'https://web-production-ef868.up.railway.app/api';
         window.open(`${API_BASE}/cases/${caseId}/documents/${docId}/download`, '_blank');
     } catch (error) {
         console.error('❌ Błąd pobierania dokumentu:', error);
@@ -6894,7 +6894,7 @@ window.showUploadDocumentModal = function(caseId) {
             // Dynamiczny URL - localhost lub produkcja
             const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                 ? 'http://localhost:3500/api'
-                : 'https://web-production-7504.up.railway.app/api';
+                : 'https://web-production-ef868.up.railway.app/api';
             const response = await fetch(`${API_BASE}/cases/${caseId}/documents`, {
                 method: 'POST',
                 headers: {

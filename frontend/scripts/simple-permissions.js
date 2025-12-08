@@ -35,7 +35,7 @@ window.showPermissionsSimple = async function(caseId) {
     // Załaduj listę
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`https://web-production-7504.up.railway.app/api/case-permissions/${caseId}/list`, {
+        const response = await fetch(`https://web-production-ef868.up.railway.app/api/case-permissions/${caseId}/list`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();
@@ -61,7 +61,7 @@ window.showPermissionsSimple = async function(caseId) {
 window.grantAccessSimple = async function(caseId) {
     // Pobierz listę użytkowników
     const token = localStorage.getItem('token');
-    const response = await fetch('https://web-production-7504.up.railway.app/api/cases/staff/list', {
+    const response = await fetch('https://web-production-ef868.up.railway.app/api/cases/staff/list', {
         headers: { 'Authorization': `Bearer ${token}` }
     });
     const staffData = await response.json();
@@ -186,8 +186,8 @@ window.submitGrantAccess = async function(caseId) {
         
         // Wybierz endpoint w zależności od typu dostępu
         const endpoint = accessType === 'temporary' 
-            ? `https://web-production-7504.up.railway.app/api/case-permissions/${caseId}/grant-temporary`
-            : `https://web-production-7504.up.railway.app/api/case-permissions/${caseId}/grant-permanent`;
+            ? `https://web-production-ef868.up.railway.app/api/case-permissions/${caseId}/grant-temporary`
+            : `https://web-production-ef868.up.railway.app/api/case-permissions/${caseId}/grant-permanent`;
         
         const body = {
             user_id: parseInt(userId),

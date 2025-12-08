@@ -856,7 +856,7 @@ async function loadArticleContent(parsed, codeInfo) {
         });
         
         // Próba pobrania z naszej bazy
-        const API_URL = 'https://web-production-7504.up.railway.app';
+        const API_URL = 'https://web-production-ef868.up.railway.app';
         const response = await fetch(`${API_URL}/api/ai/legal-acts/article`, {
             method: 'POST',
             headers: {
@@ -1439,7 +1439,7 @@ window.showArticleContext = async function(code, articleNum) {
     
     for (let i = from; i <= to; i++) {
         try {
-            const response = await fetch(`https://web-production-7504.up.railway.app/api/ai/legal-acts/article`, {
+            const response = await fetch(`https://web-production-ef868.up.railway.app/api/ai/legal-acts/article`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

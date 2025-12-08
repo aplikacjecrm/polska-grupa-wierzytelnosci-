@@ -114,7 +114,7 @@ class CasesModule {
                         📅 ${new Date(doc.created_at).toLocaleDateString('pl-PL')}
                     </div>
                 </div>
-                <button onclick="window.open('https://web-production-7504.up.railway.app/api/documents/download/${doc.id}', '_blank')" 
+                <button onclick="window.open('https://web-production-ef868.up.railway.app/api/documents/download/${doc.id}', '_blank')" 
                         style="padding: 6px 12px; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
                     📥 Pobierz
                 </button>
