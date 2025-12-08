@@ -25,33 +25,28 @@ if (fs.existsSync(VOLUME_DB_PATH)) {
     console.log('[DB INIT] VOLUME DB size:', volSize, 'bytes (', (volSize/1024/1024).toFixed(2), 'MB)');
 }
 
-// SEED DATABASE: Skopiuj seed DB TYLKO jeśli volume NIE ISTNIEJE (pierwsze uruchomienie)
-// NIE NADPISUJ istniejącego volume - zawiera produkcyjne dane!
+// SEED DATABASE: Skopiuj seed DB jeśli volume jest pusty/mały LUB seed jest nowszy
 if (isRailway && fs.existsSync(SEED_DB_PATH)) {
-    const volumeExists = fs.existsSync(VOLUME_DB_PATH);
-    const volumeSize = volumeExists ? fs.statSync(VOLUME_DB_PATH).size : 0;
+    const volumeSize = fs.existsSync(VOLUME_DB_PATH) ? fs.statSync(VOLUME_DB_PATH).size : 0;
     const seedSize = fs.statSync(SEED_DB_PATH).size;
     
-    console.log('[DB INIT] Checking: Volume exists:', volumeExists, 'Volume size:', volumeSize, 'Seed size:', seedSize);
+    console.log('[DB INIT] Checking: Volume size:', volumeSize, 'Seed size:', seedSize);
     
-    // Kopiuj TYLKO jeśli volume NIE ISTNIEJE (pierwsze uruchomienie)
-    // NIE kopiuj jeśli volume już istnieje - zawiera produkcyjne dane użytkownika!
-    if (!volumeExists && seedSize > 100000) {
-        console.log('[DB INIT] Volume nie istnieje - kopiuję seed database...');
+    // Kopiuj jeśli seed DB ma jakiekolwiek dane (>100KB) i (volume nie istnieje LUB jest pusty <100KB)
+    if (seedSize > 100000 && volumeSize < 100000) {
+        console.log('[DB INIT] COPYING seed database to Volume...');
         try {
             // Ensure /app/data directory exists
             if (!fs.existsSync('/app/data')) {
                 fs.mkdirSync('/app/data', { recursive: true });
             }
             fs.copyFileSync(SEED_DB_PATH, VOLUME_DB_PATH);
-            console.log('[DB INIT] SUCCESS! Seed database copied to Volume (first run)');
+            console.log('[DB INIT] SUCCESS! Seed database copied to Volume!');
         } catch (err) {
             console.error('[DB INIT] ERROR copying database:', err.message);
         }
-    } else if (volumeExists) {
-        console.log('[DB INIT] Volume już istnieje - używam produkcyjnej bazy (NIE kopiuję seed)');
     } else {
-        console.log('[DB INIT] No copy needed. Seed:', seedSize, 'Volume exists:', volumeExists);
+        console.log('[DB INIT] No copy needed. Seed:', seedSize, 'Volume:', volumeSize);
     }
 }
 
