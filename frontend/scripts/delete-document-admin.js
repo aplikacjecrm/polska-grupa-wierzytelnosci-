@@ -56,18 +56,21 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
         // Pokaż powiadomienie sukcesu
         showNotification('✅ Dokument usunięty pomyślnie!', 'success');
         
-        // PRZEŁADUJ CAŁĄ SPRAWĘ (żeby zaktualizować liczniki)
-        console.log(`🔄 Przeładowuję całą sprawę ${caseId}...`);
+        // ODŚWIEŻ SPRAWĘ (używając nowego systemu auto-refresh)
+        console.log(`🔄 Odświeżam sprawę ${caseId}...`);
         
         setTimeout(() => {
-            if (typeof window.crmManager !== 'undefined' && caseId) {
-                // Przeładuj całą sprawę z serwera (zaktualizuje liczniki i zawartość)
-                console.log('📡 Wywołuję viewCase()...');
+            // Użyj nowego systemu auto-refresh (jeśli dostępny)
+            if (typeof window.refreshCurrentCase === 'function') {
+                console.log('✅ Używam window.refreshCurrentCase()');
+                window.refreshCurrentCase();
+            } 
+            // Fallback: stary sposób
+            else if (typeof window.crmManager !== 'undefined' && caseId) {
+                console.log('⚠️ Fallback: używam viewCase()');
                 window.crmManager.viewCase(caseId).then(() => {
-                    // Po załadowaniu sprawy, przełącz na zakładkę dokumentów
                     setTimeout(() => {
                         window.crmManager.switchCaseTab(caseId, 'documents');
-                        console.log('✅ Sprawa przeładowana, zakładka dokumentów aktywna');
                     }, 300);
                 });
             }
