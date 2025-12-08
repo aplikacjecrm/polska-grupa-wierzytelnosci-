@@ -442,6 +442,10 @@ router.get('/case/:caseId', verifyToken, (req, res) => {
 
 // Pobierz/wyświetl dokument (download endpoint)
 router.get('/download/:id', verifyToken, (req, res) => {
+    console.log('🔥 DOWNLOAD ENDPOINT HIT! ID:', req.params.id);
+    console.log('🔥 User from token:', req.user);
+    console.log('🔥 Query params:', req.query);
+    
     const db = getDatabase();
     const { id } = req.params;
     const userId = req.user.userId;

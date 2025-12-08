@@ -1,0 +1,41 @@
+RAILWAY ENVIRONMENT VARIABLES - SKOPIUJ I WKLEJ!
+
+======================================
+KROK PO KROKU - KAŻDA ZMIENNA OSOBNO:
+======================================
+
+1. NODE_ENV
+   Wartość: production
+
+2. PORT
+   Wartość: 3500
+
+3. USE_CLOUDINARY
+   Wartość: true
+
+4. CLOUDINARY_CLOUD_NAME
+   Wartość: dnn1s4f30
+
+5. CLOUDINARY_API_KEY
+   Wartość: 695843691868791
+
+6. CLOUDINARY_API_SECRET
+   Wartość: gHde-cH8NDphM1z9iYH8FHobPIg
+
+======================================
+VOLUME SETTINGS:
+======================================
+
+Name: data-volume
+Mount Path: /app/data
+
+======================================
+BUILD SETTINGS (jeśli trzeba):
+======================================
+
+Build Command: npm install
+Start Command: npm start
+
+======================================
+GOTOWE!
+======================================
