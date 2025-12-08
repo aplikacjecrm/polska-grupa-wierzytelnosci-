@@ -1015,7 +1015,7 @@ const evidenceModule = {
       for (const doc of this.selectedSystemDocs) {
         try {
           // Pobierz plik z systemu
-          const response = await fetch(`https://web-production-7504.up.railway.app/api/cases/${caseId}/documents/${doc.id}/download`, {
+          const response = await fetch(`https://web-production-ef868.up.railway.app/api/cases/${caseId}/documents/${doc.id}/download`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }

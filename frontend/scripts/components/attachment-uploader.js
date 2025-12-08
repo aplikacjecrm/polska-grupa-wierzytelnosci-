@@ -128,7 +128,7 @@ class AttachmentUploader {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://web-production-7504.up.railway.app/api/attachments/upload', {
+      const response = await fetch('https://web-production-ef868.up.railway.app/api/attachments/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -166,7 +166,7 @@ class AttachmentUploader {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `https://web-production-7504.up.railway.app/api/attachments?entity_type=${this.entityType}&entity_id=${this.entityId}`,
+        `https://web-production-ef868.up.railway.app/api/attachments?entity_type=${this.entityType}&entity_id=${this.entityId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -279,7 +279,7 @@ window.downloadAttachment = async function(attachmentId) {
   try {
     const token = localStorage.getItem('token');
     // Dodaj parametr download=true aby wymusić pobieranie
-    const response = await fetch(`https://web-production-7504.up.railway.app/api/attachments/${attachmentId}/download?download=true`, {
+    const response = await fetch(`https://web-production-ef868.up.railway.app/api/attachments/${attachmentId}/download?download=true`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -322,7 +322,7 @@ window.deleteAttachment = async function(attachmentId, containerId) {
   
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`https://web-production-7504.up.railway.app/api/attachments/${attachmentId}`, {
+    const response = await fetch(`https://web-production-ef868.up.railway.app/api/attachments/${attachmentId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -349,7 +349,7 @@ window.previewAttachment = async function(attachmentId, title, fileType) {
   
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`https://web-production-7504.up.railway.app/api/attachments/${attachmentId}/download`, {
+    const response = await fetch(`https://web-production-ef868.up.railway.app/api/attachments/${attachmentId}/download`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }

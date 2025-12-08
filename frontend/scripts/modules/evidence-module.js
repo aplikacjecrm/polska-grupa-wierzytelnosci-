@@ -973,7 +973,7 @@ const evidenceModule = {
     try {
       console.log('👁️ Podgląd załącznika świadka:', attachmentId, filename);
       
-      const apiBaseUrl = window.api?.baseURL || 'https://web-production-7504.up.railway.app/api';
+      const apiBaseUrl = window.api?.baseURL || 'https://web-production-ef868.up.railway.app/api';
       const token = localStorage.getItem('token');
       
       const response = await fetch(`${apiBaseUrl}/attachments/${attachmentId}/download`, {
@@ -2394,7 +2394,7 @@ const evidenceModule = {
   // === POBIERZ ZAŁĄCZNIK ===
   async downloadAttachment(attachmentId, filename) {
     const token = localStorage.getItem('token');
-    const apiBaseUrl = window.api?.baseURL || window.getApiBaseUrl?.() || 'https://web-production-7504.up.railway.app/api';
+    const apiBaseUrl = window.api?.baseURL || window.getApiBaseUrl?.() || 'https://web-production-ef868.up.railway.app/api';
     const downloadUrl = `${apiBaseUrl}/attachments/${attachmentId}/download?download=true`;
     
     console.log('⬇️ Pobieranie załącznika:', attachmentId, filename, downloadUrl);
@@ -2425,7 +2425,7 @@ const evidenceModule = {
   // === PODGLĄD ZLINKOWANEGO DOKUMENTU ===
   async viewLinkedDocument(docId, sourceType, filename) {
     const token = localStorage.getItem('token');
-    const apiBaseUrl = window.api?.baseURL || 'https://web-production-7504.up.railway.app/api';
+    const apiBaseUrl = window.api?.baseURL || 'https://web-production-ef868.up.railway.app/api';
     let url;
     
     if (sourceType === 'document') {
@@ -2546,7 +2546,7 @@ const evidenceModule = {
   // === PODGLĄD ZAŁĄCZNIKA ===
   async previewAttachment(attachmentId, filename, mimetype) {
     const token = localStorage.getItem('token');
-    const apiBaseUrl = window.api?.baseURL || window.getApiBaseUrl?.() || 'https://web-production-7504.up.railway.app/api';
+    const apiBaseUrl = window.api?.baseURL || window.getApiBaseUrl?.() || 'https://web-production-ef868.up.railway.app/api';
     const fileUrl = `${apiBaseUrl}/attachments/${attachmentId}/download`;
     
     console.log('👁️ Podgląd załącznika:', attachmentId, filename);
