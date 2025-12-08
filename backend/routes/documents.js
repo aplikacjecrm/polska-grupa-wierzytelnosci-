@@ -480,7 +480,13 @@ router.get('/download/:id', verifyToken, (req, res) => {
 function sendFile(document, res) {
     const filePath = document.filepath || document.file_path;
     
-    console.log('📄 Wysyłam plik:', filePath);
+    console.log('📄 SEND FILE START - Path:', filePath);
+    console.log('📄 Document:', {
+        id: document.id,
+        filename: document.filename || document.file_name,
+        file_type: document.file_type,
+        has_base64: !!document.file_data
+    });
     
     // CLOUDINARY: Jeśli file_path to URL (zaczyna się od http), przekieruj
     if (filePath && (filePath.startsWith('http://') || filePath.startsWith('https://'))) {
@@ -488,8 +494,12 @@ function sendFile(document, res) {
         return res.redirect(filePath);
     }
     
+    // Sprawdź istnienie pliku
+    const fileExists = filePath && fs.existsSync(filePath);
+    console.log('📄 File exists?', fileExists);
+    
     // Jeśli plik nie istnieje na dysku, użyj base64 z bazy
-    if (!filePath || !fs.existsSync(filePath)) {
+    if (!fileExists) {
         if (document.file_data) {
             console.log('📎 Plik nie na dysku, używam base64 z bazy');
             const buffer = Buffer.from(document.file_data, 'base64');
