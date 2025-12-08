@@ -453,47 +453,66 @@ router.get('/test-download/:id', (req, res) => {
 
 // Pobierz/wyświetl dokument (download endpoint)
 router.get('/download/:id', verifyToken, (req, res) => {
-    console.log('🔥 DOWNLOAD ENDPOINT HIT! ID:', req.params.id);
-    console.log('🔥 User from token:', req.user);
-    console.log('🔥 Query params:', req.query);
-    
-    const db = getDatabase();
-    const { id } = req.params;
-    const userId = req.user.userId;
-    const userRole = req.user.role;
-    
-    console.log('📥 Pobieranie dokumentu ID:', id, 'przez użytkownika:', userId);
-    
-    db.get('SELECT * FROM documents WHERE id = ?', [id], (err, document) => {
-        if (err) {
-            console.error('❌ Błąd pobierania dokumentu z DB:', err);
-            return res.status(500).json({ error: 'Błąd pobierania dokumentu' });
-        }
+    try {
+        console.log('🔥 DOWNLOAD ENDPOINT HIT! ID:', req.params.id);
+        console.log('🔥 User from token:', req.user);
+        console.log('🔥 Query params:', req.query);
         
-        if (!document) {
-            console.error('❌ Dokument nie znaleziony ID:', id);
-            return res.status(404).json({ error: 'Dokument nie znaleziony' });
-        }
+        const db = getDatabase();
+        const { id } = req.params;
+        const userId = req.user.userId;
+        const userRole = req.user.role;
         
-        // Sprawdź uprawnienia
-        if (userRole === 'client') {
-            // Klient może pobrać tylko swoje dokumenty
-            db.get('SELECT id FROM clients WHERE user_id = ?', [userId], (clientErr, client) => {
-                if (clientErr || !client || document.client_id !== client.id) {
-                    console.error('❌ Brak uprawnień dla klienta');
-                    return res.status(403).json({ error: 'Brak uprawnień' });
+        console.log('📥 Pobieranie dokumentu ID:', id, 'przez użytkownika:', userId);
+        
+        db.get('SELECT * FROM documents WHERE id = ?', [id], (err, document) => {
+            try {
+                if (err) {
+                    console.error('❌ Błąd pobierania dokumentu z DB:', err);
+                    return res.status(500).json({ error: 'Błąd pobierania dokumentu' });
                 }
-                sendFile(document, res);
-            });
-        } else {
-            // Admin/Lawyer może pobrać wszystkie
-            sendFile(document, res);
+                
+                if (!document) {
+                    console.error('❌ Dokument nie znaleziony ID:', id);
+                    return res.status(404).json({ error: 'Dokument nie znaleziony' });
+                }
+                
+                console.log('✅ Dokument znaleziony, sprawdzam uprawnienia...');
+                
+                // Sprawdź uprawnienia
+                if (userRole === 'client') {
+                    // Klient może pobrać tylko swoje dokumenty
+                    db.get('SELECT id FROM clients WHERE user_id = ?', [userId], (clientErr, client) => {
+                        if (clientErr || !client || document.client_id !== client.id) {
+                            console.error('❌ Brak uprawnień dla klienta');
+                            return res.status(403).json({ error: 'Brak uprawnień' });
+                        }
+                        console.log('✅ Uprawnienia OK, wysyłam plik...');
+                        sendFile(document, req, res);
+                    });
+                } else {
+                    // Admin/Lawyer może pobrać wszystkie
+                    console.log('✅ Admin/Lawyer, wysyłam plik...');
+                    sendFile(document, req, res);
+                }
+            } catch (innerErr) {
+                console.error('💥 CRASH w db.get callback:', innerErr);
+                if (!res.headersSent) {
+                    res.status(500).json({ error: 'Internal error', details: innerErr.message });
+                }
+            }
+        });
+    } catch (outerErr) {
+        console.error('💥 CRASH w download endpoint:', outerErr);
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Internal error', details: outerErr.message });
         }
-    });
+    }
 });
 
-function sendFile(document, res) {
-    const filePath = document.filepath || document.file_path;
+function sendFile(document, req, res) {
+    try {
+        const filePath = document.filepath || document.file_path;
     
     console.log('📄 SEND FILE START - Path:', filePath);
     console.log('📄 Document:', {
@@ -591,6 +610,12 @@ function sendFile(document, res) {
         });
         
         console.log('✅ Plik wysłany:', document.filename || document.file_name);
+    }
+    } catch (err) {
+        console.error('💥 CRASH w sendFile:', err);
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Internal error in sendFile', details: err.message });
+        }
     }
 }
 
