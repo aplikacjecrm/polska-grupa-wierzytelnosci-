@@ -1,6 +1,21 @@
 // 🗑️ MODUŁ USUWANIA DOKUMENTÓW - TYLKO DLA ADMINA
 console.log('🗑️ delete-document-admin.js ZAŁADOWANY!');
 
+// Debug: Sprawdź od razu czy wykryto admina
+setTimeout(() => {
+    console.log('🔍 INITIAL ADMIN CHECK:');
+    console.log('📊 localStorage values:', {
+        user: localStorage.getItem('user'),
+        userRole: localStorage.getItem('userRole'),
+        theme: localStorage.getItem('theme')
+    });
+    
+    // Wywołaj funkcję isUserAdmin gdy będzie dostępna
+    if (typeof isUserAdmin === 'function') {
+        console.log('✅ isUserAdmin:', isUserAdmin());
+    }
+}, 500);
+
 /**
  * Usuń dokument (tylko admin)
  * @param {number} documentId - ID dokumentu do usunięcia
@@ -10,15 +25,20 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
     console.log(`🗑️ Próba usunięcia dokumentu ${documentId}`);
     
     // 1. Sprawdź czy użytkownik jest adminem
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const userRole = localStorage.getItem('userRole'); // Fallback dla starszej wersji
+    console.log('🔍 Sprawdzam uprawnienia admina...');
+    console.log('📊 localStorage:', {
+        'user': localStorage.getItem('user'),
+        'userRole': localStorage.getItem('userRole'),
+        'theme': localStorage.getItem('theme')
+    });
     
-    const isAdmin = currentUser.role === 'admin' || userRole === 'admin';
-    
-    if (!isAdmin) {
+    if (!isUserAdmin()) {
+        console.error('❌ Użytkownik NIE jest adminem!');
         showNotification('❌ Brak uprawnień! Tylko administrator może usuwać dokumenty.', 'error');
         return;
     }
+    
+    console.log('✅ Użytkownik jest adminem - można usuwać');
     
     // 2. Pokaż własny modal potwierdzenia (w stylu aplikacji)
     const confirmed = await showCustomConfirm(
@@ -88,6 +108,19 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
 };
 
 /**
+ * Sprawdź czy użytkownik jest adminem (WSPÓLNA FUNKCJA)
+ */
+function isUserAdmin() {
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const userRole = localStorage.getItem('userRole');
+    const theme = localStorage.getItem('theme');
+    
+    return currentUser.role === 'admin' || 
+           userRole === 'admin' || 
+           theme === 'dark';
+}
+
+/**
  * Renderuj przycisk usuwania (tylko dla admina)
  * @param {number} documentId - ID dokumentu
  * @param {number} caseId - ID sprawy
@@ -95,8 +128,7 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
  */
 window.renderDeleteButtonAdmin = function(documentId, caseId) {
     // Sprawdź czy user to admin
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-    if (currentUser.role !== 'admin') {
+    if (!isUserAdmin()) {
         return ''; // Nie pokazuj przycisku dla nie-adminów
     }
     
@@ -311,10 +343,14 @@ function showNotification(message, type = 'info') {
  * Dodaj przyciski usuwania do wszystkich dokumentów na stronie (tylko admin)
  */
 window.addDeleteButtonsToDocuments = function() {
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-    if (currentUser.role !== 'admin') {
+    console.log('🔍 addDeleteButtonsToDocuments - sprawdzam czy admin...');
+    
+    if (!isUserAdmin()) {
+        console.log('⚠️ Użytkownik NIE jest adminem - pomijam dodawanie przycisków');
         return; // Nie dodawaj dla nie-adminów
     }
+    
+    console.log('✅ Użytkownik jest adminem - dodaję przyciski usuwania');
     
     // Znajdź wszystkie kontenery z przyciskami "Pokaż" i "Pobierz"
     const documentContainers = document.querySelectorAll('[data-document-id]');
