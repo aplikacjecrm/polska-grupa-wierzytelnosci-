@@ -12,6 +12,10 @@ data/
 *.db
 *.sqlite
 
+# WYJĄTEK: Seed database musi być w repo!
+!db-seed/
+!db-seed/*.db
+
 # Build
 dist/
 build/
