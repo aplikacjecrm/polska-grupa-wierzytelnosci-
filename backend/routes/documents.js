@@ -440,6 +440,17 @@ router.get('/case/:caseId', verifyToken, (req, res) => {
     );
 });
 
+// TEST endpoint - bez auth, tylko logging
+router.get('/test-download/:id', (req, res) => {
+    console.log('🧪 TEST DOWNLOAD ENDPOINT HIT! ID:', req.params.id);
+    res.json({ 
+        success: true, 
+        message: 'Test endpoint działa!', 
+        id: req.params.id,
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Pobierz/wyświetl dokument (download endpoint)
 router.get('/download/:id', verifyToken, (req, res) => {
     console.log('🔥 DOWNLOAD ENDPOINT HIT! ID:', req.params.id);
