@@ -714,6 +714,24 @@ router.delete('/emergency-cleanup/:id', verifyToken, (req, res) => {
             
             console.log(`✅ Dokument ${id} usunięty z bazy przez ${req.user.email}`);
             
+            // DODAJ WPIS DO HISTORII SPRAWY
+            if (doc.case_id) {
+                const historyEntry = `🗑️ Administrator usunął dokument: "${doc.filename || doc.file_name || doc.title || 'Dokument'}" (ID: ${doc.id})`;
+                
+                db.run(
+                    `INSERT INTO case_history (case_id, action_type, description, performed_by, created_at) 
+                     VALUES (?, ?, ?, ?, datetime('now'))`,
+                    [doc.case_id, 'document_deleted', historyEntry, req.user.userId],
+                    (histErr) => {
+                        if (histErr) {
+                            console.error('⚠️ Nie można dodać wpisu do historii:', histErr);
+                        } else {
+                            console.log(`✅ Dodano wpis do historii sprawy ${doc.case_id}`);
+                        }
+                    }
+                );
+            }
+            
             res.json({
                 message: `Dokument ${id} (${doc.filename || doc.file_name}) został usunięty`,
                 deleted: true,
