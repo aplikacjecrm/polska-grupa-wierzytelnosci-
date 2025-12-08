@@ -171,12 +171,16 @@ window.addDeleteButtonsToDocuments = function() {
             return; // Już dodany
         }
         
-        // Znajdź kontener z przyciskami
-        const buttonContainer = container.querySelector('.document-buttons');
-        if (!buttonContainer) {
-            console.warn(`⚠️ Brak kontenera przycisków dla dokumentu ${documentId}`);
+        // Znajdź wszystkie przyciski w kontenerze
+        const existingButtons = container.querySelectorAll('button');
+        if (existingButtons.length === 0) {
+            console.warn(`⚠️ Brak przycisków dla dokumentu ${documentId}`);
             return;
         }
+        
+        // Znajdź kontener przycisków - parent pierwszego przycisku
+        const firstButton = existingButtons[0];
+        const buttonContainer = firstButton.parentElement;
         
         // Stwórz przycisk "Usuń"
         const deleteButton = document.createElement('button');
