@@ -8,27 +8,45 @@ console.log('🔄 auto-refresh-case.js ZAŁADOWANY!');
 window.refreshCurrentCase = function() {
     console.log('🔄 refreshCurrentCase() wywołane');
     
-    // Sprawdź czy jest otwarta jakaś sprawa
-    const casePanel = document.getElementById('caseDetails');
-    if (!casePanel || casePanel.style.display === 'none') {
-        console.log('⚠️ Brak otwartej sprawy - pomijam refresh');
-        return;
+    // Znajdź Case ID na różne sposoby
+    let caseId = null;
+    
+    // Sposób 1: window.crmManager.currentCaseId (NAJPEWNIEJSZY)
+    if (window.crmManager?.currentCaseId) {
+        caseId = window.crmManager.currentCaseId;
+        console.log(`✅ Znaleziono Case ID z crmManager: ${caseId}`);
     }
     
-    // Pobierz ID aktualnie otwartej sprawy
-    const caseIdElement = casePanel.querySelector('[data-case-id]');
-    if (!caseIdElement) {
-        console.log('⚠️ Nie znaleziono elementu z data-case-id');
-        return;
+    // Sposób 2: window.currentCaseId
+    if (!caseId && window.currentCaseId) {
+        caseId = window.currentCaseId;
+        console.log(`✅ Znaleziono Case ID z window: ${caseId}`);
     }
     
-    const caseId = caseIdElement.getAttribute('data-case-id');
+    // Sposób 3: Panel sprawy (stary sposób)
     if (!caseId) {
-        console.log('⚠️ Brak case ID');
+        const casePanel = document.getElementById('caseDetails');
+        if (casePanel && casePanel.style.display !== 'none') {
+            const caseIdElement = casePanel.querySelector('[data-case-id]');
+            caseId = caseIdElement?.getAttribute('data-case-id');
+            if (caseId) {
+                console.log(`✅ Znaleziono Case ID z panelu: ${caseId}`);
+            }
+        }
+    }
+    
+    // Jeśli nadal nie znaleziono
+    if (!caseId) {
+        console.warn('⚠️ Nie znaleziono Case ID - pomijam refresh');
+        console.log('Debug:', {
+            'crmManager.currentCaseId': window.crmManager?.currentCaseId,
+            'window.currentCaseId': window.currentCaseId,
+            'panel': document.getElementById('caseDetails')?.style.display
+        });
         return;
     }
     
-    console.log(`✅ Znaleziono otwartą sprawę: ${caseId}`);
+    console.log(`✅ FINAL Case ID do odświeżenia: ${caseId}`);
     
     // Sprawdź która zakładka jest aktywna
     const activeTabs = document.querySelectorAll('.case-tab.active');
