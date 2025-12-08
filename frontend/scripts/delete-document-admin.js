@@ -145,17 +145,33 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
         console.log('KROK 4: Odświeżam sprawę...');
         console.log(`📁 Case ID przekazany: ${caseId}`);
         
-        // Jeśli caseId nie został przekazany - spróbuj znaleźć z DOM
+        // Jeśli caseId nie został przekazany - spróbuj znaleźć na różne sposoby
         let actualCaseId = caseId;
-        if (!actualCaseId) {
-            console.warn('⚠️ Case ID nie przekazany - szukam w DOM...');
-            const documentElement = document.querySelector(`[data-document-id="${documentId}"]`);
-            if (documentElement) {
-                actualCaseId = documentElement.getAttribute('data-case-id');
-                console.log(`📁 Znaleziono Case ID z DOM: ${actualCaseId}`);
+        if (!actualCaseId || actualCaseId === 'null' || actualCaseId === 'undefined') {
+            console.warn('⚠️ Case ID nie przekazany - szukam wszędzie...');
+            
+            // Sposób 1: Sprawdź window.crmManager.currentCaseId
+            if (window.crmManager?.currentCaseId) {
+                actualCaseId = window.crmManager.currentCaseId;
+                console.log(`📁 Znaleziono Case ID z crmManager: ${actualCaseId}`);
             }
             
-            // Jeśli nadal brak - sprawdź w panelu sprawy
+            // Sposób 2: Sprawdź window.currentCaseId
+            if (!actualCaseId && window.currentCaseId) {
+                actualCaseId = window.currentCaseId;
+                console.log(`📁 Znaleziono Case ID z window: ${actualCaseId}`);
+            }
+            
+            // Sposób 3: Sprawdź element dokumentu
+            if (!actualCaseId) {
+                const documentElement = document.querySelector(`[data-document-id="${documentId}"]`);
+                if (documentElement) {
+                    actualCaseId = documentElement.getAttribute('data-case-id');
+                    console.log(`📁 Znaleziono Case ID z DOM: ${actualCaseId}`);
+                }
+            }
+            
+            // Sposób 4: Sprawdź panel sprawy
             if (!actualCaseId) {
                 const casePanel = document.getElementById('caseDetails');
                 const caseIdElement = casePanel?.querySelector('[data-case-id]');
@@ -163,6 +179,8 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
                 console.log(`📁 Znaleziono Case ID z panelu: ${actualCaseId}`);
             }
         }
+        
+        console.log(`📁 FINAL Case ID: ${actualCaseId}`);
         
         setTimeout(() => {
             // Użyj nowego systemu auto-refresh (jeśli dostępny)
