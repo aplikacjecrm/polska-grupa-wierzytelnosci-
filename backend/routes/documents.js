@@ -537,9 +537,13 @@ function sendFile(document, req, res) {
         if (document.file_data) {
             console.log('📎 Plik nie na dysku, używam base64 z bazy');
             const buffer = Buffer.from(document.file_data, 'base64');
+            const fileName = document.filename || document.file_name;
+            const encodedFileName = encodeURIComponent(fileName);
+            const safeFileName = fileName.replace(/[^\x00-\x7F]/g, '_');
+            
             res.setHeader('Content-Type', document.file_type || 'application/octet-stream');
             res.setHeader('Content-Length', buffer.length);
-            res.setHeader('Content-Disposition', `inline; filename="${document.filename || document.file_name}"`);
+            res.setHeader('Content-Disposition', `inline; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`);
             return res.send(buffer);
         }
         console.error('❌ Plik nie istnieje i brak base64:', filePath);
@@ -560,6 +564,8 @@ function sendFile(document, req, res) {
         
         const fileName = document.filename || document.file_name;
         const encodedFileName = encodeURIComponent(fileName);
+        // Bezpieczna nazwa ASCII dla starych przeglądarek (bez polskich znaków)
+        const safeFileName = fileName.replace(/[^\x00-\x7F]/g, '_');
         
         if (range) {
             // Obsługa Range request - streaming częściowy
@@ -575,7 +581,7 @@ function sendFile(document, req, res) {
                 'Accept-Ranges': 'bytes',
                 'Content-Length': chunkSize,
                 'Content-Type': document.file_type,
-                'Content-Disposition': `inline; filename="${fileName}"; filename*=UTF-8''${encodedFileName}`
+                'Content-Disposition': `inline; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`
             });
             
             const readStream = fs.createReadStream(filePath, { start, end });
@@ -586,7 +592,7 @@ function sendFile(document, req, res) {
                 'Content-Length': fileSize,
                 'Content-Type': document.file_type,
                 'Accept-Ranges': 'bytes',
-                'Content-Disposition': `inline; filename="${fileName}"; filename*=UTF-8''${encodedFileName}`
+                'Content-Disposition': `inline; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`
             });
             
             const readStream = fs.createReadStream(filePath);
@@ -597,9 +603,11 @@ function sendFile(document, req, res) {
         // Dla innych plików - standardowe wysyłanie
         const fileName = document.filename || document.file_name;
         const encodedFileName = encodeURIComponent(fileName);
+        // Bezpieczna nazwa ASCII dla starych przeglądarek (bez polskich znaków)
+        const safeFileName = fileName.replace(/[^\x00-\x7F]/g, '_');
         
         res.setHeader('Content-Type', document.file_type || 'application/octet-stream');
-        res.setHeader('Content-Disposition', `inline; filename="${fileName}"; filename*=UTF-8''${encodedFileName}`);
+        res.setHeader('Content-Disposition', `inline; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`);
         
         const fileStream = fs.createReadStream(filePath);
         fileStream.pipe(res);
