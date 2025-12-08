@@ -22,14 +22,20 @@ setTimeout(() => {
  * @param {number} caseId - ID sprawy (do odświeżenia listy po usunięciu)
  */
 window.deleteDocumentAdmin = async function(documentId, caseId) {
-    console.log(`🗑️ Próba usunięcia dokumentu ${documentId}`);
+    console.log('');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log(`🗑️ DELETE DOCUMENT ADMIN - START`);
+    console.log(`📄 Document ID: ${documentId}`);
+    console.log(`📁 Case ID: ${caseId}`);
+    console.log('═══════════════════════════════════════════════════════════');
     
     // 1. Sprawdź czy użytkownik jest adminem
-    console.log('🔍 Sprawdzam uprawnienia admina...');
+    console.log('KROK 1: Sprawdzam uprawnienia admina...');
     console.log('📊 localStorage:', {
         'user': localStorage.getItem('user'),
         'userRole': localStorage.getItem('userRole'),
-        'theme': localStorage.getItem('theme')
+        'theme': localStorage.getItem('theme'),
+        'token': localStorage.getItem('token') ? 'EXISTS' : 'MISSING'
     });
     
     if (!isUserAdmin()) {
@@ -38,28 +44,56 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
         return;
     }
     
-    console.log('✅ Użytkownik jest adminem - można usuwać');
+    console.log('✅ KROK 1: OK - Użytkownik jest adminem');
     
     // 2. Pokaż własny modal potwierdzenia (w stylu aplikacji)
+    console.log('KROK 2: Pokazuję modal potwierdzenia...');
     const confirmed = await showCustomConfirm(
         'CZY NA PEWNO USUNĄĆ TEN DOKUMENT?',
         'Ta operacja jest NIEODWRACALNA!\nDokument zostanie usunięty z bazy danych i dysku.'
     );
     
     if (!confirmed) {
-        console.log('❌ Użytkownik anulował usuwanie');
+        console.log('❌ KROK 2: Użytkownik ANULOWAŁ usuwanie');
+        console.log('═══════════════════════════════════════════════════════════');
         return;
     }
     
+    console.log('✅ KROK 2: OK - Potwierdzono usunięcie');
+    
     try {
-        console.log(`📡 Wysyłam żądanie usunięcia dokumentu ${documentId}...`);
+        console.log('KROK 3: Wysyłam żądanie DELETE do backendu...');
+        console.log(`📡 Endpoint: /api/documents/emergency-cleanup/${documentId}`);
         
-        // Wywołaj endpoint usuwania
-        const response = await window.api.request(`/documents/emergency-cleanup/${documentId}`, {
-            method: 'DELETE'
-        });
-        
-        console.log('✅ Odpowiedź z serwera:', response);
+        // Sprawdź czy window.api istnieje
+        if (!window.api || !window.api.request) {
+            console.error('❌ window.api.request NIE ISTNIEJE! Używam fetch...');
+            
+            // Fallback na fetch
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/documents/emergency-cleanup/${documentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            
+            const data = await response.json();
+            console.log('✅ Odpowiedź z serwera (fetch):', data);
+        } else {
+            // Użyj window.api
+            const response = await window.api.request(`/documents/emergency-cleanup/${documentId}`, {
+                method: 'DELETE'
+            });
+            
+            console.log('✅ Odpowiedź z serwera (api):', response);
+        }
         
         // USUŃ ELEMENT Z DOM (natychmiastowe usunięcie wizualne)
         const documentElement = document.querySelector(`[data-document-id="${documentId}"]`);
@@ -102,8 +136,15 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
         }, 500);
         
     } catch (error) {
-        console.error('❌ Błąd usuwania dokumentu:', error);
-        alert(`❌ Błąd usuwania dokumentu: ${error.message}`);
+        console.error('❌ BŁĄD USUWANIA DOKUMENTU:');
+        console.error('Error object:', error);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        
+        showNotification(`❌ Błąd usuwania: ${error.message}`, 'error');
+        
+        // Pokaż też alert dla pewności
+        alert(`❌ BŁĄD USUWANIA DOKUMENTU!\n\n${error.message}\n\nSprawdź konsolę (F12) po więcej szczegółów.`);
     }
 };
 
