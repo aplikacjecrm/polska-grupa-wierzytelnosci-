@@ -56,14 +56,20 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
         // Pokaż powiadomienie sukcesu
         showNotification('✅ Dokument usunięty pomyślnie!', 'success');
         
-        // ODŚWIEŻ LISTĘ DOKUMENTÓW (na wszelki wypadek)
-        console.log(`🔄 Odświeżam listę dokumentów dla sprawy ${caseId}...`);
+        // PRZEŁADUJ CAŁĄ SPRAWĘ (żeby zaktualizować liczniki)
+        console.log(`🔄 Przeładowuję całą sprawę ${caseId}...`);
         
         setTimeout(() => {
-            // Jeśli jesteśmy w zakładce dokumentów w sprawie
             if (typeof window.crmManager !== 'undefined' && caseId) {
-                // Przełącz na zakładkę dokumentów (to automatycznie odświeży listę)
-                window.crmManager.switchCaseTab(caseId, 'documents');
+                // Przeładuj całą sprawę z serwera (zaktualizuje liczniki i zawartość)
+                console.log('📡 Wywołuję viewCase()...');
+                window.crmManager.viewCase(caseId).then(() => {
+                    // Po załadowaniu sprawy, przełącz na zakładkę dokumentów
+                    setTimeout(() => {
+                        window.crmManager.switchCaseTab(caseId, 'documents');
+                        console.log('✅ Sprawa przeładowana, zakładka dokumentów aktywna');
+                    }, 300);
+                });
             }
             
             // Jeśli to widok dokumentów globalny - odśwież całą stronę
