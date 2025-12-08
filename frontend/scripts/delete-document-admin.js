@@ -183,28 +183,14 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
         console.log(`📁 FINAL Case ID: ${actualCaseId}`);
         
         setTimeout(() => {
-            // Użyj nowego systemu auto-refresh (jeśli dostępny)
-            if (typeof window.refreshCurrentCase === 'function') {
-                console.log('✅ KROK 4: Używam window.refreshCurrentCase()');
-                window.refreshCurrentCase();
-            } 
-            // Fallback: stary sposób
-            else if (typeof window.crmManager !== 'undefined' && actualCaseId) {
-                console.log(`✅ KROK 4: Fallback - używam viewCase(${actualCaseId})`);
-                window.crmManager.viewCase(actualCaseId).then(() => {
-                    setTimeout(() => {
-                        window.crmManager.switchCaseTab(actualCaseId, 'documents');
-                    }, 300);
-                });
-            } else {
-                console.error('❌ KROK 4: Nie można odświeżyć - brak caseId i brak window.refreshCurrentCase()');
-            }
+            // NAJPROSTSZE ROZWIĄZANIE: Przeładuj całą stronę
+            // Zagwarantuje że dane będą świeże z serwera
+            console.log('✅ KROK 4: Przeładowuję całą stronę...');
+            console.log('⏳ Za 1 sekundę nastąpi reload...');
             
-            // Jeśli to widok dokumentów globalny - odśwież całą stronę
-            if (window.location.hash === '#documents') {
-                console.log('🔄 Odświeżam całą stronę (widok globalny)...');
+            setTimeout(() => {
                 window.location.reload();
-            }
+            }, 1000);
         }, 500);
         
         // Usuń z listy usuwanych (operacja zakończona pomyślnie)
