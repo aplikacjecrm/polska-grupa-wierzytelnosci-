@@ -9,18 +9,25 @@ console.log('🗑️ delete-document-admin.js ZAŁADOWANY!');
 window.deleteDocumentAdmin = async function(documentId, caseId) {
     console.log(`🗑️ Próba usunięcia dokumentu ${documentId}`);
     
-    // Sprawdź czy user to admin
+    // 1. Sprawdź czy użytkownik jest adminem
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-    if (currentUser.role !== 'admin') {
-        alert('❌ Tylko administrator może usuwać dokumenty!');
+    const userRole = localStorage.getItem('userRole'); // Fallback dla starszej wersji
+    
+    const isAdmin = currentUser.role === 'admin' || userRole === 'admin';
+    
+    if (!isAdmin) {
+        showNotification('❌ Brak uprawnień! Tylko administrator może usuwać dokumenty.', 'error');
         return;
     }
     
-    // Potwierdzenie
-    const confirmDelete = confirm(`⚠️ CZY NA PEWNO USUNĄĆ TEN DOKUMENT?\n\nTa operacja jest NIEODWRACALNA!\nDokument zostanie usunięty z bazy danych i dysku.`);
+    // 2. Pokaż własny modal potwierdzenia (w stylu aplikacji)
+    const confirmed = await showCustomConfirm(
+        'CZY NA PEWNO USUNĄĆ TEN DOKUMENT?',
+        'Ta operacja jest NIEODWRACALNA!\nDokument zostanie usunięty z bazy danych i dysku.'
+    );
     
-    if (!confirmDelete) {
-        console.log('❌ Anulowano usuwanie');
+    if (!confirmed) {
+        console.log('❌ Użytkownik anulował usuwanie');
         return;
     }
     
@@ -34,24 +41,36 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
         
         console.log('✅ Odpowiedź z serwera:', response);
         
+        // USUŃ ELEMENT Z DOM (natychmiastowe usunięcie wizualne)
+        const documentElement = document.querySelector(`[data-document-id="${documentId}"]`);
+        if (documentElement) {
+            documentElement.style.transition = 'all 0.3s ease';
+            documentElement.style.opacity = '0';
+            documentElement.style.transform = 'translateX(-100px)';
+            setTimeout(() => {
+                documentElement.remove();
+                console.log(`✅ Element dokumentu ${documentId} usunięty z DOM`);
+            }, 300);
+        }
+        
         // Pokaż powiadomienie sukcesu
         showNotification('✅ Dokument usunięty pomyślnie!', 'success');
         
-        // ODŚWIEŻ LISTĘ DOKUMENTÓW
+        // ODŚWIEŻ LISTĘ DOKUMENTÓW (na wszelki wypadek)
         console.log(`🔄 Odświeżam listę dokumentów dla sprawy ${caseId}...`);
         
-        // Jeśli jesteśmy w zakładce dokumentów w sprawie
-        if (typeof window.crmManager !== 'undefined' && caseId) {
-            // Przełącz na zakładkę dokumentów (to automatycznie odświeży listę)
-            window.crmManager.switchCaseTab(caseId, 'documents');
-        }
-        
-        // Jeśli to widok dokumentów globalny - odśwież całą stronę
-        if (window.location.hash === '#documents') {
-            setTimeout(() => {
+        setTimeout(() => {
+            // Jeśli jesteśmy w zakładce dokumentów w sprawie
+            if (typeof window.crmManager !== 'undefined' && caseId) {
+                // Przełącz na zakładkę dokumentów (to automatycznie odświeży listę)
+                window.crmManager.switchCaseTab(caseId, 'documents');
+            }
+            
+            // Jeśli to widok dokumentów globalny - odśwież całą stronę
+            if (window.location.hash === '#documents') {
                 window.location.reload();
-            }, 1000);
-        }
+            }
+        }, 500);
         
     } catch (error) {
         console.error('❌ Błąd usuwania dokumentu:', error);
@@ -91,6 +110,137 @@ window.renderDeleteButtonAdmin = function(documentId, caseId) {
         </button>
     `;
 };
+
+/**
+ * Pokazuje własny modal potwierdzenia (w stylu aplikacji)
+ */
+function showCustomConfirm(title, message) {
+    return new Promise((resolve) => {
+        // Stwórz backdrop
+        const backdrop = document.createElement('div');
+        backdrop.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        `;
+        
+        // Stwórz modal
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: scaleIn 0.3s ease;
+        `;
+        
+        modal.innerHTML = `
+            <div style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
+                <h2 style="margin: 0 0 15px 0; color: #dc3545; font-size: 1.5rem;">${title}</h2>
+                <p style="color: #666; line-height: 1.6; margin-bottom: 30px; white-space: pre-line;">${message}</p>
+                
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button id="confirmCancel" style="
+                        padding: 12px 30px;
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        font-size: 1rem;
+                        transition: all 0.2s;
+                    ">Anuluj</button>
+                    
+                    <button id="confirmOK" style="
+                        padding: 12px 30px;
+                        background: linear-gradient(135deg, #dc3545, #c82333);
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        font-size: 1rem;
+                        transition: all 0.2s;
+                    ">OK - Usuń</button>
+                </div>
+            </div>
+        `;
+        
+        // Dodaj style animacji
+        if (!document.getElementById('modalStyles')) {
+            const style = document.createElement('style');
+            style.id = 'modalStyles';
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes scaleIn {
+                    from {
+                        transform: scale(0.8);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: scale(1);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        backdrop.appendChild(modal);
+        document.body.appendChild(backdrop);
+        
+        // Obsługa przycisków
+        const closeModal = (result) => {
+            backdrop.style.animation = 'fadeIn 0.2s ease reverse';
+            setTimeout(() => {
+                backdrop.remove();
+                resolve(result);
+            }, 200);
+        };
+        
+        document.getElementById('confirmOK').onclick = () => closeModal(true);
+        document.getElementById('confirmCancel').onclick = () => closeModal(false);
+        backdrop.onclick = (e) => {
+            if (e.target === backdrop) closeModal(false);
+        };
+        
+        // Hover effects
+        const btnOK = document.getElementById('confirmOK');
+        const btnCancel = document.getElementById('confirmCancel');
+        
+        btnOK.onmouseover = () => {
+            btnOK.style.transform = 'translateY(-2px)';
+            btnOK.style.boxShadow = '0 4px 12px rgba(220,53,69,0.4)';
+        };
+        btnOK.onmouseout = () => {
+            btnOK.style.transform = 'translateY(0)';
+            btnOK.style.boxShadow = 'none';
+        };
+        
+        btnCancel.onmouseover = () => {
+            btnCancel.style.background = '#5a6268';
+            btnCancel.style.transform = 'translateY(-2px)';
+        };
+        btnCancel.onmouseout = () => {
+            btnCancel.style.background = '#6c757d';
+            btnCancel.style.transform = 'translateY(0)';
+        };
+    });
+}
 
 /**
  * Pokazuje powiadomienie na ekranie
