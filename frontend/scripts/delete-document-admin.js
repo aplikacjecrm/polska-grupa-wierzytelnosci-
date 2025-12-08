@@ -141,57 +141,9 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
         // Pokaż powiadomienie sukcesu
         showNotification('✅ Dokument usunięty pomyślnie!', 'success');
         
-        // ODŚWIEŻ SPRAWĘ (używając nowego systemu auto-refresh)
-        console.log('KROK 4: Odświeżam sprawę...');
-        console.log(`📁 Case ID przekazany: ${caseId}`);
-        
-        // Jeśli caseId nie został przekazany - spróbuj znaleźć na różne sposoby
-        let actualCaseId = caseId;
-        if (!actualCaseId || actualCaseId === 'null' || actualCaseId === 'undefined') {
-            console.warn('⚠️ Case ID nie przekazany - szukam wszędzie...');
-            
-            // Sposób 1: Sprawdź window.crmManager.currentCaseId
-            if (window.crmManager?.currentCaseId) {
-                actualCaseId = window.crmManager.currentCaseId;
-                console.log(`📁 Znaleziono Case ID z crmManager: ${actualCaseId}`);
-            }
-            
-            // Sposób 2: Sprawdź window.currentCaseId
-            if (!actualCaseId && window.currentCaseId) {
-                actualCaseId = window.currentCaseId;
-                console.log(`📁 Znaleziono Case ID z window: ${actualCaseId}`);
-            }
-            
-            // Sposób 3: Sprawdź element dokumentu
-            if (!actualCaseId) {
-                const documentElement = document.querySelector(`[data-document-id="${documentId}"]`);
-                if (documentElement) {
-                    actualCaseId = documentElement.getAttribute('data-case-id');
-                    console.log(`📁 Znaleziono Case ID z DOM: ${actualCaseId}`);
-                }
-            }
-            
-            // Sposób 4: Sprawdź panel sprawy
-            if (!actualCaseId) {
-                const casePanel = document.getElementById('caseDetails');
-                const caseIdElement = casePanel?.querySelector('[data-case-id]');
-                actualCaseId = caseIdElement?.getAttribute('data-case-id');
-                console.log(`📁 Znaleziono Case ID z panelu: ${actualCaseId}`);
-            }
-        }
-        
-        console.log(`📁 FINAL Case ID: ${actualCaseId}`);
-        
-        setTimeout(() => {
-            // NAJPROSTSZE ROZWIĄZANIE: Przeładuj całą stronę
-            // Zagwarantuje że dane będą świeże z serwera
-            console.log('✅ KROK 4: Przeładowuję całą stronę...');
-            console.log('⏳ Za 1 sekundę nastąpi reload...');
-            
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        }, 500);
+        // BEZ ODŚWIEŻANIA - tylko usuń z DOM
+        console.log('KROK 4: Zakończono - dokument usunięty z bazy i DOM');
+        console.log('💡 TIP: Naciśnij F5 aby odświeżyć licznik dokumentów');
         
         // Usuń z listy usuwanych (operacja zakończona pomyślnie)
         deletingDocuments.delete(documentId);
@@ -463,35 +415,40 @@ window.addDeleteButtonsToDocuments = function() {
     
     console.log('✅ Użytkownik jest adminem - dodaję przyciski usuwania');
     
-    // Znajdź wszystkie kontenery z przyciskami "Pokaż" i "Pobierz"
-    const documentContainers = document.querySelectorAll('[data-document-id]');
+    // NOWA STRATEGIA: Znajdź wszystkie przyciski z onclick zawierającym "viewDocument" lub "previewDocument"
+    const allButtons = document.querySelectorAll('button[onclick*="Document"]');
     
-    console.log(`🗑️ Znaleziono ${documentContainers.length} dokumentów do dodania przycisków usuwania`);
+    console.log(`🗑️ Znaleziono ${allButtons.length} przycisków dokumentów`);
     
-    documentContainers.forEach(container => {
-        const documentId = container.getAttribute('data-document-id');
-        const caseId = container.getAttribute('data-case-id');
+    // Grupuj przyciski tego samego dokumentu
+    const processedDocs = new Set();
+    
+    allButtons.forEach(button => {
+        const onclick = button.getAttribute('onclick');
+        if (!onclick) return;
+        
+        // Wyciągnij documentId z onclick (np. "viewDocument(90, ...)")
+        const match = onclick.match(/Document\((\d+)/);
+        if (!match) return;
+        
+        const documentId = match[1];
+        
+        // Jeśli już przetworzony - pomiń
+        if (processedDocs.has(documentId)) return;
+        processedDocs.add(documentId);
+        
+        // Znajdź kontener przycisków - parent tego przycisku
+        const buttonContainer = button.parentElement;
         
         // Sprawdź czy przycisk usuń już istnieje
-        if (container.querySelector('.delete-button-admin')) {
+        if (buttonContainer.querySelector('.delete-button-admin')) {
             return; // Już dodany
         }
-        
-        // Znajdź wszystkie przyciski w kontenerze
-        const existingButtons = container.querySelectorAll('button');
-        if (existingButtons.length === 0) {
-            console.warn(`⚠️ Brak przycisków dla dokumentu ${documentId}`);
-            return;
-        }
-        
-        // Znajdź kontener przycisków - parent pierwszego przycisku
-        const firstButton = existingButtons[0];
-        const buttonContainer = firstButton.parentElement;
         
         // Stwórz przycisk "Usuń"
         const deleteButton = document.createElement('button');
         deleteButton.className = 'delete-button-admin';
-        deleteButton.onclick = () => window.deleteDocumentAdmin(documentId, caseId);
+        deleteButton.onclick = () => window.deleteDocumentAdmin(documentId, null);
         deleteButton.style.cssText = `
             padding: 10px 20px;
             background: linear-gradient(135deg, #dc3545, #c82333);
