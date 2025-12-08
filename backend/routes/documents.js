@@ -627,6 +627,85 @@ function sendFile(document, req, res) {
     }
 }
 
+// 🧹 ENDPOINT DO CZYSZCZENIA PUSTYCH WPISÓW DOKUMENTÓW (bez fizycznych plików)
+// MUSI BYĆ PRZED /:id ABY NIE BYŁ ZŁAPANY PRZEZ PARAMETR!
+// TYLKO DLA ADMINA
+router.delete('/cleanup-empty', verifyToken, (req, res) => {
+    const db = getDatabase();
+    
+    // TYLKO ADMIN
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Tylko admin może czyścić puste wpisy' });
+    }
+    
+    console.log(`🧹 CLEANUP: Admin ${req.user.email} czyści puste wpisy dokumentów`);
+    
+    // Pobierz wszystkie dokumenty
+    db.all('SELECT * FROM documents ORDER BY case_id, uploaded_at', [], (err, docs) => {
+        if (err) {
+            console.error('❌ Błąd odczytu dokumentów:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        console.log(`📄 Znaleziono ${docs.length} dokumentów w bazie`);
+        
+        const toDelete = [];
+        const existing = [];
+        
+        docs.forEach(doc => {
+            const filePath = doc.file_path || doc.filepath;
+            const fileExists = filePath && fs.existsSync(filePath);
+            
+            if (!fileExists) {
+                toDelete.push(doc);
+                console.log(`❌ Plik nie istnieje: ID ${doc.id} - "${doc.title || doc.file_name}"`);
+            } else {
+                existing.push(doc);
+                console.log(`✅ Plik istnieje: ID ${doc.id} - "${doc.title || doc.file_name}"`);
+            }
+        });
+        
+        if (toDelete.length === 0) {
+            console.log('✅ Brak pustych wpisów!');
+            return res.json({ 
+                message: 'Brak pustych wpisów do usunięcia',
+                total: docs.length,
+                deleted: 0,
+                remaining: existing.length
+            });
+        }
+        
+        // Usuń puste wpisy
+        let deleted = 0;
+        const deletedIds = [];
+        
+        toDelete.forEach((doc, index) => {
+            db.run('DELETE FROM documents WHERE id = ?', [doc.id], (err) => {
+                if (err) {
+                    console.error(`❌ Błąd usuwania ID ${doc.id}:`, err);
+                } else {
+                    console.log(`✅ Usunięto ID ${doc.id}: "${doc.title || doc.file_name}"`);
+                    deleted++;
+                    deletedIds.push(doc.id);
+                }
+                
+                // Odpowiedź po ostatnim
+                if (index === toDelete.length - 1) {
+                    setTimeout(() => {
+                        res.json({
+                            message: `Usunięto ${deleted} pustych wpisów`,
+                            total: docs.length,
+                            deleted: deleted,
+                            deletedIds: deletedIds,
+                            remaining: existing.length
+                        });
+                    }, 500);
+                }
+            });
+        });
+    });
+});
+
 // Usuń dokument
 router.delete('/:id', verifyToken, (req, res) => {
     const db = getDatabase();
@@ -738,84 +817,6 @@ router.delete('/emergency-cleanup/:id', verifyToken, (req, res) => {
                 document: {
                     id: doc.id,
                     filename: doc.filename || doc.file_name
-                }
-            });
-        });
-    });
-});
-
-// 🧹 ENDPOINT DO CZYSZCZENIA PUSTYCH WPISÓW DOKUMENTÓW (bez fizycznych plików)
-// TYLKO DLA ADMINA
-router.delete('/cleanup-empty', verifyToken, (req, res) => {
-    const db = getDatabase();
-    
-    // TYLKO ADMIN
-    if (req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Tylko admin może czyścić puste wpisy' });
-    }
-    
-    console.log(`🧹 CLEANUP: Admin ${req.user.email} czyści puste wpisy dokumentów`);
-    
-    // Pobierz wszystkie dokumenty
-    db.all('SELECT * FROM documents ORDER BY case_id, uploaded_at', [], (err, docs) => {
-        if (err) {
-            console.error('❌ Błąd odczytu dokumentów:', err);
-            return res.status(500).json({ error: err.message });
-        }
-        
-        console.log(`📄 Znaleziono ${docs.length} dokumentów w bazie`);
-        
-        const toDelete = [];
-        const existing = [];
-        
-        docs.forEach(doc => {
-            const filePath = doc.file_path || doc.filepath;
-            const fileExists = filePath && fs.existsSync(filePath);
-            
-            if (!fileExists) {
-                toDelete.push(doc);
-                console.log(`❌ Plik nie istnieje: ID ${doc.id} - "${doc.title || doc.file_name}"`);
-            } else {
-                existing.push(doc);
-                console.log(`✅ Plik istnieje: ID ${doc.id} - "${doc.title || doc.file_name}"`);
-            }
-        });
-        
-        if (toDelete.length === 0) {
-            console.log('✅ Brak pustych wpisów!');
-            return res.json({ 
-                message: 'Brak pustych wpisów do usunięcia',
-                total: docs.length,
-                deleted: 0,
-                remaining: existing.length
-            });
-        }
-        
-        // Usuń puste wpisy
-        let deleted = 0;
-        const deletedIds = [];
-        
-        toDelete.forEach((doc, index) => {
-            db.run('DELETE FROM documents WHERE id = ?', [doc.id], (err) => {
-                if (err) {
-                    console.error(`❌ Błąd usuwania ID ${doc.id}:`, err);
-                } else {
-                    console.log(`✅ Usunięto ID ${doc.id}: "${doc.title || doc.file_name}"`);
-                    deleted++;
-                    deletedIds.push(doc.id);
-                }
-                
-                // Odpowiedź po ostatnim
-                if (index === toDelete.length - 1) {
-                    setTimeout(() => {
-                        res.json({
-                            message: `Usunięto ${deleted} pustych wpisów`,
-                            total: docs.length,
-                            deleted: deleted,
-                            deletedIds: deletedIds,
-                            remaining: existing.length
-                        });
-                    }, 500);
                 }
             });
         });
