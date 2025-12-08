@@ -1,6 +1,9 @@
 // 🗑️ MODUŁ USUWANIA DOKUMENTÓW - TYLKO DLA ADMINA
 console.log('🗑️ delete-document-admin.js ZAŁADOWANY!');
 
+// Śledź aktualnie usuwane dokumenty (zapobiega wielokrotnemu klikaniu)
+const deletingDocuments = new Set();
+
 // Debug: Sprawdź od razu czy wykryto admina
 setTimeout(() => {
     console.log('🔍 INITIAL ADMIN CHECK:');
@@ -29,6 +32,17 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
     console.log(`📁 Case ID: ${caseId}`);
     console.log('═══════════════════════════════════════════════════════════');
     
+    // 0. Sprawdź czy ten dokument jest już w trakcie usuwania
+    if (deletingDocuments.has(documentId)) {
+        console.warn(`⚠️ Dokument ${documentId} jest już w trakcie usuwania - IGNORUJĘ`);
+        showNotification('⚠️ Dokument jest już w trakcie usuwania...', 'warning');
+        return;
+    }
+    
+    // Dodaj do zbioru usuwanych
+    deletingDocuments.add(documentId);
+    console.log(`🔒 Dokument ${documentId} dodany do listy usuwanych`);
+    
     // 1. Sprawdź czy użytkownik jest adminem
     console.log('KROK 1: Sprawdzam uprawnienia admina...');
     console.log('📊 localStorage:', {
@@ -40,6 +54,7 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
     
     if (!isUserAdmin()) {
         console.error('❌ Użytkownik NIE jest adminem!');
+        deletingDocuments.delete(documentId); // Usuń z listy usuwanych
         showNotification('❌ Brak uprawnień! Tylko administrator może usuwać dokumenty.', 'error');
         return;
     }
@@ -55,6 +70,7 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
     
     if (!confirmed) {
         console.log('❌ KROK 2: Użytkownik ANULOWAŁ usuwanie');
+        deletingDocuments.delete(documentId); // Usuń z listy usuwanych
         console.log('═══════════════════════════════════════════════════════════');
         return;
     }
@@ -85,15 +101,30 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
             }
             
             const data = await response.json();
-            console.log('✅ Odpowiedź z serwera (fetch):', data);
+            console.log('✅ KROK 3: Odpowiedź z serwera (fetch):', data);
+            
+            // Sprawdź czy faktycznie usunięto
+            if (data.deleted === false) {
+                console.warn('⚠️ Backend mówi: dokument już nie istnieje w bazie!');
+                showNotification('⚠️ Dokument już został wcześniej usunięty', 'warning');
+                // Kontynuuj - usuń z DOM i odśwież
+            }
         } else {
             // Użyj window.api
             const response = await window.api.request(`/documents/emergency-cleanup/${documentId}`, {
                 method: 'DELETE'
             });
             
-            console.log('✅ Odpowiedź z serwera (api):', response);
+            console.log('✅ KROK 3: Odpowiedź z serwera (api):', response);
+            
+            // Sprawdź czy faktycznie usunięto
+            if (response.deleted === false) {
+                console.warn('⚠️ Backend mówi: dokument już nie istnieje w bazie!');
+                showNotification('⚠️ Dokument już został wcześniej usunięty', 'warning');
+            }
         }
+        
+        console.log('✅ KROK 3: OK - Backend odpowiedział');
         
         // USUŃ ELEMENT Z DOM (natychmiastowe usunięcie wizualne)
         const documentElement = document.querySelector(`[data-document-id="${documentId}"]`);
@@ -111,31 +142,66 @@ window.deleteDocumentAdmin = async function(documentId, caseId) {
         showNotification('✅ Dokument usunięty pomyślnie!', 'success');
         
         // ODŚWIEŻ SPRAWĘ (używając nowego systemu auto-refresh)
-        console.log(`🔄 Odświeżam sprawę ${caseId}...`);
+        console.log('KROK 4: Odświeżam sprawę...');
+        console.log(`📁 Case ID przekazany: ${caseId}`);
+        
+        // Jeśli caseId nie został przekazany - spróbuj znaleźć z DOM
+        let actualCaseId = caseId;
+        if (!actualCaseId) {
+            console.warn('⚠️ Case ID nie przekazany - szukam w DOM...');
+            const documentElement = document.querySelector(`[data-document-id="${documentId}"]`);
+            if (documentElement) {
+                actualCaseId = documentElement.getAttribute('data-case-id');
+                console.log(`📁 Znaleziono Case ID z DOM: ${actualCaseId}`);
+            }
+            
+            // Jeśli nadal brak - sprawdź w panelu sprawy
+            if (!actualCaseId) {
+                const casePanel = document.getElementById('caseDetails');
+                const caseIdElement = casePanel?.querySelector('[data-case-id]');
+                actualCaseId = caseIdElement?.getAttribute('data-case-id');
+                console.log(`📁 Znaleziono Case ID z panelu: ${actualCaseId}`);
+            }
+        }
         
         setTimeout(() => {
             // Użyj nowego systemu auto-refresh (jeśli dostępny)
             if (typeof window.refreshCurrentCase === 'function') {
-                console.log('✅ Używam window.refreshCurrentCase()');
+                console.log('✅ KROK 4: Używam window.refreshCurrentCase()');
                 window.refreshCurrentCase();
             } 
             // Fallback: stary sposób
-            else if (typeof window.crmManager !== 'undefined' && caseId) {
-                console.log('⚠️ Fallback: używam viewCase()');
-                window.crmManager.viewCase(caseId).then(() => {
+            else if (typeof window.crmManager !== 'undefined' && actualCaseId) {
+                console.log(`✅ KROK 4: Fallback - używam viewCase(${actualCaseId})`);
+                window.crmManager.viewCase(actualCaseId).then(() => {
                     setTimeout(() => {
-                        window.crmManager.switchCaseTab(caseId, 'documents');
+                        window.crmManager.switchCaseTab(actualCaseId, 'documents');
                     }, 300);
                 });
+            } else {
+                console.error('❌ KROK 4: Nie można odświeżyć - brak caseId i brak window.refreshCurrentCase()');
             }
             
             // Jeśli to widok dokumentów globalny - odśwież całą stronę
             if (window.location.hash === '#documents') {
+                console.log('🔄 Odświeżam całą stronę (widok globalny)...');
                 window.location.reload();
             }
         }, 500);
         
+        // Usuń z listy usuwanych (operacja zakończona pomyślnie)
+        deletingDocuments.delete(documentId);
+        console.log(`🔓 Dokument ${documentId} usunięty z listy usuwanych`);
+        
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('✅ DELETE DOCUMENT ADMIN - ZAKOŃCZONE POMYŚLNIE');
+        console.log('═══════════════════════════════════════════════════════════');
+        
     } catch (error) {
+        // Usuń z listy usuwanych (operacja zakończona z błędem)
+        deletingDocuments.delete(documentId);
+        console.log(`🔓 Dokument ${documentId} usunięty z listy usuwanych (błąd)`);
+        
         console.error('❌ BŁĄD USUWANIA DOKUMENTU:');
         console.error('Error object:', error);
         console.error('Error message:', error.message);
