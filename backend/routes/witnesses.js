@@ -789,15 +789,42 @@ router.post('/:id/documents', verifyToken, witnessDocsUpload.array('documents', 
     const uploadedDocs = [];
     
     for (const file of files) {
+      // Wygeneruj kod dokumentu
+      const prefix = `DOK/SWI/${witness.case_number}/${witness.witness_code}/`;
+      
+      // Pobierz ostatni numer dokumentu dla tego świadka
+      const lastDoc = await new Promise((resolve, reject) => {
+        db.get(
+          `SELECT document_code FROM witness_documents 
+           WHERE witness_id = ? AND document_code LIKE ?
+           ORDER BY document_code DESC LIMIT 1`,
+          [witnessId, `${prefix}%`],
+          (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+          }
+        );
+      });
+      
+      let nextNumber = 1;
+      if (lastDoc && lastDoc.document_code) {
+        const lastNumberPart = lastDoc.document_code.split('/').pop();
+        nextNumber = parseInt(lastNumberPart) + 1;
+      }
+      
+      const documentCode = `${prefix}${String(nextNumber).padStart(3, '0')}`;
+      console.log('📋 Kod dokumentu świadka:', documentCode);
+      
       const docId = await new Promise((resolve, reject) => {
         db.run(
           `INSERT INTO witness_documents (
-            witness_id, case_id, file_name, file_path, file_size, file_type,
+            witness_id, case_id, document_code, file_name, file_path, file_size, file_type,
             document_type, title, uploaded_by
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             witnessId,
             witness.case_id,
+            documentCode,
             file.originalname,
             file.path,
             file.size,
@@ -815,11 +842,12 @@ router.post('/:id/documents', verifyToken, witnessDocsUpload.array('documents', 
       
       uploadedDocs.push({
         id: docId,
+        document_code: documentCode,
         filename: file.originalname,
         size: file.size
       });
       
-      console.log(`✅ Dokument zapisany: ${file.originalname} (ID: ${docId})`);
+      console.log(`✅ Dokument zapisany: ${file.originalname} (ID: ${docId}, Kod: ${documentCode})`);
     }
     
     // Loguj aktywność
@@ -871,10 +899,11 @@ router.get('/:id/documents', verifyToken, (req, res) => {
   );
 });
 
-// Pobierz pojedynczy dokument świadka
+// Pobierz/podejrzyj pojedynczy dokument świadka
 router.get('/:witnessId/documents/:docId', verifyToken, (req, res) => {
   const db = getDatabase();
   const { docId } = req.params;
+  const isView = req.query.view === 'true';
   
   db.get(
     'SELECT * FROM witness_documents WHERE id = ?',
@@ -889,11 +918,24 @@ router.get('/:witnessId/documents/:docId', verifyToken, (req, res) => {
         return res.status(404).json({ error: 'Dokument nie znaleziony' });
       }
       
+      // Sprawdź czy plik istnieje
+      if (!fs.existsSync(doc.file_path)) {
+        console.error('❌ Plik nie istnieje:', doc.file_path);
+        return res.status(404).json({ error: 'Plik nie znaleziony na serwerze' });
+      }
+      
+      // Ustaw Content-Disposition: inline dla podglądu, attachment dla pobierania
+      const disposition = isView ? 'inline' : 'attachment';
+      res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(doc.file_name)}"`);
+      res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
+      
       // Wyślij plik
       res.sendFile(doc.file_path, (err) => {
         if (err) {
           console.error('❌ Błąd wysyłania pliku:', err);
-          res.status(500).json({ error: 'Błąd pobierania pliku' });
+          if (!res.headersSent) {
+            res.status(500).json({ error: 'Błąd pobierania pliku' });
+          }
         }
       });
     }

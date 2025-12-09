@@ -1124,37 +1124,67 @@ window.witnessesModule = {
                 container.innerHTML = '<div style="text-align: center; padding: 20px; color: #999; font-size: 0.9rem;">Brak dokumentów</div>';
             } else {
                 container.innerHTML = `
-                    <div style="display: grid; gap: 10px;">
+                    <div style="display: grid; gap: 12px;">
                         ${documents.map(doc => `
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0;">
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 600; color: #1a2332; margin-bottom: 4px;">📄 ${doc.file_name}</div>
-                                    <div style="font-size: 0.85rem; color: #666;">
-                                        ${(doc.file_size / 1024).toFixed(1)} KB • ${new Date(doc.uploaded_at).toLocaleDateString('pl-PL')}
+                            <div style="background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 16px; border-left: 4px solid #FFD700;">
+                                <!-- Kod dokumentu -->
+                                ${doc.document_code ? `
+                                    <div style="display: inline-block; padding: 6px 12px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2332; border-radius: 8px; font-size: 0.8rem; font-weight: 700; margin-bottom: 10px;">
+                                        📋 ${doc.document_code}
+                                    </div>
+                                ` : ''}
+                                
+                                <!-- Nazwa pliku -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; color: #1a2332; font-size: 1rem; margin-bottom: 4px;">📄 ${doc.file_name}</div>
+                                        <div style="font-size: 0.85rem; color: #666;">
+                                            ${(doc.file_size / 1024).toFixed(1)} KB • ${new Date(doc.uploaded_at).toLocaleDateString('pl-PL')} • ${doc.uploaded_by_name || 'Admin'}
+                                        </div>
                                     </div>
                                 </div>
-                                <div style="display: flex; gap: 8px;">
+                                
+                                <!-- Przyciski -->
+                                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                    <button onclick="witnessesModule.viewWitnessDocument(${witnessId}, ${doc.id})" style="
+                                        flex: 1;
+                                        padding: 10px 16px;
+                                        background: linear-gradient(135deg, #FFD700, #FFA500);
+                                        color: #1a2332;
+                                        border: none;
+                                        border-radius: 8px;
+                                        cursor: pointer;
+                                        font-size: 0.9rem;
+                                        font-weight: 700;
+                                        box-shadow: 0 2px 8px rgba(255,215,0,0.3);
+                                        transition: all 0.3s;
+                                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,215,0,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(255,215,0,0.3)'">
+                                        👁️ Pokaż
+                                    </button>
                                     <button onclick="witnessesModule.downloadWitnessDocument(${witnessId}, ${doc.id})" style="
-                                        padding: 6px 12px;
-                                        background: #3B82F6;
+                                        flex: 1;
+                                        padding: 10px 16px;
+                                        background: linear-gradient(135deg, #3B82F6, #1E40AF);
                                         color: white;
                                         border: none;
-                                        border-radius: 6px;
+                                        border-radius: 8px;
                                         cursor: pointer;
-                                        font-size: 0.85rem;
-                                        font-weight: 600;
-                                    ">
-                                        ⬇️ Pobierz
+                                        font-size: 0.9rem;
+                                        font-weight: 700;
+                                        box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+                                        transition: all 0.3s;
+                                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(59,130,246,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(59,130,246,0.3)'">
+                                        📥 Pobierz
                                     </button>
-                                    <button onclick="if(confirm('Usunąć dokument?')) witnessesModule.deleteWitnessDocument(${witnessId}, ${doc.id})" style="
-                                        padding: 6px 12px;
+                                    <button onclick="if(confirm('Usunąć dokument ${doc.file_name}?')) witnessesModule.deleteWitnessDocument(${witnessId}, ${doc.id})" style="
+                                        padding: 10px 16px;
                                         background: #dc3545;
                                         color: white;
                                         border: none;
-                                        border-radius: 6px;
+                                        border-radius: 8px;
                                         cursor: pointer;
-                                        font-size: 0.85rem;
-                                        font-weight: 600;
+                                        font-size: 0.9rem;
+                                        font-weight: 700;
                                     ">
                                         🗑️
                                     </button>
@@ -1254,7 +1284,21 @@ window.witnessesModule = {
         }
     },
     
-    // Pobierz dokument świadka
+    // Podgląd dokumentu świadka (otwórz w przeglądarce)
+    viewWitnessDocument: async function(witnessId, docId) {
+        try {
+            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
+            const token = localStorage.getItem('token');
+            
+            // Dodaj parametr view=true aby otworzyć inline w przeglądarce
+            window.open(`${apiUrl}/witnesses/${witnessId}/documents/${docId}?view=true&token=${token}`, '_blank');
+        } catch (error) {
+            console.error('❌ Błąd podglądu:', error);
+            alert('❌ Błąd: ' + error.message);
+        }
+    },
+    
+    // Pobierz dokument świadka (download)
     downloadWitnessDocument: async function(witnessId, docId) {
         try {
             const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';

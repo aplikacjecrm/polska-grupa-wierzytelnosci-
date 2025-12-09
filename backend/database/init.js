@@ -849,6 +849,7 @@ async function initDatabase() {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           witness_id INTEGER NOT NULL,
           case_id INTEGER NOT NULL,
+          document_code TEXT,
           file_name TEXT NOT NULL,
           file_path TEXT NOT NULL,
           file_size INTEGER,
@@ -867,6 +868,13 @@ async function initDatabase() {
           console.error('❌ Błąd tworzenia tabeli witness_documents:', err);
         } else {
           console.log('✅ Tabela witness_documents utworzona');
+        }
+      });
+      
+      // Dodaj kolumnę document_code jeśli nie istnieje
+      db.run(`ALTER TABLE witness_documents ADD COLUMN document_code TEXT`, (err) => {
+        if (err && !err.message.includes('duplicate column')) {
+          console.error('Błąd dodawania kolumny document_code:', err);
         }
       });
       
