@@ -1122,6 +1122,7 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       d.filepath as file_path,
       NULL as file_size,
       NULL as file_type,
+      NULL as file_data,
       d.uploaded_at,
       d.uploaded_by,
       u.name as uploaded_by_name,
@@ -1144,6 +1145,7 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       a.file_path,
       a.file_size,
       a.file_type,
+      a.file_data,
       a.uploaded_at,
       a.uploaded_by,
       u.name as uploaded_by_name,
@@ -1166,6 +1168,7 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       wd.file_path,
       wd.file_size,
       wd.file_type,
+      wd.file_data,
       wd.uploaded_at,
       wd.uploaded_by,
       u.name as uploaded_by_name,
@@ -1469,32 +1472,42 @@ router.get('/:id/documents/:docId/download', verifyToken, canAccessCase, async (
       return res.status(404).json({ error: 'Dokument nie znaleziony' });
     }
 
-    // Sprawdź czy plik istnieje (kolumny w bazie: filepath lub file_path, filename lub file_name)
-    const filePath = document.filepath || document.file_path;
     const fileName = document.filename || document.file_name;
-    
-    if (!filePath || !fs.existsSync(filePath)) {
-      console.error('File not found:', filePath);
-      return res.status(404).json({ error: 'Plik nie znaleziony na serwerze' });
-    }
-
-    // Ustaw Content-Disposition: inline dla podglądu, attachment dla pobierania
-    const disposition = isView ? 'inline' : 'attachment';
-    res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(fileName)}"`);
-    
-    // Ustaw Content-Type
+    const filePath = document.filepath || document.file_path;
     const mimeType = document.file_type || document.mimetype || 'application/octet-stream';
-    res.setHeader('Content-Type', mimeType);
-
-    // Wyślij plik
-    res.sendFile(filePath, (err) => {
-      if (err) {
-        console.error('Error sending file:', err);
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Błąd wysyłania pliku' });
+    const disposition = isView ? 'inline' : 'attachment';
+    
+    // PRIORITET 1: Sprawdź czy mamy base64 data w bazie (dla witness_documents i attachments)
+    if (document.file_data) {
+      console.log('📦 Używam base64 z bazy dla dokumentu:', fileName);
+      const buffer = Buffer.from(document.file_data, 'base64');
+      
+      res.setHeader('Content-Type', mimeType);
+      res.setHeader('Content-Length', buffer.length);
+      res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(fileName)}"`);
+      
+      return res.send(buffer);
+    }
+    
+    // PRIORITET 2: Sprawdź czy plik istnieje na dysku (fallback dla starych dokumentów)
+    if (filePath && fs.existsSync(filePath)) {
+      console.log('📁 Używam pliku z dysku:', filePath);
+      res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(fileName)}"`);
+      res.setHeader('Content-Type', mimeType);
+      
+      return res.sendFile(filePath, (err) => {
+        if (err) {
+          console.error('Error sending file:', err);
+          if (!res.headersSent) {
+            res.status(500).json({ error: 'Błąd wysyłania pliku' });
+          }
         }
-      }
-    });
+      });
+    }
+    
+    // Brak pliku zarówno w bazie jak i na dysku
+    console.error('❌ Plik nie znaleziony ani w bazie ani na dysku:', fileName);
+    return res.status(404).json({ error: 'Plik nie znaleziony na serwerze' });
     
   } catch (error) {
     console.error('Error fetching document:', error);
