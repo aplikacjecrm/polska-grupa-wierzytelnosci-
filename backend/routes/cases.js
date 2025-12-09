@@ -1255,7 +1255,8 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
           acc[d.source_type] = (acc[d.source_type] || 0) + 1;
           return acc;
         }, {});
-        console.log('📊 Dokumenty według typu:', byType);
+        console.log('📊 DOKUMENTY WEDŁUG TYPU:', byType);
+        console.log('🔍 witness_document count:', byType.witness_document || 0);
       }
       
       res.json({ documents: documents || [] });
