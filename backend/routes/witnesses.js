@@ -789,8 +789,10 @@ router.post('/:id/documents', verifyToken, witnessDocsUpload.array('documents', 
     const uploadedDocs = [];
     
     for (const file of files) {
-      // Wygeneruj kod dokumentu w formacie: DOK/SWI/ZEZ/{case_number}/{witness_code}/{seq}
-      const prefix = `DOK/SWI/ZEZ/${witness.case_number}/${witness.witness_code}/`;
+      // Wygeneruj kod dokumentu w formacie: DOK/SWI/ZEZ/{case_number}/{witness_short}/{seq}
+      // witness_code to np. "SW/DLU/TS01/001/006" - weź tylko ostatnią część (006)
+      const witnessShortCode = witness.witness_code.split('/').pop();
+      const prefix = `DOK/SWI/ZEZ/${witness.case_number}/${witnessShortCode}/`;
       
       // Pobierz ostatni numer dokumentu dla tego świadka
       const lastDoc = await new Promise((resolve, reject) => {
