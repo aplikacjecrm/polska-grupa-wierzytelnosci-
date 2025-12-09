@@ -1419,26 +1419,13 @@ window.crmManager.viewDocument = async function(docId, caseId, sourceType) {
                         color: #1a2332;
                         margin: 0;
                     ">${txtContent}</pre>
-                    <div style="margin-top: 20px; text-align: center;">
-                        <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="
-                            padding: 12px 24px;
-                            background: linear-gradient(135deg, #9333ea, #7c3aed);
-                            color: white;
-                            border: none;
-                            border-radius: 8px;
-                            cursor: pointer;
-                            font-weight: 700;
-                            font-size: 1rem;
-                            box-shadow: 0 4px 12px rgba(147,51,234,0.3);
-                        ">📥 Pobierz plik</button>
-                    </div>
                 </div>`;
             } catch (error) {
                 console.error('❌ Błąd wczytywania TXT:', error);
                 content = `<div style="background: white; padding: 40px; border-radius: 12px; text-align: center;">
                     <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
                     <p style="color: #333; font-size: 1.1rem; margin-bottom: 20px;">Nie udało się wczytać pliku tekstowego</p>
-                    <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="padding: 12px 24px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">📥 Pobierz plik</button>
+<p style="color: #666; font-size: 0.9rem;">Użyj przycisku "Pobierz" w poprzednim ekranie</p>
                 </div>`;
             }
         } else if (isVideo) {
@@ -1452,19 +1439,6 @@ window.crmManager.viewDocument = async function(docId, caseId, sourceType) {
                     <source src="${docUrl}" type="video/${fileExt}">
                     Twoja przeglądarka nie obsługuje odtwarzania wideo.
                 </video>
-                <div style="margin-top: 15px; text-align: center;">
-                    <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="
-                        padding: 12px 24px;
-                        background: linear-gradient(135deg, #3B82F6, #1E40AF);
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        font-weight: 700;
-                        font-size: 1rem;
-                        box-shadow: 0 4px 12px rgba(59,130,246,0.3);
-                    ">📥 Pobierz plik</button>
-                </div>
             </div>`;
         } else if (isAudio) {
             // Podgląd audio
@@ -1477,25 +1451,12 @@ window.crmManager.viewDocument = async function(docId, caseId, sourceType) {
                     <source src="${docUrl}" type="audio/${fileExt}">
                     Twoja przeglądarka nie obsługuje odtwarzania audio.
                 </audio>
-                <div style="text-align: center;">
-                    <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="
-                        padding: 12px 24px;
-                        background: linear-gradient(135deg, #3B82F6, #1E40AF);
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        font-weight: 700;
-                        font-size: 1rem;
-                        box-shadow: 0 4px 12px rgba(59,130,246,0.3);
-                    ">📥 Pobierz plik</button>
-                </div>
             </div>`;
         } else {
             content = `<div style="background: white; padding: 40px; border-radius: 12px; text-align: center;">
                 <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
                 <p style="color: #333; font-size: 1.1rem; margin-bottom: 20px;">Podgląd niedostępny dla tego typu pliku</p>
-                <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="padding: 12px 24px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">📥 Pobierz plik</button>
+                <p style="color: #666; font-size: 0.9rem;">Użyj przycisku "Pobierz" w poprzednim ekranie</p>
             </div>`;
         }
         
