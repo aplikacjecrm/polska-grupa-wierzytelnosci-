@@ -1366,7 +1366,7 @@ window.crmManager.viewDocument = async function(docId, caseId, sourceType) {
         modal.id = 'docViewModal';
         modal.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 10005; display: flex;
+            background: rgba(0,0,0,0.95); z-index: 100000; display: flex;
             flex-direction: column; align-items: center; justify-content: center;
         `;
         
