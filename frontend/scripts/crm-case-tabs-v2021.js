@@ -1345,7 +1345,7 @@ window.crmManager.viewDocument = async function(docId, caseId, sourceType) {
             docData = { ...docData, file_name: docData.filename };
         } else if (sourceType === 'attachment') {
             docUrl = `${apiUrl}/attachments/${docId}/download?view=true&token=${token}`;
-            const docsResponse = await window.api.request(`/cases/${window.crmManager.currentCaseId}/documents`);
+            const docsResponse = await window.api.request(`/cases/${caseId || window.crmManager.currentCaseId}/documents`);
             const docs = docsResponse.documents || [];
             docData = docs.find(d => d.id === docId);
         } else {
@@ -1532,8 +1532,8 @@ window.crmManager.viewDocument = async function(docId, caseId, sourceType) {
 };
 
 // Pobierz dokument (obsługuje różne source_type)
-window.crmManager.downloadDocument = async function(docId, filename, sourceType) {
-    console.log(`📥 downloadDocument: docId=${docId}, filename=${filename}, sourceType=${sourceType}`);
+window.crmManager.downloadDocument = async function(docId, filename, sourceType, caseId) {
+    console.log(`📥 downloadDocument: docId=${docId}, filename=${filename}, sourceType=${sourceType}, caseId=${caseId}`);
     
     try {
         const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
@@ -1542,11 +1542,11 @@ window.crmManager.downloadDocument = async function(docId, filename, sourceType)
         let downloadUrl;
         
         if (sourceType === 'witness_document') {
-            downloadUrl = `${apiUrl}/cases/${window.crmManager.currentCaseId}/documents/${docId}/download?token=${token}`;
+            downloadUrl = `${apiUrl}/cases/${caseId || window.crmManager.currentCaseId}/documents/${docId}/download?token=${token}`;
         } else if (sourceType === 'attachment') {
             downloadUrl = `${apiUrl}/attachments/${docId}/download?token=${token}`;
         } else {
-            downloadUrl = `${apiUrl}/cases/${window.crmManager.currentCaseId}/documents/${docId}/download?token=${token}`;
+            downloadUrl = `${apiUrl}/cases/${caseId || window.crmManager.currentCaseId}/documents/${docId}/download?token=${token}`;
         }
         
         window.open(downloadUrl, '_blank');
@@ -3587,14 +3587,14 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                             ` : ''}
                         </div>
                         <div style="display: flex; gap: 12px; flex-direction: column;">
-                            <button onclick="crmManager.viewDocument(${doc.id}, null, '${doc.source_type || 'document'}')" 
+                            <button onclick="crmManager.viewDocument(${doc.id}, ${caseId}, '${doc.source_type || 'document'}')" 
                                 style="padding: 12px 20px; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 3px 10px rgba(212,175,55,0.3); transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; justify-content: center;"
                                 onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(212,175,55,0.5)'"
                                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 10px rgba(212,175,55,0.3)'">
                                 <span style="font-size: 1.2rem;">👁️</span>
                                 <span>Pokaż</span>
                             </button>
-                            <button onclick="crmManager.downloadDocument(${doc.id}, '${window.crmManager.escapeHtml(doc.filename)}', '${doc.source_type || 'document'}')" 
+                            <button onclick="crmManager.downloadDocument(${doc.id}, '${window.crmManager.escapeHtml(doc.filename)}', '${doc.source_type || 'document'}', ${caseId})" 
                                 style="padding: 12px 20px; background: linear-gradient(135deg, #1a2332, #2c3e50); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 3px 10px rgba(26,35,50,0.3); transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; justify-content: center;"
                                 onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(26,35,50,0.5)'"
                                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 10px rgba(26,35,50,0.3)'">
