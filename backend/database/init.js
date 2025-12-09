@@ -886,6 +886,13 @@ async function initDatabase() {
         }
       });
       
+      // Dodaj kolumnę file_data jeśli nie istnieje (dla base64 storage)
+      db.run(`ALTER TABLE witness_documents ADD COLUMN file_data TEXT`, (err) => {
+        if (err && !err.message.includes('duplicate column')) {
+          console.error('Błąd dodawania kolumny file_data:', err);
+        }
+      });
+      
       db.run(`CREATE INDEX IF NOT EXISTS idx_witness_documents_witness ON witness_documents(witness_id)`);
       db.run(`CREATE INDEX IF NOT EXISTS idx_witness_documents_case ON witness_documents(case_id)`);
       

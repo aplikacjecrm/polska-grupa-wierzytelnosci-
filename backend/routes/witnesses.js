@@ -817,12 +817,16 @@ router.post('/:id/documents', verifyToken, witnessDocsUpload.array('documents', 
       const documentCode = `${prefix}${String(nextNumber).padStart(3, '0')}`;
       console.log('📋 Kod dokumentu świadka:', documentCode);
       
+      // Wczytaj plik jako base64 (dla Railway - pliki efemeralne)
+      const fileData = fs.readFileSync(file.path, { encoding: 'base64' });
+      console.log('📦 Plik wczytany jako base64:', fileData.length, 'znaków');
+      
       const docId = await new Promise((resolve, reject) => {
         db.run(
           `INSERT INTO witness_documents (
             witness_id, case_id, document_code, file_name, file_path, file_size, file_type,
-            document_type, title, uploaded_by
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            file_data, document_type, title, uploaded_by
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             witnessId,
             witness.case_id,
@@ -831,6 +835,7 @@ router.post('/:id/documents', verifyToken, witnessDocsUpload.array('documents', 
             file.path,
             file.size,
             file.mimetype,
+            fileData,  // Base64 data
             'general',
             file.originalname,
             userId
@@ -841,6 +846,12 @@ router.post('/:id/documents', verifyToken, witnessDocsUpload.array('documents', 
           }
         );
       });
+      
+      // Usuń plik z dysku po zapisaniu do bazy
+      if (fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+        console.log('🗑️ Plik usunięty z dysku (zapisany w bazie jako base64)');
+      }
       
       uploadedDocs.push({
         id: docId,
@@ -920,26 +931,39 @@ router.get('/:witnessId/documents/:docId', verifyToken, (req, res) => {
         return res.status(404).json({ error: 'Dokument nie znaleziony' });
       }
       
-      // Sprawdź czy plik istnieje
-      if (!fs.existsSync(doc.file_path)) {
-        console.error('❌ Plik nie istnieje:', doc.file_path);
-        return res.status(404).json({ error: 'Plik nie znaleziony na serwerze' });
+      // PRIORITET 1: Sprawdź czy mamy base64 data w bazie
+      if (doc.file_data) {
+        console.log('📦 Używam base64 z bazy dla dokumentu:', doc.file_name);
+        const buffer = Buffer.from(doc.file_data, 'base64');
+        const disposition = isView ? 'inline' : 'attachment';
+        
+        res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
+        res.setHeader('Content-Length', buffer.length);
+        res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(doc.file_name)}"`);
+        
+        return res.send(buffer);
       }
       
-      // Ustaw Content-Disposition: inline dla podglądu, attachment dla pobierania
-      const disposition = isView ? 'inline' : 'attachment';
-      res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(doc.file_name)}"`);
-      res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
-      
-      // Wyślij plik
-      res.sendFile(doc.file_path, (err) => {
-        if (err) {
-          console.error('❌ Błąd wysyłania pliku:', err);
-          if (!res.headersSent) {
-            res.status(500).json({ error: 'Błąd pobierania pliku' });
+      // PRIORITET 2: Sprawdź czy plik istnieje na dysku (fallback dla starych plików)
+      if (fs.existsSync(doc.file_path)) {
+        console.log('📁 Używam pliku z dysku:', doc.file_path);
+        const disposition = isView ? 'inline' : 'attachment';
+        res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(doc.file_name)}"`);
+        res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
+        
+        return res.sendFile(doc.file_path, (err) => {
+          if (err) {
+            console.error('❌ Błąd wysyłania pliku:', err);
+            if (!res.headersSent) {
+              res.status(500).json({ error: 'Błąd pobierania pliku' });
+            }
           }
-        }
-      });
+        });
+      }
+      
+      // Brak pliku zarówno w bazie jak i na dysku
+      console.error('❌ Plik nie znaleziony ani w bazie ani na dysku:', doc.file_name);
+      return res.status(404).json({ error: 'Plik nie znaleziony na serwerze' });
     }
   );
 });
