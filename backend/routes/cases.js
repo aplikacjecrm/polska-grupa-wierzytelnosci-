@@ -1249,6 +1249,13 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
         console.log('  - attachment_code:', documents[0].attachment_code);
         console.log('  - document_number:', documents[0].document_number);
         console.log('  - source_type:', documents[0].source_type);
+        
+        // Pokaż ile każdego typu
+        const byType = documents.reduce((acc, d) => {
+          acc[d.source_type] = (acc[d.source_type] || 0) + 1;
+          return acc;
+        }, {});
+        console.log('📊 Dokumenty według typu:', byType);
       }
       
       res.json({ documents: documents || [] });
@@ -1479,43 +1486,76 @@ router.get('/:id/witnesses', verifyToken, canAccessCase, async (req, res) => {
   }
 });
 
-// GET /cases/:id/documents/:docId/download - Pobierz dokument
-router.get('/:id/documents/:docId/download', verifyToken, canAccessCase, (req, res) => {
+// GET /cases/:id/documents/:docId/download - Pobierz dokument (obsługuje documents, attachments, witness_documents)
+router.get('/:id/documents/:docId/download', verifyToken, canAccessCase, async (req, res) => {
   const db = getDatabase();
   const { id, docId } = req.params;
+  const isView = req.query.view === 'true';
 
-  db.get(
-    'SELECT * FROM documents WHERE id = ? AND case_id = ?',
-    [docId, id],
-    (err, document) => {
-      if (err) {
-        console.error('Error fetching document:', err);
-        return res.status(500).json({ error: 'Błąd pobierania dokumentu' });
-      }
-      if (!document) {
-        return res.status(404).json({ error: 'Dokument nie znaleziony' });
-      }
-
-      // Sprawdź czy plik istnieje (kolumny w bazie: filepath, filename)
-      const filePath = document.filepath || document.file_path;
-      const fileName = document.filename || document.file_name;
-      
-      if (!filePath || !fs.existsSync(filePath)) {
-        console.error('File not found:', filePath);
-        return res.status(404).json({ error: 'Plik nie znaleziony na serwerze' });
-      }
-
-      // Wyślij plik
-      res.download(filePath, fileName, (err) => {
-        if (err) {
-          console.error('Error sending file:', err);
-          if (!res.headersSent) {
-            res.status(500).json({ error: 'Błąd wysyłania pliku' });
-          }
-        }
+  try {
+    // Szukaj w documents
+    let document = await new Promise((resolve, reject) => {
+      db.get('SELECT *, "document" as source_type FROM documents WHERE id = ? AND case_id = ?', [docId, id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    
+    // Jeśli nie znaleziono, szukaj w attachments
+    if (!document) {
+      document = await new Promise((resolve, reject) => {
+        db.get('SELECT *, "attachment" as source_type FROM attachments WHERE id = ? AND case_id = ?', [docId, id], (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
       });
     }
-  );
+    
+    // Jeśli nie znaleziono, szukaj w witness_documents
+    if (!document) {
+      document = await new Promise((resolve, reject) => {
+        db.get('SELECT *, "witness_document" as source_type FROM witness_documents WHERE id = ? AND case_id = ?', [docId, id], (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+    }
+    
+    if (!document) {
+      return res.status(404).json({ error: 'Dokument nie znaleziony' });
+    }
+
+    // Sprawdź czy plik istnieje (kolumny w bazie: filepath lub file_path, filename lub file_name)
+    const filePath = document.filepath || document.file_path;
+    const fileName = document.filename || document.file_name;
+    
+    if (!filePath || !fs.existsSync(filePath)) {
+      console.error('File not found:', filePath);
+      return res.status(404).json({ error: 'Plik nie znaleziony na serwerze' });
+    }
+
+    // Ustaw Content-Disposition: inline dla podglądu, attachment dla pobierania
+    const disposition = isView ? 'inline' : 'attachment';
+    res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(fileName)}"`);
+    
+    // Ustaw Content-Type
+    const mimeType = document.file_type || document.mimetype || 'application/octet-stream';
+    res.setHeader('Content-Type', mimeType);
+
+    // Wyślij plik
+    res.sendFile(filePath, (err) => {
+      if (err) {
+        console.error('Error sending file:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Błąd wysyłania pliku' });
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching document:', error);
+    res.status(500).json({ error: 'Błąd pobierania dokumentu' });
+  }
 });
 
 // GET /cases/staff/list - Pobierz listę personelu (mecenasów i opiekunów)
