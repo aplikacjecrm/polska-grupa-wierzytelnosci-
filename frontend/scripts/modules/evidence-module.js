@@ -913,7 +913,7 @@ const evidenceModule = {
       console.log(`✅ Załączniki zeznania: ${testimonyAttachments.length}`);
       
       // 2. Pobierz ID świadka z wybranego zeznania
-      const witnessId = this.selectedWitnessId;
+      const witnessId = this.selectedWitnessId || this.editWitnessId;
       
       // 3. Pobierz dokumenty świadka (DOK/SWI/ZEZ/...)
       let witnessDocuments = [];
