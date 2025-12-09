@@ -895,60 +895,104 @@ const evidenceModule = {
     }
   },
   
-  // === ZAŁADUJ ZAŁĄCZNIKI ZEZNANIA ===
+  // === ZAŁADUJ ZAŁĄCZNIKI ZEZNANIA + DOKUMENTY ŚWIADKA ===
   
   async loadTestimonyAttachments(testimonyId, caseId) {
     try {
-      console.log('📎 Ładowanie załączników zeznania:', testimonyId);
-      
-      // Pobierz załączniki zeznania z API (entity_type=testimony)
-      const response = await window.api.request(`/attachments?entity_type=testimony&entity_id=${testimonyId}`);
-      const attachments = response.attachments || [];
+      console.log('📎 Ładowanie załączników zeznania + dokumentów świadka:', testimonyId);
       
       const listDiv = document.getElementById('witness_attachments_list');
       if (!listDiv) return;
       
-      if (attachments.length === 0) {
+      // Pokaż loading
+      listDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;"><div style="animation: spin 1s linear infinite;">⏳</div> Ładowanie...</div>';
+      
+      // 1. Pobierz załączniki zeznania (entity_type=testimony)
+      const testimonyAttResponse = await window.api.request(`/attachments?entity_type=testimony&entity_id=${testimonyId}`);
+      const testimonyAttachments = testimonyAttResponse.attachments || [];
+      console.log(`✅ Załączniki zeznania: ${testimonyAttachments.length}`);
+      
+      // 2. Pobierz ID świadka z wybranego zeznania
+      const witnessId = this.selectedWitnessId;
+      
+      // 3. Pobierz dokumenty świadka (DOK/SWI/ZEZ/...)
+      let witnessDocuments = [];
+      if (witnessId) {
+        try {
+          const docResponse = await window.api.request(`/witnesses/${witnessId}/documents`);
+          witnessDocuments = docResponse.documents || [];
+          console.log(`✅ Dokumenty świadka: ${witnessDocuments.length}`);
+        } catch (err) {
+          console.warn('⚠️ Nie można pobrać dokumentów świadka:', err);
+        }
+      }
+      
+      // 4. Pobierz załączniki bezpośrednio przypisane do świadka (ZAL/...)
+      let witnessAttachments = [];
+      if (witnessId) {
+        try {
+          const attResponse = await window.api.request(`/attachments?entity_type=witness&entity_id=${witnessId}&case_id=${caseId}`);
+          witnessAttachments = attResponse.attachments || [];
+          console.log(`✅ Załączniki świadka: ${witnessAttachments.length}`);
+        } catch (err) {
+          console.warn('⚠️ Nie można pobrać załączników świadka:', err);
+        }
+      }
+      
+      // Połącz wszystkie pliki
+      const allFiles = [
+        ...testimonyAttachments.map(att => ({ ...att, source: 'testimony', sourceLabel: '📝 Z zeznania' })),
+        ...witnessDocuments.map(doc => ({ ...doc, id: doc.id, file_name: doc.filename, source: 'witness_doc', sourceLabel: '📋 Dokument świadka' })),
+        ...witnessAttachments.map(att => ({ ...att, source: 'witness_att', sourceLabel: '📎 Załącznik świadka' }))
+      ];
+      
+      if (allFiles.length === 0) {
         listDiv.innerHTML = `
           <div style="text-align: center; padding: 20px; color: #999;">
             <div style="font-size: 2rem; margin-bottom: 10px;">📭</div>
-            <div>Brak załączników dla tego zeznania</div>
-            <small style="display: block; margin-top: 5px;">Dodaj załączniki przy zeznaniu w zakładce <strong>Świadkowie</strong></small>
+            <div>Brak plików dla tego świadka</div>
+            <small style="display: block; margin-top: 5px;">Dodaj załączniki lub dokumenty w zakładce <strong>Świadkowie</strong></small>
           </div>
         `;
         return;
       }
       
-      // Wyświetl listę załączników z checkboxami i podglądem
-      listDiv.innerHTML = attachments.map(att => {
-        const fileExt = att.file_name ? att.file_name.split('.').pop().toLowerCase() : '';
+      // Wyświetl listę plików z checkboxami i podglądem
+      listDiv.innerHTML = allFiles.map((file, idx) => {
+        const filename = file.file_name || file.filename || '';
+        const fileExt = filename ? filename.split('.').pop().toLowerCase() : '';
         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
         const isVideo = ['mp4', 'webm', 'mov', 'avi'].includes(fileExt);
         const isPdf = fileExt === 'pdf';
         const icon = isVideo ? '🎬' : isImage ? '🖼️' : isPdf ? '📄' : '📎';
         
+        // Określ kolor ramki w zależności od źródła
+        const borderColor = file.source === 'testimony' ? '#4CAF50' : file.source === 'witness_doc' ? '#9C27B0' : '#FF9800';
+        
         return `
-          <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px; border: 2px solid transparent; transition: all 0.2s;" 
-               onmouseover="this.style.borderColor='#4CAF50'" 
-               onmouseout="this.style.borderColor='transparent'">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid ${borderColor}; transition: all 0.2s;">
             <input type="checkbox" 
-                   id="testimony_att_${att.id}" 
+                   id="file_${idx}" 
                    name="testimony_attachments" 
-                   value="${att.id}"
-                   data-filename="${att.file_name || ''}"
-                   data-code="${att.attachment_code || ''}"
+                   value="${file.id}"
+                   data-filename="${filename}"
+                   data-code="${file.attachment_code || file.document_number || ''}"
+                   data-source="${file.source}"
                    style="width: 20px; height: 20px; cursor: pointer;">
-            <label for="testimony_att_${att.id}" style="flex: 1; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+            <label for="file_${idx}" style="flex: 1; cursor: pointer; display: flex; align-items: center; gap: 10px;">
               <span style="font-size: 1.5rem;">${icon}</span>
               <div>
-                <div style="font-weight: 600; color: #1a2332;">${att.title || att.file_name || 'Bez nazwy'}</div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <span style="font-weight: 600; color: #1a2332;">${file.title || filename || 'Bez nazwy'}</span>
+                  <span style="font-size: 0.75rem; background: ${borderColor}; color: white; padding: 2px 6px; border-radius: 4px;">${file.sourceLabel}</span>
+                </div>
                 <div style="font-size: 0.85rem; color: #666;">
-                  ${att.attachment_code ? `<span style="background: #e8f5e9; padding: 2px 6px; border-radius: 4px; margin-right: 8px;">${att.attachment_code}</span>` : ''}
-                  ${att.file_name || ''} • ${(att.file_size / 1024).toFixed(1)} KB
+                  ${file.attachment_code || file.document_number ? `<span style="background: #e8f5e9; padding: 2px 6px; border-radius: 4px; margin-right: 8px; font-weight: 600;">${file.attachment_code || file.document_number}</span>` : ''}
+                  ${filename} ${file.file_size ? `• ${(file.file_size / 1024).toFixed(1)} KB` : ''}
                 </div>
               </div>
             </label>
-            <button type="button" onclick="window.crmManager.viewDocument(${att.id}, null, 'attachment')" 
+            <button type="button" onclick="window.crmManager.viewDocument(${file.id}, ${caseId}, '${file.source === 'witness_doc' ? 'witness_document' : 'attachment'}')" 
                     style="padding: 8px 12px; background: #FFD700; color: #1a2332; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 5px;">
               👁️ Podgląd
             </button>
@@ -956,13 +1000,13 @@ const evidenceModule = {
         `;
       }).join('');
       
-      console.log(`✅ Załadowano ${attachments.length} załączników zeznania`);
+      console.log(`✅ Załadowano ${allFiles.length} plików (${testimonyAttachments.length} zeznanie + ${witnessDocuments.length} dokumenty + ${witnessAttachments.length} załączniki)`);
       
     } catch (error) {
-      console.error('❌ Błąd ładowania załączników zeznania:', error);
+      console.error('❌ Błąd ładowania załączników:', error);
       const listDiv = document.getElementById('witness_attachments_list');
       if (listDiv) {
-        listDiv.innerHTML = `<div style="color: #f44336; padding: 10px;">❌ Błąd ładowania załączników</div>`;
+        listDiv.innerHTML = `<div style="color: #f44336; padding: 10px;">❌ Błąd ładowania: ${error.message}</div>`;
       }
     }
   },
