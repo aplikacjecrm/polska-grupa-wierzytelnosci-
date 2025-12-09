@@ -1051,7 +1051,7 @@ const evidenceModule = {
             <div style="font-size: 4rem; margin-bottom: 20px;">📄</div>
             <div style="font-size: 1.2rem; margin-bottom: 10px;">${filename}</div>
             <div style="margin-bottom: 20px; opacity: 0.7;">Podgląd niedostępny dla tego typu pliku</div>
-            <button onclick="window.open('${url}', '_blank')" 
+            <button onclick="const a = document.createElement('a'); a.href = '${url}'; a.download = '${filename}'; document.body.appendChild(a); a.click(); document.body.removeChild(a);" 
                 style="padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
               📥 Pobierz plik
             </button>
@@ -1065,7 +1065,7 @@ const evidenceModule = {
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 12px 12px 0 0;">
             <div style="color: white; font-weight: 600; font-size: 1.1rem;">📎 ${filename}</div>
             <div style="display: flex; gap: 10px;">
-              <button onclick="window.open('${url}', '_blank')" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Pobierz</button>
+              <button onclick="const a = document.createElement('a'); a.href = '${url}'; a.download = '${filename}'; document.body.appendChild(a); a.click(); document.body.removeChild(a);" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Pobierz</button>
               <button onclick="document.getElementById('witness-attachment-preview-modal').remove()" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✕ Zamknij</button>
             </div>
           </div>
