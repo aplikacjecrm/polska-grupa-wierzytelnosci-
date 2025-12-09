@@ -439,6 +439,17 @@ window.witnessesModule = {
                             <label style="display: block; color: #666; font-weight: 600; margin-bottom: 8px;">Notatki</label>
                             <textarea id="witnessNotes" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; min-height: 80px; resize: vertical;"></textarea>
                         </div>
+                        
+                        <!-- Dokumenty świadka -->
+                        <div style="border: 2px solid #e8f2ff; border-radius: 12px; padding: 20px; background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(30,64,175,0.05));">
+                            <label style="display: block; color: #1a2332; font-weight: 700; margin-bottom: 12px; font-size: 1.05rem;">📎 Dokumenty świadka (opcjonalne)</label>
+                            <p style="color: #666; font-size: 0.9rem; margin-bottom: 12px;">Możesz dodać dokumenty już teraz lub później po zapisaniu świadka.</p>
+                            <input type="file" id="witnessDocuments" multiple accept="*/*" style="width: 100%; padding: 12px; border: 2px dashed #3B82F6; border-radius: 8px; background: white; cursor: pointer; font-size: 0.95rem;">
+                            <div id="witnessFilesPreview" style="margin-top: 12px; display: none;">
+                                <p style="color: #3B82F6; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px;">Wybrane pliki:</p>
+                                <div id="witnessFilesList" style="display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto;"></div>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Przyciski -->
@@ -455,6 +466,34 @@ window.witnessesModule = {
         `;
         
         document.body.appendChild(modal);
+        
+        // Dodaj listener do podglądu wybranych plików
+        setTimeout(() => {
+            const filesInput = document.getElementById('witnessDocuments');
+            if (filesInput) {
+                filesInput.addEventListener('change', (e) => {
+                    const preview = document.getElementById('witnessFilesPreview');
+                    const filesList = document.getElementById('witnessFilesList');
+                    
+                    if (e.target.files.length > 0) {
+                        preview.style.display = 'block';
+                        filesList.innerHTML = '';
+                        
+                        Array.from(e.target.files).forEach((file, index) => {
+                            const fileItem = document.createElement('div');
+                            fileItem.style.cssText = 'padding: 8px; background: white; border-radius: 6px; border: 1px solid #e0e0e0; font-size: 0.85rem; color: #333; display: flex; justify-content: space-between; align-items: center;';
+                            fileItem.innerHTML = `
+                                <span>📄 ${file.name}</span>
+                                <span style="color: #666; font-size: 0.8rem;">${(file.size / 1024).toFixed(1)} KB</span>
+                            `;
+                            filesList.appendChild(fileItem);
+                        });
+                    } else {
+                        preview.style.display = 'none';
+                    }
+                });
+            }
+        }, 100);
     },
     
     // Zapisz świadka
@@ -517,12 +556,45 @@ window.witnessesModule = {
             });
             
             console.log('✅ Dodano świadka:', response);
-            // Komunikat ukryty - lista świadków odświeży się automatycznie
-            // alert('✅ Dodano świadka!');
+            
+            const witnessId = response.witnessId;
+            
+            // Sprawdź czy są wybrane pliki do uploadu
+            const filesInput = document.getElementById('witnessDocuments');
+            if (filesInput && filesInput.files.length > 0) {
+                console.log(`📎 Uploading ${filesInput.files.length} dokumentów świadka...`);
+                
+                try {
+                    const formData = new FormData();
+                    Array.from(filesInput.files).forEach(file => {
+                        formData.append('documents', file);
+                    });
+                    
+                    // Upload dokumentów
+                    const uploadResponse = await fetch(`/api/witnesses/${witnessId}/documents`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: formData
+                    });
+                    
+                    if (!uploadResponse.ok) {
+                        throw new Error('Błąd uploadu dokumentów');
+                    }
+                    
+                    const uploadResult = await uploadResponse.json();
+                    console.log('✅ Dokumenty uploadu:', uploadResult);
+                    
+                } catch (uploadError) {
+                    console.error('⚠️ Błąd uploadu dokumentów:', uploadError);
+                    alert(`⚠️ Świadek zapisany, ale błąd uploadu dokumentów: ${uploadError.message}`);
+                }
+            }
             
             // Emit event
             if (window.eventBus) {
-                window.eventBus.emit('witness:added', { witnessId: response.witnessId, caseId });
+                window.eventBus.emit('witness:added', { witnessId: witnessId, caseId });
             }
             
             // Zamknij modal

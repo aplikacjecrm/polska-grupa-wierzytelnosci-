@@ -843,6 +843,36 @@ async function initDatabase() {
         )
       `);
       
+      // Tabela dokumentów świadków (załączniki do świadka)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS witness_documents (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          witness_id INTEGER NOT NULL,
+          case_id INTEGER NOT NULL,
+          file_name TEXT NOT NULL,
+          file_path TEXT NOT NULL,
+          file_size INTEGER,
+          file_type TEXT,
+          document_type TEXT,
+          title TEXT,
+          description TEXT,
+          uploaded_by INTEGER NOT NULL,
+          uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (witness_id) REFERENCES case_witnesses(id) ON DELETE CASCADE,
+          FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE,
+          FOREIGN KEY (uploaded_by) REFERENCES users(id)
+        )
+      `, (err) => {
+        if (err) {
+          console.error('❌ Błąd tworzenia tabeli witness_documents:', err);
+        } else {
+          console.log('✅ Tabela witness_documents utworzona');
+        }
+      });
+      
+      db.run(`CREATE INDEX IF NOT EXISTS idx_witness_documents_witness ON witness_documents(witness_id)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_witness_documents_case ON witness_documents(case_id)`);
+      
       // === MODUŁ SCENARIUSZY ===
       
       // Tabela scenariuszy sprawy

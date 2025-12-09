@@ -724,4 +724,224 @@ router.get('/:id/testimonies', verifyToken, (req, res) => {
   });
 });
 
+// ================================================
+// ENDPOINTY DLA DOKUMENTÓW ŚWIADKÓW
+// ================================================
+
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+
+// Konfiguracja uploadu dla dokumentów świadków
+const witnessDocsStorage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    const uploadDir = path.join(__dirname, '../uploads/witness-documents');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function(req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    const name = path.basename(file.originalname, ext);
+    cb(null, `witness_${req.params.id}_${uniqueSuffix}${ext}`);
+  }
+});
+
+const witnessDocsUpload = multer({ 
+  storage: witnessDocsStorage,
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+});
+
+// Upload dokumentów świadka
+router.post('/:id/documents', verifyToken, witnessDocsUpload.array('documents', 10), async (req, res) => {
+  const db = getDatabase();
+  const witnessId = req.params.id;
+  const userId = req.user.userId;
+  const files = req.files;
+  
+  if (!files || files.length === 0) {
+    return res.status(400).json({ error: 'Brak plików do uploadu' });
+  }
+  
+  console.log(`📎 Upload ${files.length} dokumentów dla świadka ${witnessId}`);
+  
+  try {
+    // Pobierz dane świadka
+    const witness = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT w.*, c.case_number FROM case_witnesses w LEFT JOIN cases c ON w.case_id = c.id WHERE w.id = ?',
+        [witnessId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+    
+    if (!witness) {
+      // Usuń uploady files
+      files.forEach(f => fs.unlinkSync(f.path));
+      return res.status(404).json({ error: 'Świadek nie znaleziony' });
+    }
+    
+    const uploadedDocs = [];
+    
+    for (const file of files) {
+      const docId = await new Promise((resolve, reject) => {
+        db.run(
+          `INSERT INTO witness_documents (
+            witness_id, case_id, file_name, file_path, file_size, file_type,
+            document_type, title, uploaded_by
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            witnessId,
+            witness.case_id,
+            file.originalname,
+            file.path,
+            file.size,
+            file.mimetype,
+            'general',
+            file.originalname,
+            userId
+          ],
+          function(err) {
+            if (err) reject(err);
+            else resolve(this.lastID);
+          }
+        );
+      });
+      
+      uploadedDocs.push({
+        id: docId,
+        filename: file.originalname,
+        size: file.size
+      });
+      
+      console.log(`✅ Dokument zapisany: ${file.originalname} (ID: ${docId})`);
+    }
+    
+    // Loguj aktywność
+    logEmployeeActivity({
+      userId: userId,
+      actionType: 'witness_documents_added',
+      actionCategory: 'witness',
+      description: `Dodano ${files.length} dokumentów do świadka: ${witness.first_name} ${witness.last_name}`,
+      caseId: witness.case_id
+    });
+    
+    res.json({
+      success: true,
+      count: uploadedDocs.length,
+      documents: uploadedDocs
+    });
+    
+  } catch (error) {
+    console.error('❌ Błąd uploadu dokumentów świadka:', error);
+    // Usuń pliki w przypadku błędu
+    files.forEach(f => {
+      try { fs.unlinkSync(f.path); } catch(e) {}
+    });
+    res.status(500).json({ error: 'Błąd uploadu dokumentów: ' + error.message });
+  }
+});
+
+// Pobierz dokumenty świadka
+router.get('/:id/documents', verifyToken, (req, res) => {
+  const db = getDatabase();
+  const witnessId = req.params.id;
+  
+  db.all(
+    `SELECT wd.*, u.name as uploaded_by_name
+     FROM witness_documents wd
+     LEFT JOIN users u ON wd.uploaded_by = u.id
+     WHERE wd.witness_id = ?
+     ORDER BY wd.uploaded_at DESC`,
+    [witnessId],
+    (err, documents) => {
+      if (err) {
+        console.error('❌ Błąd pobierania dokumentów świadka:', err);
+        return res.status(500).json({ error: 'Błąd pobierania dokumentów' });
+      }
+      
+      console.log(`✅ Pobrano ${documents ? documents.length : 0} dokumentów świadka ${witnessId}`);
+      res.json({ documents: documents || [] });
+    }
+  );
+});
+
+// Pobierz pojedynczy dokument świadka
+router.get('/:witnessId/documents/:docId', verifyToken, (req, res) => {
+  const db = getDatabase();
+  const { docId } = req.params;
+  
+  db.get(
+    'SELECT * FROM witness_documents WHERE id = ?',
+    [docId],
+    (err, doc) => {
+      if (err) {
+        console.error('❌ Błąd pobierania dokumentu:', err);
+        return res.status(500).json({ error: 'Błąd pobierania dokumentu' });
+      }
+      
+      if (!doc) {
+        return res.status(404).json({ error: 'Dokument nie znaleziony' });
+      }
+      
+      // Wyślij plik
+      res.sendFile(doc.file_path, (err) => {
+        if (err) {
+          console.error('❌ Błąd wysyłania pliku:', err);
+          res.status(500).json({ error: 'Błąd pobierania pliku' });
+        }
+      });
+    }
+  );
+});
+
+// Usuń dokument świadka
+router.delete('/:witnessId/documents/:docId', verifyToken, (req, res) => {
+  const db = getDatabase();
+  const { docId, witnessId } = req.params;
+  const userId = req.user.userId;
+  
+  // Pobierz dane dokumentu
+  db.get('SELECT * FROM witness_documents WHERE id = ? AND witness_id = ?', [docId, witnessId], (err, doc) => {
+    if (err || !doc) {
+      return res.status(404).json({ error: 'Dokument nie znaleziony' });
+    }
+    
+    // Usuń plik fizyczny
+    if (fs.existsSync(doc.file_path)) {
+      try {
+        fs.unlinkSync(doc.file_path);
+        console.log('✅ Plik fizyczny usunięty:', doc.file_path);
+      } catch (e) {
+        console.error('⚠️ Nie można usunąć pliku fizycznego:', e);
+      }
+    }
+    
+    // Usuń z bazy
+    db.run('DELETE FROM witness_documents WHERE id = ?', [docId], function(err) {
+      if (err) {
+        console.error('❌ Błąd usuwania dokumentu:', err);
+        return res.status(500).json({ error: 'Błąd usuwania dokumentu' });
+      }
+      
+      // Loguj
+      logEmployeeActivity({
+        userId: userId,
+        actionType: 'witness_document_deleted',
+        actionCategory: 'witness',
+        description: `Usunięto dokument świadka: ${doc.file_name}`,
+        caseId: doc.case_id
+      });
+      
+      console.log('✅ Dokument usunięty:', docId);
+      res.json({ success: true });
+    });
+  });
+});
+
 module.exports = router;
