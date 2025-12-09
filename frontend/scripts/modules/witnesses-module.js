@@ -997,6 +997,28 @@ window.witnessesModule = {
                             </div>
                         </div>
                         
+                        <!-- Dokumenty świadka -->
+                        <div style="background: #ffffff; padding: 20px 22px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #dde3f0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h4 style="margin: 0; color: #111827; font-size: 1.05rem;">📎 Dokumenty świadka</h4>
+                                <button onclick="witnessesModule.showUploadWitnessDocuments(${witnessId}, ${caseId})" style="
+                                    padding: 8px 16px;
+                                    background: linear-gradient(135deg, #3B82F6, #1E40AF);
+                                    color: white;
+                                    border: none;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    font-size: 0.85rem;
+                                    font-weight: 600;
+                                ">
+                                    + Dodaj dokumenty
+                                </button>
+                            </div>
+                            <div id="witnessDocumentsList-${witnessId}">
+                                <div style="text-align: center; padding: 20px; color: #999;">Ładowanie dokumentów...</div>
+                            </div>
+                        </div>
+                        
                         <!-- Zeznania świadka -->
                         <div style="margin-top: 25px;">
                             <div style="margin-bottom: 15px;">
@@ -1069,6 +1091,9 @@ window.witnessesModule = {
             
             document.body.appendChild(modal);
             
+            // Załaduj dokumenty świadka
+            this.loadWitnessDocuments(witnessId);
+            
             // Załaduj załączniki dla każdego zeznania
             for (const t of testimonies) {
                 this.loadTestimonyAttachments(witnessId, t.id, caseId, t.version_number);
@@ -1080,6 +1105,176 @@ window.witnessesModule = {
             if (loadingEl) loadingEl.remove();
             
             console.error('❌ Błąd ładowania szczegółów:', error);
+            alert('❌ Błąd: ' + error.message);
+        }
+    },
+    
+    // Załaduj dokumenty świadka
+    loadWitnessDocuments: async function(witnessId) {
+        const container = document.getElementById(`witnessDocumentsList-${witnessId}`);
+        if (!container) return;
+        
+        try {
+            const response = await window.api.request(`/witnesses/${witnessId}/documents`);
+            const documents = response.documents || [];
+            
+            console.log(`📎 Pobrano ${documents.length} dokumentów świadka ${witnessId}`);
+            
+            if (documents.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #999; font-size: 0.9rem;">Brak dokumentów</div>';
+            } else {
+                container.innerHTML = `
+                    <div style="display: grid; gap: 10px;">
+                        ${documents.map(doc => `
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: #1a2332; margin-bottom: 4px;">📄 ${doc.file_name}</div>
+                                    <div style="font-size: 0.85rem; color: #666;">
+                                        ${(doc.file_size / 1024).toFixed(1)} KB • ${new Date(doc.uploaded_at).toLocaleDateString('pl-PL')}
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button onclick="witnessesModule.downloadWitnessDocument(${witnessId}, ${doc.id})" style="
+                                        padding: 6px 12px;
+                                        background: #3B82F6;
+                                        color: white;
+                                        border: none;
+                                        border-radius: 6px;
+                                        cursor: pointer;
+                                        font-size: 0.85rem;
+                                        font-weight: 600;
+                                    ">
+                                        ⬇️ Pobierz
+                                    </button>
+                                    <button onclick="if(confirm('Usunąć dokument?')) witnessesModule.deleteWitnessDocument(${witnessId}, ${doc.id})" style="
+                                        padding: 6px 12px;
+                                        background: #dc3545;
+                                        color: white;
+                                        border: none;
+                                        border-radius: 6px;
+                                        cursor: pointer;
+                                        font-size: 0.85rem;
+                                        font-weight: 600;
+                                    ">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('❌ Błąd ładowania dokumentów świadka:', error);
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">Błąd ładowania dokumentów</div>';
+        }
+    },
+    
+    // Pokaż modal uploadu dokumentów świadka
+    showUploadWitnessDocuments: function(witnessId, caseId) {
+        const modal = document.createElement('div');
+        modal.id = 'uploadWitnessDocsModal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 10003; display: flex;
+            justify-content: center; align-items: center; padding: 20px;
+        `;
+        modal.innerHTML = `
+            <div style="background: white; border-radius: 16px; padding: 25px; max-width: 500px; width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0;">📎 Dodaj dokumenty świadka</h3>
+                    <button onclick="document.getElementById('uploadWitnessDocsModal').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+                </div>
+                
+                <input type="file" id="witnessDocsFiles" multiple style="width: 100%; padding: 12px; border: 2px dashed #3B82F6; border-radius: 8px; margin-bottom: 15px;">
+                <div id="witnessDocsPreview" style="margin-bottom: 15px; display: none;"></div>
+                
+                <button onclick="witnessesModule.uploadWitnessDocuments(${witnessId})" style="
+                    width: 100%;
+                    padding: 14px;
+                    background: linear-gradient(135deg, #3B82F6, #1E40AF);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: 700;
+                    font-size: 1rem;
+                ">
+                    📤 Wgraj dokumenty
+                </button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Preview
+        document.getElementById('witnessDocsFiles').addEventListener('change', (e) => {
+            const preview = document.getElementById('witnessDocsPreview');
+            if (e.target.files.length > 0) {
+                preview.style.display = 'block';
+                preview.innerHTML = `<div style="font-size: 0.9rem; color: #666;">Wybrano: ${e.target.files.length} plik(ów)</div>`;
+            }
+        });
+    },
+    
+    // Upload dokumentów świadka
+    uploadWitnessDocuments: async function(witnessId) {
+        const filesInput = document.getElementById('witnessDocsFiles');
+        if (!filesInput.files.length) {
+            alert('❌ Wybierz pliki');
+            return;
+        }
+        
+        const formData = new FormData();
+        Array.from(filesInput.files).forEach(file => {
+            formData.append('documents', file);
+        });
+        
+        try {
+            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
+            const token = localStorage.getItem('token');
+            
+            const response = await fetch(`${apiUrl}/witnesses/${witnessId}/documents`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            
+            if (!response.ok) throw new Error('Błąd uploadu');
+            
+            const result = await response.json();
+            console.log('✅ Upload dokumentów:', result);
+            
+            alert(`✅ Wgrano ${result.count} dokumentów`);
+            document.getElementById('uploadWitnessDocsModal').remove();
+            this.loadWitnessDocuments(witnessId);
+            
+        } catch (error) {
+            console.error('❌ Błąd uploadu:', error);
+            alert('❌ Błąd: ' + error.message);
+        }
+    },
+    
+    // Pobierz dokument świadka
+    downloadWitnessDocument: async function(witnessId, docId) {
+        try {
+            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
+            const token = localStorage.getItem('token');
+            
+            window.open(`${apiUrl}/witnesses/${witnessId}/documents/${docId}?token=${token}`, '_blank');
+        } catch (error) {
+            console.error('❌ Błąd pobierania:', error);
+            alert('❌ Błąd: ' + error.message);
+        }
+    },
+    
+    // Usuń dokument świadka
+    deleteWitnessDocument: async function(witnessId, docId) {
+        try {
+            await window.api.request(`/witnesses/${witnessId}/documents/${docId}`, { method: 'DELETE' });
+            alert('✅ Dokument usunięty');
+            this.loadWitnessDocuments(witnessId);
+        } catch (error) {
+            console.error('❌ Błąd usuwania:', error);
             alert('❌ Błąd: ' + error.message);
         }
     },
