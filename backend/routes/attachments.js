@@ -316,8 +316,23 @@ router.get('/:id/download', verifyToken, (req, res) => {
         });
       }
 
-      // Sprawdź różne możliwe lokalizacje pliku
-      let filePath = attachment.file_path;
+      // PRIORITET 1: Sprawdź czy mamy base64 data w bazie (dla nowych załączników)
+      if (attachment.file_data) {
+        console.log('📦 Używam base64 z bazy dla załącznika:', attachment.file_name);
+        const mimeType = attachment.file_type || attachment.mimetype || 'application/octet-stream';
+        const buffer = Buffer.from(attachment.file_data, 'base64');
+        
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Content-Length', buffer.length);
+        if (forceDownload) {
+          res.setHeader('Content-Disposition', `attachment; filename="${attachment.file_name}"`);
+        } else {
+          res.setHeader('Content-Disposition', `inline; filename="${attachment.file_name}"`);
+        }
+        return res.send(buffer);
+      }
+      
+      // PRIORITET 2: Sprawdź różne możliwe lokalizacje pliku na dysku (fallback dla starych załączników)
       const possiblePaths = [
         attachment.file_path,
         path.join(__dirname, '..', attachment.file_path),
@@ -333,26 +348,12 @@ router.get('/:id/download', verifyToken, (req, res) => {
         }
       }
       
-      // Jeśli plik nie istnieje na dysku, sprawdź czy mamy base64 data w bazie
-      if (!foundPath && attachment.file_data) {
-        console.log('📎 Plik nie na dysku, używam base64 z bazy:', attachment.file_name);
-        const mimeType = attachment.file_type || attachment.mimetype || 'application/octet-stream';
-        const buffer = Buffer.from(attachment.file_data, 'base64');
-        
-        res.setHeader('Content-Type', mimeType);
-        res.setHeader('Content-Length', buffer.length);
-        if (forceDownload) {
-          res.setHeader('Content-Disposition', `attachment; filename="${attachment.file_name}"`);
-        } else {
-          res.setHeader('Content-Disposition', `inline; filename="${attachment.file_name}"`);
-        }
-        return res.send(buffer);
-      }
-      
       if (!foundPath) {
-        console.error('❌ Plik nie znaleziony i brak base64 data. Próbowane ścieżki:', possiblePaths);
+        console.error('❌ Plik nie znaleziony ani w bazie ani na dysku. Próbowane ścieżki:', possiblePaths);
         return res.status(404).json({ error: 'Plik nie został znaleziony na serwerze' });
       }
+      
+      console.log('📁 Używam pliku z dysku:', foundPath);
       
       filePath = foundPath;
 
