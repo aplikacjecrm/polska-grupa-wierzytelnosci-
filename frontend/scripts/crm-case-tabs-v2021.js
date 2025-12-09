@@ -1549,7 +1549,13 @@ window.crmManager.downloadDocument = async function(docId, filename, sourceType,
             downloadUrl = `${apiUrl}/cases/${caseId || window.crmManager.currentCaseId}/documents/${docId}/download?token=${token}`;
         }
         
-        window.open(downloadUrl, '_blank');
+        // Pobierz plik używając download attribute
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = filename || 'download';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
         
     } catch (error) {
         console.error('❌ Błąd pobierania:', error);
@@ -7930,6 +7936,49 @@ window.previewDocument = function(filename, displayName, fileExt) {
     };
     
     console.log('✅ Modal podglądu otwarty');
+};
+
+// Pobierz załącznik (używane w witnesses-module.js)
+window.downloadAttachment = async function(attachmentId) {
+    console.log(`📥 Pobieranie załącznika: ${attachmentId}`);
+    
+    try {
+        const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
+        const token = localStorage.getItem('token');
+        
+        // Pobierz blob
+        const response = await fetch(`${apiUrl}/attachments/${attachmentId}/download`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Błąd pobierania pliku');
+        
+        // Pobierz nazwę pliku z headera Content-Disposition lub użyj domyślnej
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'attachment';
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (match) filename = match[1];
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        // Pobierz plik
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        console.log('✅ Plik pobrany:', filename);
+        
+    } catch (error) {
+        console.error('❌ Błąd pobierania załącznika:', error);
+        alert('❌ Błąd: ' + error.message);
+    }
 };
 
 // ✅ KONIEC PLIKU - NOWA PROSTA WERSJA viewEventDetails + MAPA
