@@ -1001,69 +1001,6 @@ router.get('/search-documents', verifyToken, (req, res) => {
   );
 });
 
-// Pobierz dokumenty sprawy (documents + attachments)
-router.get('/:id/documents', verifyToken, (req, res) => {
-  const db = getDatabase();
-  const { id } = req.params;
-  
-  console.log('📄📄📄 POBIERANIE DOKUMENTÓW SPRAWY:', id);
-
-  db.all(
-    `SELECT
-        d.id,
-        d.case_id,
-        d.document_number,
-        NULL as attachment_code,
-        d.title,
-        d.description,
-        d.category,
-        d.filename,
-        d.filepath as file_path,
-        d.file_size,
-        d.file_type,
-        d.uploaded_at,
-        d.uploaded_by,
-        u.name as uploaded_by_name,
-        'document' as source_type
-     FROM documents d
-     LEFT JOIN users u ON d.uploaded_by = u.id
-     WHERE d.case_id = ?
-
-     UNION ALL
-
-     SELECT
-        a.id,
-        a.case_id,
-        NULL as document_number,
-        a.attachment_code,
-        a.title,
-        a.description,
-        a.category,
-        a.file_name as filename,
-        a.file_path,
-        a.file_size,
-        a.file_type,
-        a.uploaded_at,
-        a.uploaded_by,
-        u.name as uploaded_by_name,
-        'attachment' as source_type
-     FROM attachments a
-     LEFT JOIN users u ON a.uploaded_by = u.id
-     WHERE a.case_id = ?
-
-     ORDER BY uploaded_at DESC`,
-    [id, id],
-    (err, documents) => {
-      if (err) {
-        console.error('❌ Błąd pobierania dokumentów:', err);
-        return res.status(500).json({ error: 'Błąd pobierania dokumentów' });
-      }
-      console.log(`✅ Znaleziono ${documents.length} dokumentów dla sprawy ${id}`);
-      res.json({ documents });
-    }
-  );
-});
-
 // Pobierz wydarzenia sprawy
 router.get('/:id/events', verifyToken, (req, res) => {
   const db = getDatabase();
