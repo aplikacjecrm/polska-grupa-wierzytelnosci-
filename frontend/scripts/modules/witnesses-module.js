@@ -1324,6 +1324,8 @@ window.witnessesModule = {
             const isPDF = fileExt === 'pdf';
             const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt);
             const isTXT = fileExt === 'txt';
+            const isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(fileExt);
+            const isAudio = ['mp3', 'wav', 'ogg', 'm4a', 'aac'].includes(fileExt);
             
             let content = '';
             if (isPDF) {
@@ -1389,6 +1391,56 @@ window.witnessesModule = {
                         <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="padding: 12px 24px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">📥 Pobierz plik</button>
                     </div>`;
                 }
+            } else if (isVideo) {
+                // Podgląd wideo
+                content = `<div style="background: white; border-radius: 16px; padding: 20px; max-width: 90vw; max-height: 85vh; overflow: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <span style="font-size: 2rem;">🎬</span>
+                        <h3 style="margin: 10px 0; color: #1a2332;">Podgląd nagrania wideo</h3>
+                    </div>
+                    <video controls style="width: 100%; max-height: 70vh; border-radius: 8px; background: #000;">
+                        <source src="${docUrl}" type="video/${fileExt}">
+                        Twoja przeglądarka nie obsługuje odtwarzania wideo.
+                    </video>
+                    <div style="margin-top: 15px; text-align: center;">
+                        <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="
+                            padding: 12px 24px;
+                            background: linear-gradient(135deg, #3B82F6, #1E40AF);
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: 700;
+                            font-size: 1rem;
+                            box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+                        ">📥 Pobierz plik</button>
+                    </div>
+                </div>`;
+            } else if (isAudio) {
+                // Podgląd audio
+                content = `<div style="background: white; border-radius: 16px; padding: 40px; max-width: 600px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <span style="font-size: 4rem;">🎵</span>
+                        <h3 style="margin: 15px 0; color: #1a2332;">Podgląd nagrania audio</h3>
+                    </div>
+                    <audio controls style="width: 100%; margin-bottom: 20px;">
+                        <source src="${docUrl}" type="audio/${fileExt}">
+                        Twoja przeglądarka nie obsługuje odtwarzania audio.
+                    </audio>
+                    <div style="text-align: center;">
+                        <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="
+                            padding: 12px 24px;
+                            background: linear-gradient(135deg, #3B82F6, #1E40AF);
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: 700;
+                            font-size: 1rem;
+                            box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+                        ">📥 Pobierz plik</button>
+                    </div>
+                </div>`;
             } else {
                 content = `<div style="background: white; padding: 40px; border-radius: 12px; text-align: center;">
                     <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
