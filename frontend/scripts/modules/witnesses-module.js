@@ -570,16 +570,21 @@ window.witnessesModule = {
                         formData.append('documents', file);
                     });
                     
-                    // Upload dokumentów
-                    const uploadResponse = await fetch(`/api/witnesses/${witnessId}/documents`, {
+                    // Upload dokumentów - użyj poprawnego API URL
+                    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
+                    const token = localStorage.getItem('token');
+                    
+                    const uploadResponse = await fetch(`${apiUrl}/witnesses/${witnessId}/documents`, {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            'Authorization': `Bearer ${token}`
                         },
                         body: formData
                     });
                     
                     if (!uploadResponse.ok) {
+                        const errorText = await uploadResponse.text();
+                        console.error('❌ Upload error:', errorText);
                         throw new Error('Błąd uploadu dokumentów');
                     }
                     
@@ -600,8 +605,13 @@ window.witnessesModule = {
             // Zamknij modal
             document.getElementById('addWitnessModal').remove();
             
-            // Odśwież zakładkę
+            // Odśwież zakładkę i otwórz szczegóły świadka (żeby zobaczyć dodane dokumenty)
             window.crmManager.switchCaseTab(caseId, 'witnesses');
+            
+            // Po krótkiej chwili otwórz szczegóły świadka
+            setTimeout(() => {
+                this.viewWitnessDetails(witnessId, caseId);
+            }, 500);
             
         } catch (error) {
             console.error('❌ Błąd dodawania świadka:', error);
