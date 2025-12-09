@@ -787,14 +787,14 @@ router.post('/:id/documents', verifyToken, witnessDocsUpload.array('documents', 
     }
     
     const uploadedDocs = [];
+    const witnessShortCode = witness.witness_code.split('/').pop();
+    const prefix = `DOK/SWI/ZEZ/${witness.case_number}/${witnessShortCode}/`;
     
-    for (const file of files) {
-      // Wygeneruj kod dokumentu w formacie: DOK/SWI/ZEZ/{case_number}/{witness_short}/{seq}
-      // witness_code to np. "SW/DLU/TS01/001/006" - weź tylko ostatnią część (006)
-      const witnessShortCode = witness.witness_code.split('/').pop();
-      const prefix = `DOK/SWI/ZEZ/${witness.case_number}/${witnessShortCode}/`;
+    // Przetwarzaj pliki równolegle dla szybszości
+    const uploadPromises = files.map(async (file, index) => {
+      console.log(`📤 Przetwarzam plik ${index + 1}/${files.length}: ${file.originalname}`);
       
-      // Pobierz ostatni numer dokumentu dla tego świadka
+      // Pobierz ostatni numer dokumentu dla tego świadka (z lock aby uniknąć konfliktów)
       const lastDoc = await new Promise((resolve, reject) => {
         db.get(
           `SELECT document_code FROM witness_documents 
@@ -808,18 +808,18 @@ router.post('/:id/documents', verifyToken, witnessDocsUpload.array('documents', 
         );
       });
       
-      let nextNumber = 1;
+      let nextNumber = 1 + index; // Dodaj index aby uniknąć duplikatów przy równoległym przetwarzaniu
       if (lastDoc && lastDoc.document_code) {
         const lastNumberPart = lastDoc.document_code.split('/').pop();
-        nextNumber = parseInt(lastNumberPart) + 1;
+        nextNumber = parseInt(lastNumberPart) + 1 + index;
       }
       
       const documentCode = `${prefix}${String(nextNumber).padStart(3, '0')}`;
       console.log('📋 Kod dokumentu świadka:', documentCode);
       
-      // Wczytaj plik jako base64 (dla Railway - pliki efemeralne)
-      const fileData = fs.readFileSync(file.path, { encoding: 'base64' });
-      console.log('📦 Plik wczytany jako base64:', fileData.length, 'znaków');
+      // Wczytaj plik jako base64 ASYNC (szybsze dla dużych plików)
+      const fileData = await fs.promises.readFile(file.path, { encoding: 'base64' });
+      console.log(`📦 Plik ${file.originalname} wczytany jako base64:`, Math.round(fileData.length / 1024), 'KB');
       
       const docId = await new Promise((resolve, reject) => {
         db.run(
@@ -848,20 +848,26 @@ router.post('/:id/documents', verifyToken, witnessDocsUpload.array('documents', 
       });
       
       // Usuń plik z dysku po zapisaniu do bazy
-      if (fs.existsSync(file.path)) {
-        fs.unlinkSync(file.path);
+      try {
+        await fs.promises.unlink(file.path);
         console.log('🗑️ Plik usunięty z dysku (zapisany w bazie jako base64)');
+      } catch (e) {
+        console.warn('⚠️ Nie można usunąć pliku z dysku:', e.message);
       }
       
-      uploadedDocs.push({
+      console.log(`✅ Dokument ${index + 1}/${files.length} zapisany: ${file.originalname} (ID: ${docId})`);
+      
+      return {
         id: docId,
         document_code: documentCode,
         filename: file.originalname,
         size: file.size
-      });
-      
-      console.log(`✅ Dokument zapisany: ${file.originalname} (ID: ${docId}, Kod: ${documentCode})`);
-    }
+      };
+    });
+    
+    // Czekaj na wszystkie pliki
+    const results = await Promise.all(uploadPromises);
+    uploadedDocs.push(...results);
     
     // Loguj aktywność
     logEmployeeActivity({

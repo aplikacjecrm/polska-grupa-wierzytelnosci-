@@ -1269,9 +1269,28 @@ window.witnessesModule = {
             formData.append('documents', file);
         });
         
+        // Pokaż progress
+        const modal = document.getElementById('uploadWitnessDocsModal');
+        const uploadBtn = modal.querySelector('button[onclick*="uploadWitnessDocuments"]');
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <div style="
+                    width: 20px; height: 20px;
+                    border: 3px solid rgba(255,255,255,0.3);
+                    border-top-color: white;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                "></div>
+                <span>Wgrywanie...</span>
+            </div>
+        `;
+        
         try {
             const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
             const token = localStorage.getItem('token');
+            
+            console.log('📤 Rozpoczynam upload', filesInput.files.length, 'plików...');
             
             const response = await fetch(`${apiUrl}/witnesses/${witnessId}/documents`, {
                 method: 'POST',
@@ -1279,10 +1298,13 @@ window.witnessesModule = {
                 body: formData
             });
             
-            if (!response.ok) throw new Error('Błąd uploadu');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Błąd uploadu');
+            }
             
             const result = await response.json();
-            console.log('✅ Upload dokumentów:', result);
+            console.log('✅ Upload dokumentów zakończony:', result);
             
             alert(`✅ Wgrano ${result.count} dokumentów`);
             document.getElementById('uploadWitnessDocsModal').remove();
@@ -1290,6 +1312,8 @@ window.witnessesModule = {
             
         } catch (error) {
             console.error('❌ Błąd uploadu:', error);
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '📤 Wgraj dokumenty';
             alert('❌ Błąd: ' + error.message);
         }
     },
