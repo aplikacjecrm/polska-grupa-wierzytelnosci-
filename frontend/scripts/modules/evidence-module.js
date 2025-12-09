@@ -2021,6 +2021,22 @@ const evidenceModule = {
                   </small>
                 </div>
               </div>
+              
+              <!-- WYBÓR ZAŁĄCZNIKÓW ZEZNANIA (pokazuje się gdy wybrano zeznanie) -->
+              <div id="edit_witness_attachments_section" style="background: rgba(76, 175, 80, 0.08); border: 2px dashed #4CAF50; border-radius: 8px; padding: 20px; margin-top: 15px; display: none;">
+                <h4 style="margin: 0 0 15px 0; color: #2e7d32;">📎 Załączniki i dokumenty świadka</h4>
+                
+                <div style="margin-bottom: 15px;">
+                  <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 1.05rem; color: #1a2332;">Wszystkie pliki powiązane ze świadkiem</label>
+                  <div id="edit_witness_attachments_list" style="background: white; border: 2px solid #4CAF50; border-radius: 6px; padding: 15px; min-height: 60px; max-height: 400px; overflow-y: auto;">
+                    <small style="color: #999;">Wybierz zeznanie aby zobaczyć pliki świadka</small>
+                  </div>
+                  <small style="color: #666; display: block; margin-top: 8px;">
+                    📌 Lista zawiera: załączniki zeznania, dokumenty świadka (DOK/SWI/ZEZ), załączniki świadka (ZAL)<br>
+                    💡 Możesz przeglądać pliki klikając "👁️ Podgląd"
+                  </small>
+                </div>
+              </div>
             </div>
             
             <!-- POSZLAKI (gdy typ = circumstantial) -->
@@ -2192,20 +2208,68 @@ const evidenceModule = {
       // Pokaż sekcję zeznania gdy wybrano świadka
       document.getElementById('edit_witness_id').addEventListener('change', async (e) => {
         const testimonySection = document.getElementById('edit_testimony_section');
+        const attachmentsSection = document.getElementById('edit_witness_attachments_section');
         const selectedWitnessId = e.target.value;
         
         if (selectedWitnessId && selectedWitnessId !== 'loading' && selectedWitnessId !== '') {
           testimonySection.style.display = 'block';
+          attachmentsSection.style.display = 'none'; // Ukryj - pokaże się po wybraniu zeznania
+          this.editWitnessId = selectedWitnessId; // Zapisz ID świadka
           await this.loadTestimoniesForEditSelect(selectedWitnessId, evidence.testimony_id);
+          // Wyczyść listę załączników
+          const listDiv = document.getElementById('edit_witness_attachments_list');
+          if (listDiv) {
+            listDiv.innerHTML = '<small style="color: #999;">Wybierz zeznanie aby zobaczyć pliki świadka</small>';
+          }
         } else {
           testimonySection.style.display = 'none';
+          attachmentsSection.style.display = 'none';
+          this.editWitnessId = null;
+        }
+      });
+      
+      // Podgląd wybranego zeznania + załaduj załączniki zeznania (EDYCJA)
+      document.getElementById('edit_testimony_id').addEventListener('change', async (e) => {
+        const testimonyId = e.target.value;
+        const attachmentsSection = document.getElementById('edit_witness_attachments_section');
+        
+        if (testimonyId) {
+          attachmentsSection.style.display = 'block';
+          // Użyj tej samej funkcji co w dodawaniu, ale z innym ID kontenera
+          const originalContainerId = 'witness_attachments_list';
+          const editContainerId = 'edit_witness_attachments_list';
+          
+          // Tymczasowo podmień ID kontenera
+          const editContainer = document.getElementById(editContainerId);
+          if (editContainer) {
+            editContainer.id = originalContainerId;
+            await this.loadTestimonyAttachments(testimonyId, evidence.case_id);
+            editContainer.id = editContainerId; // Przywróć oryginalne ID
+          }
+        } else {
+          attachmentsSection.style.display = 'none';
         }
       });
       
       // Jeśli dowód ma świadka, pokaż sekcję zeznań
       if (evidence.witness_id) {
+        this.editWitnessId = evidence.witness_id; // Zapisz ID świadka
         document.getElementById('edit_testimony_section').style.display = 'block';
         await this.loadTestimoniesForEditSelect(evidence.witness_id, evidence.testimony_id);
+        
+        // Jeśli ma też zeznanie, załaduj załączniki
+        if (evidence.testimony_id) {
+          const attachmentsSection = document.getElementById('edit_witness_attachments_section');
+          attachmentsSection.style.display = 'block';
+          
+          // Użyj tej samej funkcji co w dodawaniu
+          const editContainer = document.getElementById('edit_witness_attachments_list');
+          if (editContainer) {
+            editContainer.id = 'witness_attachments_list';
+            await this.loadTestimonyAttachments(evidence.testimony_id, evidence.case_id);
+            editContainer.id = 'edit_witness_attachments_list';
+          }
+        }
       }
       
     } catch (error) {
