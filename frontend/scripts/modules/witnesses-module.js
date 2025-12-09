@@ -1405,14 +1405,21 @@ window.witnessesModule = {
                 container.innerHTML = '<div style="color: #999; font-size: 0.85rem; text-align: center; padding: 8px;">Brak załączników</div>';
             } else {
                 container.innerHTML = `
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
                         ${attachments.map(att => `
-                            <div style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: #f5f5f5; border-radius: 6px; font-size: 0.85rem;">
-                                <span style="color: #1a2332; font-weight: 500;">${att.title || att.file_name}</span>
-                                <span style="color: #999; font-size: 0.75rem;">(${(att.file_size / 1024).toFixed(1)} KB)</span>
-                                <button onclick="event.stopPropagation(); window.crmManager.viewDocument(${att.id}, null, 'attachment')" style="background: #FFD700; border: none; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 0.75rem;" title="Pokaż">👁️</button>
-                                <button onclick="event.stopPropagation(); window.downloadAttachment(${att.id})" style="background: #2196F3; color: white; border: none; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 0.75rem;" title="Pobierz">⬇️</button>
-                                <button onclick="event.stopPropagation(); witnessesModule.deleteTestimonyAttachment(${att.id}, ${witnessId}, ${testimonyId}, ${caseId}, ${versionNumber})" style="background: #f44336; color: white; border: none; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 0.75rem;" title="Usuń">🗑️</button>
+                            <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px; background: #f8f9fa; border-left: 4px solid #FFD700; border-radius: 6px;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <span style="background: #FFD700; color: #1a2332; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">
+                                        📋 ${att.attachment_code || 'BRAK KODU'}
+                                    </span>
+                                    <span style="color: #1a2332; font-weight: 500; font-size: 0.9rem;">${att.title || att.file_name}</span>
+                                    <span style="color: #999; font-size: 0.75rem;">(${(att.file_size / 1024).toFixed(1)} KB)</span>
+                                </div>
+                                <div style="display: flex; gap: 6px;">
+                                    <button onclick="event.stopPropagation(); window.crmManager.viewDocument(${att.id}, null, 'attachment')" style="flex: 1; background: #FFD700; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600;" title="Pokaż">👁️ Pokaż</button>
+                                    <button onclick="event.stopPropagation(); window.downloadAttachment(${att.id})" style="flex: 1; background: #2196F3; color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600;" title="Pobierz">⬇️ Pobierz</button>
+                                    <button onclick="event.stopPropagation(); witnessesModule.deleteTestimonyAttachment(${att.id}, ${witnessId}, ${testimonyId}, ${caseId}, ${versionNumber})" style="background: #f44336; color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem;" title="Usuń">🗑️</button>
+                                </div>
                             </div>
                         `).join('')}
                     </div>
