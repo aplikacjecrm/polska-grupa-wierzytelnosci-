@@ -5,33 +5,45 @@ console.log('🗑️ Simple Delete Document - Loading...');
 
 // Sprawdź czy użytkownik jest adminem
 function isAdmin() {
+    console.log('🔍 Sprawdzam czy admin...');
+    
     // Sprawdź localStorage
     const user = localStorage.getItem('user');
     const userRole = localStorage.getItem('userRole');
     const theme = localStorage.getItem('theme');
     
+    console.log('📦 localStorage:');
+    console.log('  - user:', user);
+    console.log('  - userRole:', userRole);
+    console.log('  - theme:', theme);
+    
     // Sprawdź user object
     if (user) {
         try {
             const userData = JSON.parse(user);
+            console.log('👤 userData:', userData);
             if (userData.role === 'admin' || userData.user_role === 'admin') {
+                console.log('✅ ADMIN - znaleziony w user object');
                 return true;
             }
         } catch (e) {
-            console.error('Błąd parsowania user:', e);
+            console.error('❌ Błąd parsowania user:', e);
         }
     }
     
     // Sprawdź userRole string
     if (userRole === 'admin') {
+        console.log('✅ ADMIN - znaleziony w userRole');
         return true;
     }
     
     // Sprawdź theme (admin ma dark theme)
     if (theme === 'dark') {
+        console.log('✅ ADMIN - znaleziony przez theme=dark');
         return true;
     }
     
+    console.log('❌ NIE ADMIN');
     return false;
 }
 
@@ -121,27 +133,45 @@ function addDeleteButtons() {
     
     const processed = new Set();
     
-    buttons.forEach(btn => {
+    buttons.forEach((btn, index) => {
+        console.log(`📌 Przycisk ${index + 1}:`, btn);
+        
         const onclick = btn.getAttribute('onclick');
-        if (!onclick) return;
+        console.log(`  onclick: ${onclick}`);
+        
+        if (!onclick) {
+            console.log(`  ⚠️ Brak onclick - pomijam`);
+            return;
+        }
         
         // Wyciągnij documentId z onclick
         const match = onclick.match(/Document\((\d+)/);
-        if (!match) return;
+        if (!match) {
+            console.log(`  ⚠️ Nie znaleziono documentId w onclick - pomijam`);
+            return;
+        }
         
         const documentId = match[1];
+        console.log(`  ✅ documentId: ${documentId}`);
         
         // Jeśli już przetworzony - pomiń
-        if (processed.has(documentId)) return;
+        if (processed.has(documentId)) {
+            console.log(`  ⚠️ Już przetworzony - pomijam`);
+            return;
+        }
         processed.add(documentId);
         
         // Sprawdź czy przycisk usuń już istnieje
         const container = btn.parentElement;
+        console.log(`  📦 container:`, container);
+        
         if (container.querySelector('.delete-btn-simple')) {
+            console.log(`  ⚠️ Przycisk usuń już istnieje - pomijam`);
             return; // Już dodany
         }
         
         // Stwórz przycisk "Usuń"
+        console.log(`  🔨 Tworzę przycisk Usuń...`);
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-btn-simple';
         deleteBtn.onclick = () => window.deleteDocument(documentId);
@@ -170,7 +200,7 @@ function addDeleteButtons() {
         
         // Dodaj do kontenera
         container.appendChild(deleteBtn);
-        console.log(`✅ Dodano przycisk Usuń dla dokumentu ${documentId}`);
+        console.log(`  ✅ DODANO przycisk Usuń dla dokumentu ${documentId}`);
     });
 }
 
