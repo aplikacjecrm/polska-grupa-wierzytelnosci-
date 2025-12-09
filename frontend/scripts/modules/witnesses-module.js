@@ -1284,14 +1284,75 @@ window.witnessesModule = {
         }
     },
     
-    // Podgląd dokumentu świadka (otwórz w przeglądarce)
+    // Podgląd dokumentu świadka (otwórz w modalu aplikacji)
     viewWitnessDocument: async function(witnessId, docId) {
         try {
+            // Pobierz dane dokumentu
+            const response = await window.api.request(`/witnesses/${witnessId}/documents`);
+            const documents = response.documents || [];
+            const doc = documents.find(d => d.id === docId);
+            
+            if (!doc) {
+                alert('❌ Dokument nie znaleziony');
+                return;
+            }
+            
             const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
             const token = localStorage.getItem('token');
+            const docUrl = `${apiUrl}/witnesses/${witnessId}/documents/${docId}?view=true&token=${token}`;
             
-            // Dodaj parametr view=true aby otworzyć inline w przeglądarce
-            window.open(`${apiUrl}/witnesses/${witnessId}/documents/${docId}?view=true&token=${token}`, '_blank');
+            // Stwórz modal z podglądem (podobny do innych dokumentów w systemie)
+            const modal = document.createElement('div');
+            modal.id = 'witnessDocViewModal';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.95); z-index: 10005; display: flex;
+                flex-direction: column; align-items: center; justify-content: center;
+            `;
+            
+            const fileExt = doc.file_name.split('.').pop().toLowerCase();
+            const isPDF = fileExt === 'pdf';
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt);
+            
+            let content = '';
+            if (isPDF) {
+                content = `<iframe src="${docUrl}" style="width: 90vw; height: 85vh; border: none; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);"></iframe>`;
+            } else if (isImage) {
+                content = `<img src="${docUrl}" style="max-width: 90vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">`;
+            } else {
+                content = `<div style="background: white; padding: 40px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
+                    <p style="color: #333; font-size: 1.1rem; margin-bottom: 20px;">Podgląd niedostępny dla tego typu pliku</p>
+                    <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="padding: 12px 24px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">📥 Pobierz plik</button>
+                </div>`;
+            }
+            
+            modal.innerHTML = `
+                <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 12px 24px; border-radius: 12px; color: white; font-weight: 600; z-index: 1;">
+                    📋 ${doc.document_code || doc.file_name}
+                </div>
+                
+                <button onclick="document.getElementById('witnessDocViewModal').remove()" style="
+                    position: absolute; top: 20px; right: 20px; z-index: 2;
+                    background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
+                    border: 2px solid white; color: white;
+                    width: 48px; height: 48px; border-radius: 50%;
+                    cursor: pointer; font-size: 1.8rem; font-weight: 700;
+                    transition: all 0.3s;
+                " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">×</button>
+                
+                ${content}
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Zamknij po kliknięciu w tło
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+            
         } catch (error) {
             console.error('❌ Błąd podglądu:', error);
             alert('❌ Błąd: ' + error.message);

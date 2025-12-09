@@ -1211,8 +1211,28 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
      LEFT JOIN users u ON a.uploaded_by = u.id
      WHERE a.case_id = ?
      
+     UNION ALL
+     
+     SELECT 
+      wd.id,
+      wd.case_id,
+      wd.document_code as document_number,
+      wd.document_code as attachment_code,
+      wd.title,
+      wd.description,
+      'świadek' as category,
+      wd.file_name as filename,
+      wd.file_path,
+      wd.uploaded_at,
+      wd.uploaded_by,
+      u.name as uploaded_by_name,
+      'witness_document' as source_type
+     FROM witness_documents wd
+     LEFT JOIN users u ON wd.uploaded_by = u.id
+     WHERE wd.case_id = ?
+     
      ORDER BY uploaded_at DESC`,
-    [id, id],
+    [id, id, id],
     (err, documents) => {
       if (err) {
         console.error('❌ Błąd pobierania dokumentów:', err);

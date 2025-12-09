@@ -789,8 +789,8 @@ router.post('/:id/documents', verifyToken, witnessDocsUpload.array('documents', 
     const uploadedDocs = [];
     
     for (const file of files) {
-      // Wygeneruj kod dokumentu
-      const prefix = `DOK/SWI/${witness.case_number}/${witness.witness_code}/`;
+      // Wygeneruj kod dokumentu w formacie: DOK/SWI/ZEZ/{case_number}/{witness_code}/{seq}
+      const prefix = `DOK/SWI/ZEZ/${witness.case_number}/${witness.witness_code}/`;
       
       // Pobierz ostatni numer dokumentu dla tego świadka
       const lastDoc = await new Promise((resolve, reject) => {
