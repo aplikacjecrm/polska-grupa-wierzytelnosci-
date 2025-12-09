@@ -1006,7 +1006,7 @@ router.get('/:id/documents', verifyToken, (req, res) => {
   const db = getDatabase();
   const { id } = req.params;
   
-  console.log('📄 Pobieranie dokumentów dla sprawy:', id);
+  console.log('📄📄📄 POBIERANIE DOKUMENTÓW SPRAWY:', id);
 
   db.all(
     `SELECT
