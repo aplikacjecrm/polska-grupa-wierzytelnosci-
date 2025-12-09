@@ -5314,7 +5314,7 @@ window.crmManager.renderCaseCommentsTab = async function(caseId) {
             </div>
             <div style="background: linear-gradient(135deg, #1a2332, #2c3e50); padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(212,175,55,0.3);">
                 <h3 style="margin: 0 0 15px 0; color: white;">💬 Dodaj komentarz</h3>
-                <textarea id="newCommentText" placeholder="Wpisz komentarz... (użyj przycisku 'Odpowiedz' przy innych komentarzach aby rozpocząć dyskusję)" style="width: 100%; padding: 15px; border: 2px solid #d4af37; border-radius: 6px; min-height: 120px; resize: vertical; font-size: 1rem; font-family: inherit; background: white; color: #1a2332;"></textarea>
+                <textarea id="newCommentText" placeholder="Wpisz komentarz... (użyj przycisku 'Odpowiedz' przy innych komentarzach aby rozpocząć dyskusję)" style="width: 100%; padding: 15px; border: 3px solid #d4af37; border-radius: 6px; min-height: 120px; resize: vertical; font-size: 1.05rem; font-family: inherit; background: white !important; color: #1a2332 !important; font-weight: 600;"></textarea>
                 
                 <div style="margin-top: 10px;">
                     <label style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 6px; color: white; cursor: pointer;">
