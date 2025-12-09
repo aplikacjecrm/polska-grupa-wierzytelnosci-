@@ -656,6 +656,7 @@ async function initDatabase() {
           file_path TEXT NOT NULL,
           file_size INTEGER,
           file_type TEXT,
+          file_data TEXT,
           category TEXT,
           uploaded_by INTEGER NOT NULL,
           uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -663,6 +664,13 @@ async function initDatabase() {
           FOREIGN KEY (uploaded_by) REFERENCES users(id)
         )
       `);
+      
+      // Dodaj kolumnę file_data jeśli nie istnieje (dla starych baz)
+      db.run(`ALTER TABLE attachments ADD COLUMN file_data TEXT`, (err) => {
+        if (err && !err.message.includes('duplicate column')) {
+          console.error('Błąd dodawania kolumny file_data:', err);
+        }
+      });
 
       // Tabela notatek
       db.run(`

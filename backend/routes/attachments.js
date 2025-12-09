@@ -119,15 +119,19 @@ router.post('/upload', verifyToken, uploadAttachment.single('file'), async (req,
     const attachmentCode = `${prefix}${String(nextNumber).padStart(3, '0')}`;
     console.log('📋 Wygenerowany kod załącznika:', attachmentCode);
 
-    // 4. Zapisz załącznik do bazy
+    // 4. Wczytaj plik jako base64 (dla Railway - pliki na dysku są efemeralne)
+    const fileData = fs.readFileSync(req.file.path, { encoding: 'base64' });
+    console.log('📦 Plik wczytany jako base64:', fileData.length, 'znaków');
+
+    // 5. Zapisz załącznik do bazy (z base64 data)
     console.log('💾 Próbuję zapisać załącznik do bazy...');
     
     const attachmentId = await new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO attachments (
           case_id, entity_type, entity_id, attachment_code, title, description,
-          file_name, file_path, file_size, file_type, category, uploaded_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          file_name, file_path, file_size, file_type, file_data, category, uploaded_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           case_id,
           entity_type,
@@ -139,6 +143,7 @@ router.post('/upload', verifyToken, uploadAttachment.single('file'), async (req,
           req.file.path,
           req.file.size,
           req.file.mimetype,
+          fileData,  // Base64 data
           category || 'general',
           userId
         ],
@@ -147,12 +152,18 @@ router.post('/upload', verifyToken, uploadAttachment.single('file'), async (req,
             console.error('❌❌❌ BŁĄD ZAPISU DO BAZY:', err);
             reject(err);
           } else {
-            console.log('✅✅✅ Załącznik dodany do bazy:', attachmentCode, '(ID:', this.lastID + ')');
+            console.log('✅✅✅ Załącznik dodany do bazy:', attachmentCode, '(ID:', this.lastID + ') z file_data');
             resolve(this.lastID);
           }
         }
       );
     });
+    
+    // 6. Usuń plik z dysku po zapisaniu do bazy (opcjonalnie - oszczędność miejsca)
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+      console.log('🗑️ Plik usunięty z dysku (zapisany w bazie jako base64)');
+    }
 
     res.json({
       success: true,
