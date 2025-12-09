@@ -1373,12 +1373,72 @@ window.crmManager.viewDocument = async function(docId, caseId, sourceType) {
         const fileExt = docData.filename.split('.').pop().toLowerCase();
         const isPDF = fileExt === 'pdf';
         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt);
+        const isTXT = fileExt === 'txt';
         
         let content = '';
         if (isPDF) {
             content = `<iframe src="${docUrl}" style="width: 90vw; height: 85vh; border: none; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);"></iframe>`;
         } else if (isImage) {
             content = `<img src="${docUrl}" style="max-width: 90vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">`;
+        } else if (isTXT) {
+            // Pobierz treść TXT i wyświetl w pięknym boxie
+            try {
+                const txtResponse = await fetch(docUrl);
+                const txtContent = await txtResponse.text();
+                content = `<div style="
+                    background: white;
+                    border: 4px solid #9333ea;
+                    border-radius: 16px;
+                    padding: 30px;
+                    max-width: 90vw;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    box-shadow: 0 8px 32px rgba(147,51,234,0.3);
+                ">
+                    <div style="
+                        background: linear-gradient(135deg, #9333ea, #7c3aed);
+                        color: white;
+                        padding: 15px 20px;
+                        border-radius: 10px;
+                        margin-bottom: 20px;
+                        font-weight: 700;
+                        font-size: 1.1rem;
+                        text-align: center;
+                        box-shadow: 0 4px 12px rgba(147,51,234,0.4);
+                    ">
+                        📄 ${docData.attachment_code || docData.document_number || docData.filename}
+                    </div>
+                    <pre style="
+                        white-space: pre-wrap;
+                        word-wrap: break-word;
+                        font-family: 'Segoe UI', Arial, sans-serif;
+                        font-size: 1rem;
+                        line-height: 1.6;
+                        color: #1a2332;
+                        margin: 0;
+                    ">${txtContent}</pre>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="
+                            padding: 12px 24px;
+                            background: linear-gradient(135deg, #9333ea, #7c3aed);
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: 700;
+                            font-size: 1rem;
+                            box-shadow: 0 4px 12px rgba(147,51,234,0.3);
+                        ">📥 Pobierz plik</button>
+                    </div>
+                </div>`;
+            } catch (error) {
+                console.error('❌ Błąd wczytywania TXT:', error);
+                content = `<div style="background: white; padding: 40px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
+                    <p style="color: #333; font-size: 1.1rem; margin-bottom: 20px;">Nie udało się wczytać pliku tekstowego</p>
+                    <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="padding: 12px 24px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">📥 Pobierz plik</button>
+                </div>`;
+            }
         } else {
             content = `<div style="background: white; padding: 40px; border-radius: 12px; text-align: center;">
                 <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
