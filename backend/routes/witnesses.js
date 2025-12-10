@@ -317,54 +317,166 @@ router.post('/:id/withdraw', verifyToken, (req, res) => {
   );
 });
 
-// === USUŃ ŚWIADKA ===
+// === USUŃ ŚWIADKA (Z WERYFIKACJĄ HASŁA I SZCZEGÓŁOWYM LOGOWANIEM) ===
 
-router.delete('/:id', verifyToken, (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
   const db = getDatabase();
   const { id } = req.params;
   const userId = req.user.userId;
+  const { password, witness_name, witness_code } = req.body;
   
-  // Najpierw pobierz dane świadka do logowania
-  db.get('SELECT first_name, last_name, case_id FROM case_witnesses WHERE id = ?', [id], (err, witness) => {
-    if (err || !witness) {
+  console.log('🗑️ DELETE /witnesses/:id - Próba usunięcia świadka:', id);
+  console.log('   - userId:', userId);
+  console.log('   - hasło podane:', password ? 'TAK' : 'NIE');
+  
+  // WERYFIKACJA HASŁA - OBOWIĄZKOWA!
+  if (!password) {
+    console.log('❌ Brak hasła w żądaniu');
+    return res.status(400).json({ error: 'Hasło jest wymagane do usunięcia świadka' });
+  }
+  
+  try {
+    // Pobierz użytkownika z bazy (musimy mieć hasło do weryfikacji)
+    const bcrypt = require('bcrypt');
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT id, name, email, password FROM users WHERE id = ?', [userId], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    
+    if (!user) {
+      console.log('❌ Użytkownik nie znaleziony:', userId);
+      return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+    }
+    
+    // Weryfikuj hasło
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    if (!isPasswordValid) {
+      console.log('❌ Nieprawidłowe hasło dla użytkownika:', user.email);
+      return res.status(401).json({ error: 'Nieprawidłowe hasło. Usunięcie świadka wymaga potwierdzenia hasłem.' });
+    }
+    
+    console.log('✅ Hasło poprawne - kontynuacja usuwania');
+    
+    // Najpierw pobierz dane świadka do logowania
+    const witness = await new Promise((resolve, reject) => {
+      db.get('SELECT * FROM case_witnesses WHERE id = ?', [id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    
+    if (!witness) {
+      console.log('❌ Świadek nie znaleziony:', id);
       return res.status(404).json({ error: 'Świadek nie znaleziony' });
     }
     
-    const witnessName = `${witness.first_name} ${witness.last_name}`;
+    const witnessNameFinal = witness_name || `${witness.first_name} ${witness.last_name}`;
+    const witnessCodeFinal = witness_code || witness.witness_code;
     const caseId = witness.case_id;
     
-    // Usuń zeznania
-    db.run('DELETE FROM witness_testimonies WHERE witness_id = ?', [id], (err) => {
-      if (err) {
-        console.error('❌ Błąd usuwania zeznań:', err);
-        return res.status(500).json({ error: 'Błąd usuwania zeznań' });
-      }
-      
-      // Potem usuń świadka
-      db.run('DELETE FROM case_witnesses WHERE id = ?', [id], function(err) {
-        if (err) {
-          console.error('❌ Błąd usuwania świadka:', err);
-          return res.status(500).json({ error: 'Błąd usuwania świadka' });
+    console.log(`🗑️ Usuwanie świadka: ${witnessNameFinal} (${witnessCodeFinal})`);
+    
+    // 1️⃣ USUŃ ZEZNANIA ŚWIADKA
+    console.log('   → Usuwam zeznania świadka...');
+    const testimoniesDeleted = await new Promise((resolve, reject) => {
+      db.run('DELETE FROM witness_testimonies WHERE witness_id = ?', [id], function(err) {
+        if (err) reject(err);
+        else {
+          console.log(`   ✅ Usunięto ${this.changes} zeznań`);
+          resolve(this.changes);
         }
-        
-        if (this.changes === 0) {
-          return res.status(404).json({ error: 'Świadek nie znaleziony' });
-        }
-        
-        // 📊 LOGUJ USUNIĘCIE DO HISTORII SPRAWY
-        logEmployeeActivity({
-          userId: userId,
-          actionType: 'witness_deleted',
-          actionCategory: 'witness',
-          description: `Usunięto świadka: ${witnessName}`,
-          caseId: caseId
-        });
-        
-        console.log('✅ Usunięto świadka:', id);
-        res.json({ success: true });
       });
     });
-  });
+    
+    // 2️⃣ USUŃ DOKUMENTY ŚWIADKA (witness_documents)
+    console.log('   → Usuwam dokumenty świadka...');
+    const documentsDeleted = await new Promise((resolve, reject) => {
+      db.run('DELETE FROM witness_documents WHERE witness_id = ?', [id], function(err) {
+        if (err) reject(err);
+        else {
+          console.log(`   ✅ Usunięto ${this.changes} dokumentów`);
+          resolve(this.changes);
+        }
+      });
+    });
+    
+    // 3️⃣ USUŃ ZAŁĄCZNIKI ŚWIADKA (attachments)
+    console.log('   → Usuwam załączniki świadka...');
+    const attachmentsDeleted = await new Promise((resolve, reject) => {
+      db.run(
+        'DELETE FROM attachments WHERE entity_type = ? AND entity_id = ?',
+        ['witness', id],
+        function(err) {
+          if (err) reject(err);
+          else {
+            console.log(`   ✅ Usunięto ${this.changes} załączników`);
+            resolve(this.changes);
+          }
+        }
+      );
+    });
+    
+    // 4️⃣ USUŃ ŚWIADKA
+    console.log('   → Usuwam świadka z tabeli case_witnesses...');
+    await new Promise((resolve, reject) => {
+      db.run('DELETE FROM case_witnesses WHERE id = ?', [id], function(err) {
+        if (err) reject(err);
+        else {
+          console.log('   ✅ Świadek usunięty');
+          resolve();
+        }
+      });
+    });
+    
+    // 📊 LOGUJ USUNIĘCIE DO HISTORII SPRAWY (employee_activity)
+    await logEmployeeActivity({
+      userId: userId,
+      actionType: 'witness_deleted',
+      actionCategory: 'witness',
+      description: `🗑️ USUNIĘTO ŚWIADKA: ${witnessNameFinal} (${witnessCodeFinal}) - Potwierdzono hasłem (+ ${testimoniesDeleted} zeznań, ${documentsDeleted} dokumentów)`,
+      caseId: caseId,
+      details: JSON.stringify({
+        witness_id: id,
+        witness_name: witnessNameFinal,
+        witness_code: witnessCodeFinal,
+        deleted_by: user.name,
+        deleted_by_email: user.email,
+        confirmed_with_password: true,
+        testimonies_deleted: testimoniesDeleted,
+        documents_deleted: documentsDeleted,
+        attachments_deleted: attachmentsDeleted,
+        timestamp: new Date().toISOString()
+      })
+    });
+    
+    console.log('✅ Świadek usunięty wraz z powiązaniami:', id);
+    console.log(`   - Zeznania usunięte: ${testimoniesDeleted}`);
+    console.log(`   - Dokumenty usunięte: ${documentsDeleted}`);
+    console.log(`   - Załączniki usunięte: ${attachmentsDeleted}`);
+    console.log('   - Historia sprawy: zapisana');
+    
+    res.json({ 
+      success: true, 
+      message: `Świadek usunięty pomyślnie wraz z ${testimoniesDeleted} zeznaniami i ${documentsDeleted} dokumentami`,
+      deleted_witness: {
+        id: id,
+        name: witnessNameFinal,
+        code: witnessCodeFinal,
+        testimonies_deleted: testimoniesDeleted,
+        documents_deleted: documentsDeleted,
+        attachments_deleted: attachmentsDeleted
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Błąd usuwania świadka:', error);
+    return res.status(500).json({ 
+      error: 'Błąd usuwania świadka: ' + error.message 
+    });
+  }
 });
 
 // ================================================

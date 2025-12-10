@@ -229,16 +229,18 @@ window.renderWitnessesTab = async function(caseId) {
                                                 ⚠️ Wycofaj
                                             </button>
                                         ` : ''}
-                                        <button onclick="if(confirm('Na pewno usunąć świadka?')) witnessesModule.deleteWitness(${w.id}, ${caseId})" style="
+                                        <button onclick="witnessesModule.deleteWitness(${w.id}, ${caseId}, '${w.first_name} ${w.last_name}', '${w.witness_code}')" style="
                                             padding: 10px 18px;
-                                            background: #dc3545;
+                                            background: linear-gradient(135deg, #dc3545, #b02a37);
                                             color: white;
                                             border: none;
                                             border-radius: 8px;
                                             cursor: pointer;
                                             font-size: 0.9rem;
-                                            font-weight: 600;
-                                        ">
+                                            font-weight: 700;
+                                            box-shadow: 0 2px 8px rgba(220,53,69,0.3);
+                                            transition: all 0.3s;
+                                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(220,53,69,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(220,53,69,0.3)'">
                                             🗑️ Usuń
                                         </button>
                                     </div>
@@ -1747,20 +1749,292 @@ window.witnessesModule = {
         }
     },
     
-    // Usuń świadka
-    deleteWitness: async function(witnessId, caseId) {
-        try {
-            await window.api.request(`/witnesses/${witnessId}`, { method: 'DELETE' });
+    // Usuń świadka (z hasłem i pięknym modalem)
+    deleteWitness: async function(witnessId, caseId, witnessName, witnessCode) {
+        console.log('🗑️ Usuwanie świadka:', witnessId, witnessName, witnessCode);
+        
+        // Modal z polem hasła
+        const modal = document.createElement('div');
+        modal.id = 'deleteWitnessModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0,0,0,0.85);
+            z-index: 10003;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s;
+        `;
+        
+        modal.innerHTML = `
+            <style>
+                @keyframes shake-animation {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+                    20%, 40%, 60%, 80% { transform: translateX(10px); }
+                }
+                .shake-animation {
+                    animation: shake-animation 0.5s;
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideIn {
+                    from { transform: translateY(-50px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+            </style>
+            <div style="
+                background: white;
+                border-radius: 20px;
+                padding: 0;
+                max-width: 550px;
+                width: 90%;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                animation: slideIn 0.4s ease-out;
+            ">
+                <!-- Header -->
+                <div style="
+                    background: linear-gradient(135deg, #dc3545, #b02a37);
+                    padding: 25px;
+                    border-radius: 20px 20px 0 0;
+                    color: white;
+                    text-align: center;
+                    position: relative;
+                ">
+                    <div style="font-size: 3.5rem; margin-bottom: 15px; animation: pulse 2s infinite;">⚠️</div>
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.5rem; font-weight: 800;">USUWANIE ŚWIADKA</h3>
+                    <p style="margin: 0; opacity: 0.95; font-size: 0.95rem;">To działanie jest NIEODWRACALNE!</p>
+                </div>
+                
+                <!-- Body -->
+                <div style="padding: 30px;">
+                    <!-- Info o świadku -->
+                    <div style="
+                        padding: 20px;
+                        background: linear-gradient(135deg, rgba(220,53,69,0.1), rgba(176,42,55,0.1));
+                        border-left: 5px solid #dc3545;
+                        border-radius: 12px;
+                        margin-bottom: 25px;
+                    ">
+                        <div style="font-size: 0.85rem; color: #999; margin-bottom: 8px; font-weight: 600; text-transform: uppercase;">Usuwasz świadka:</div>
+                        <div style="font-size: 1.3rem; color: #1a2332; font-weight: 700; margin-bottom: 8px;">👤 ${witnessName}</div>
+                        <div style="font-family: 'Courier New', monospace; color: #dc3545; font-weight: 700; font-size: 1.05rem;">${witnessCode}</div>
+                    </div>
+                    
+                    <!-- Ostrzeżenie -->
+                    <div style="
+                        padding: 18px;
+                        background: #fff3cd;
+                        border: 2px solid #ffc107;
+                        border-radius: 12px;
+                        margin-bottom: 25px;
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                    ">
+                        <div style="font-size: 2.5rem; flex-shrink: 0;">🔥</div>
+                        <div>
+                            <div style="color: #856404; font-weight: 700; margin-bottom: 5px; font-size: 0.95rem;">Zostaną usunięte:</div>
+                            <div style="color: #856404; font-size: 0.85rem; line-height: 1.6;">
+                                • Wszystkie zeznania świadka<br>
+                                • Załączone dokumenty<br>
+                                • Historia i notatki<br>
+                                • Powiązania z dowodami
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pole hasła -->
+                    <div style="margin-bottom: 25px;">
+                        <label style="
+                            display: block;
+                            color: #1a2332;
+                            font-weight: 700;
+                            margin-bottom: 10px;
+                            font-size: 1rem;
+                        ">🔐 Wpisz swoje hasło aby potwierdzić:</label>
+                        <input 
+                            type="password" 
+                            id="witnessDeletePassword" 
+                            placeholder="Twoje hasło..." 
+                            autocomplete="current-password"
+                            style="
+                                width: 100%;
+                                padding: 15px;
+                                border: 3px solid #e0e0e0;
+                                border-radius: 12px;
+                                font-size: 1.05rem;
+                                transition: all 0.3s;
+                                box-sizing: border-box;
+                            "
+                            onkeypress="if(event.key==='Enter') document.getElementById('confirmDeleteWitnessBtn').click()"
+                            onfocus="this.style.borderColor='#dc3545'; this.style.boxShadow='0 0 0 4px rgba(220,53,69,0.1)'"
+                            onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'"
+                        />
+                    </div>
+                    
+                    <!-- Błąd -->
+                    <div id="witnessPasswordError" style="
+                        display: none;
+                        padding: 12px;
+                        background: #f8d7da;
+                        border: 2px solid #dc3545;
+                        border-radius: 8px;
+                        color: #721c24;
+                        font-weight: 600;
+                        margin-bottom: 20px;
+                        text-align: center;
+                    "></div>
+                    
+                    <!-- Przyciski -->
+                    <div style="display: flex; gap: 12px; margin-top: 30px;">
+                        <button 
+                            onclick="document.getElementById('deleteWitnessModal').remove()" 
+                            style="
+                                flex: 1;
+                                padding: 16px;
+                                background: #6c757d;
+                                color: white;
+                                border: none;
+                                border-radius: 12px;
+                                cursor: pointer;
+                                font-weight: 700;
+                                font-size: 1rem;
+                                transition: all 0.3s;
+                            "
+                            onmouseover="this.style.background='#5a6268'"
+                            onmouseout="this.style.background='#6c757d'"
+                        >
+                            ❌ Anuluj
+                        </button>
+                        <button 
+                            id="confirmDeleteWitnessBtn"
+                            style="
+                                flex: 2;
+                                padding: 16px;
+                                background: linear-gradient(135deg, #dc3545, #b02a37);
+                                color: white;
+                                border: none;
+                                border-radius: 12px;
+                                cursor: pointer;
+                                font-weight: 800;
+                                font-size: 1.05rem;
+                                box-shadow: 0 4px 15px rgba(220,53,69,0.4);
+                                transition: all 0.3s;
+                            "
+                            onmouseover="if(!this.disabled) { this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(220,53,69,0.6)'; }"
+                            onmouseout="if(!this.disabled) { this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(220,53,69,0.4)'; }"
+                        >
+                            🗑️ USUŃ TRWALE
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Focus na pole hasła
+        setTimeout(() => {
+            document.getElementById('witnessDeletePassword')?.focus();
+        }, 100);
+        
+        // Handler usuwania
+        document.getElementById('confirmDeleteWitnessBtn').onclick = async () => {
+            const passwordInput = document.getElementById('witnessDeletePassword');
+            const errorDiv = document.getElementById('witnessPasswordError');
+            const password = passwordInput.value.trim();
             
-            console.log('✅ Usunięto świadka');
-            alert('✅ Usunięto świadka');
+            // Walidacja
+            if (!password) {
+                passwordInput.classList.add('shake-animation');
+                passwordInput.style.borderColor = '#dc3545';
+                errorDiv.textContent = '❌ Wpisz hasło!';
+                errorDiv.style.display = 'block';
+                setTimeout(() => passwordInput.classList.remove('shake-animation'), 500);
+                return;
+            }
             
-            window.crmManager.switchCaseTab(caseId, 'witnesses');
+            // Disable przycisku
+            const btn = document.getElementById('confirmDeleteWitnessBtn');
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.innerHTML = '⏳ Weryfikacja...';
             
-        } catch (error) {
-            console.error('❌ Błąd usuwania:', error);
-            alert('❌ Błąd: ' + error.message);
-        }
+            try {
+                // Usuń świadka z weryfikacją hasła
+                const response = await window.api.request(`/witnesses/${witnessId}`, {
+                    method: 'DELETE',
+                    body: {
+                        password: password,
+                        witness_name: witnessName,
+                        witness_code: witnessCode
+                    }
+                });
+                
+                // Zamknij modal
+                modal.remove();
+                
+                // Powiadomienie z szczegółami
+                const testimoniesCount = response.deleted_witness?.testimonies_deleted || 0;
+                const documentsCount = response.deleted_witness?.documents_deleted || 0;
+                const details = testimoniesCount > 0 || documentsCount > 0
+                    ? ` (+ ${testimoniesCount} zeznań, ${documentsCount} dokumentów)`
+                    : '';
+                window.showNotification(`✅ Świadek usunięty i zapisany w historii${details}`, 'success');
+                
+                // Odśwież listę
+                window.crmManager.switchCaseTab(caseId, 'witnesses');
+                
+                // Event bus
+                if (window.eventBus) {
+                    window.eventBus.emit('witness:deleted', {
+                        witnessId,
+                        witnessName,
+                        witnessCode,
+                        testimoniesDeleted: testimoniesCount,
+                        documentsDeleted: documentsCount
+                    });
+                }
+                
+            } catch (error) {
+                console.error('❌ Błąd usuwania:', error);
+                
+                // Sprawdź czy to błąd hasła
+                if (error.message && error.message.includes('hasł')) {
+                    passwordInput.classList.add('shake-animation');
+                    passwordInput.style.borderColor = '#dc3545';
+                    passwordInput.value = '';
+                    errorDiv.textContent = '❌ Nieprawidłowe hasło! Spróbuj ponownie.';
+                    errorDiv.style.display = 'block';
+                    setTimeout(() => passwordInput.classList.remove('shake-animation'), 500);
+                    
+                    // Re-enable przycisk
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.innerHTML = '🗑️ USUŃ TRWALE';
+                    
+                    // Focus z powrotem na pole
+                    passwordInput.focus();
+                } else {
+                    modal.remove();
+                    alert('❌ Błąd: ' + error.message);
+                }
+            }
+        };
+        
+        // Zamknij modal klikając w tło
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
     },
     
     // ================================================
