@@ -1306,8 +1306,10 @@ const evidenceModule = {
               return `
               <div style="background: #f5f5f5; padding: 16px; border-radius: 12px; margin-bottom: 12px; border: 2px solid transparent; transition: all 0.3s; border-left: 4px solid #9c27b0;" 
                    data-doc-id="${doc.id}"
-                   data-doc-filename="${doc.filename}"
-                   data-doc-path="${doc.file_path || ''}">
+                   data-doc-filename="${doc.filename || doc.file_name || 'Bez nazwy'}"
+                   data-doc-path="${doc.file_path || ''}"
+                   data-doc-attachment-code="${doc.attachment_code || ''}"
+                   data-doc-document-number="${doc.document_number || ''}">
                 <div style="display: flex; align-items: start; gap: 12px;">
                   <!-- Checkbox -->
                   <input type="checkbox" 
@@ -1401,7 +1403,10 @@ const evidenceModule = {
       return {
         id: docEl.dataset.docId,
         filename: docEl.dataset.docFilename,
-        path: docEl.dataset.docPath
+        file_name: docEl.dataset.docFilename,
+        path: docEl.dataset.docPath,
+        attachment_code: docEl.dataset.docAttachmentCode || null,
+        document_number: docEl.dataset.docDocumentNumber || null
       };
     });
     
@@ -1409,15 +1414,22 @@ const evidenceModule = {
     const previewDiv = document.getElementById('selected_system_docs');
     const listDiv = document.getElementById('system_docs_list');
     
-    listDiv.innerHTML = this.selectedSystemDocs.map((doc, index) => `
+    listDiv.innerHTML = this.selectedSystemDocs.map((doc, index) => {
+      const displayName = doc.filename || doc.file_name || 'Bez nazwy';
+      const codeLabel = doc.attachment_code || doc.document_number || '';
+      return `
       <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #9c27b0; display: flex; justify-content: space-between; align-items: center;">
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
           <span style="font-size: 1.2rem;">📄</span>
-          <span style="font-weight: 600; color: #1a2332;">${doc.filename}</span>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; color: #1a2332; margin-bottom: 2px;">${displayName}</div>
+            ${codeLabel ? `<div style="font-size: 0.75rem; color: #666;">📋 ${codeLabel}</div>` : ''}
+          </div>
         </div>
         <button onclick="evidenceModule.removeSystemDoc(${index})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">✕</button>
       </div>
-    `).join('');
+    `;
+    }).join('');
     
     previewDiv.style.display = 'block';
     
@@ -1436,15 +1448,22 @@ const evidenceModule = {
     if (this.selectedSystemDocs.length === 0) {
       previewDiv.style.display = 'none';
     } else {
-      listDiv.innerHTML = this.selectedSystemDocs.map((doc, i) => `
+      listDiv.innerHTML = this.selectedSystemDocs.map((doc, i) => {
+        const displayName = doc.filename || doc.file_name || 'Bez nazwy';
+        const codeLabel = doc.attachment_code || doc.document_number || '';
+        return `
         <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #9c27b0; display: flex; justify-content: space-between; align-items: center;">
-          <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
             <span style="font-size: 1.2rem;">📄</span>
-            <span style="font-weight: 600; color: #1a2332;">${doc.filename}</span>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; color: #1a2332; margin-bottom: 2px;">${displayName}</div>
+              ${codeLabel ? `<div style="font-size: 0.75rem; color: #666;">📋 ${codeLabel}</div>` : ''}
+            </div>
           </div>
           <button onclick="evidenceModule.removeSystemDoc(${i})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">✕</button>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
   },
   
