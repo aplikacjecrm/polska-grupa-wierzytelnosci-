@@ -1013,13 +1013,14 @@ window.witnessesModule = {
                                 <h4 style="margin: 0; color: #111827; font-size: 1.05rem;">📎 Dokumenty świadka</h4>
                                 <button onclick="witnessesModule.showUploadWitnessDocuments(${witnessId}, ${caseId})" style="
                                     padding: 8px 16px;
-                                    background: linear-gradient(135deg, #3B82F6, #1E40AF);
-                                    color: white;
+                                    background: linear-gradient(135deg, #FFD700, #FFA500);
+                                    color: #1a2332;
                                     border: none;
                                     border-radius: 8px;
                                     cursor: pointer;
                                     font-size: 0.85rem;
-                                    font-weight: 600;
+                                    font-weight: 700;
+                                    box-shadow: 0 2px 8px rgba(255,215,0,0.3);
                                 ">
                                     + Dodaj dokumenty
                                 </button>
@@ -1055,15 +1056,15 @@ window.witnessesModule = {
                                             <div style="cursor: pointer;" onclick="witnessesModule.viewTestimonyDetails(${witnessId}, ${t.id})" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
                                                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
                                                     <div>
-                                                        <div style="display: inline-block; padding: 5px 10px; background: linear-gradient(135deg, #3B82F6, #1E40AF); color: white; border-radius: 6px; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">
+                                                        <div style="display: inline-block; padding: 5px 10px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2332; border-radius: 6px; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">
                                                             Wersja ${t.version_number}
                                                         </div>
                                                         <div style="color: #666; font-size: 0.85rem; margin-top: 4px;">
                                                             📅 ${new Date(t.testimony_date).toLocaleDateString('pl-PL', {year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})}
                                                         </div>
                                                     </div>
-                                                    <span style="padding: 5px 10px; background: ${t.testimony_type === 'written' ? '#3B82F6' : t.testimony_type === 'oral' ? '#3B82F6' : '#3B82F6'}; color: white; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
-                                                        ${t.testimony_type === 'written' ? '📄 Pisemne' : t.testimony_type === 'oral' ? '🎤 Ustne' : '📹 Nagranie'}
+                                                    <span style="padding: 5px 10px; background: ${t.testimony_type === 'written' ? '#FFA500' : t.testimony_type === 'oral' ? '#FFB84D' : '#dc3545'}; color: ${t.testimony_type === 'recorded' ? 'white' : '#1a2332'}; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">
+                                                        ${t.testimony_type === 'written' ? '📄 Pisemne' : t.testimony_type === 'oral' ? '🎤 Ustne' : '🔴 Nagranie'}
                                                     </span>
                                                 </div>
                                                 
@@ -1078,7 +1079,7 @@ window.witnessesModule = {
                                                 ` : ''}
                                                 
                                                 <div style="margin-top: 10px; text-align: right;">
-                                                    <span style="color: #3B82F6; font-size: 0.85rem; font-weight: 600;">👁️ Kliknij aby zobaczyć szczegóły</span>
+                                                    <span style="color: #FFA500; font-size: 0.85rem; font-weight: 600;">👁️ Kliknij aby zobaczyć szczegóły</span>
                                                 </div>
                                             </div>
                                             
@@ -1174,16 +1175,16 @@ window.witnessesModule = {
                                     <button onclick="witnessesModule.downloadWitnessDocument(${witnessId}, ${doc.id})" style="
                                         flex: 1;
                                         padding: 10px 16px;
-                                        background: linear-gradient(135deg, #3B82F6, #1E40AF);
+                                        background: linear-gradient(135deg, #FFA500, #FF8C00);
                                         color: white;
                                         border: none;
                                         border-radius: 8px;
                                         cursor: pointer;
                                         font-size: 0.9rem;
                                         font-weight: 700;
-                                        box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+                                        box-shadow: 0 2px 8px rgba(255,165,0,0.3);
                                         transition: all 0.3s;
-                                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(59,130,246,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(59,130,246,0.3)'">
+                                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,165,0,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(255,165,0,0.3)'">
                                         📥 Pobierz
                                     </button>
                                     <button onclick="if(confirm('Usunąć dokument ${doc.file_name}?')) witnessesModule.deleteWitnessDocument(${witnessId}, ${doc.id})" style="
@@ -1543,7 +1544,7 @@ window.witnessesModule = {
                                 </div>
                                 <div style="display: flex; gap: 6px;">
                                     <button onclick="event.stopPropagation(); window.crmManager.viewDocument(${att.id}, null, 'attachment')" style="flex: 1; background: #FFD700; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600;" title="Pokaż">👁️ Pokaż</button>
-                                    <button onclick="event.stopPropagation(); window.downloadAttachment(${att.id})" style="flex: 1; background: #2196F3; color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600;" title="Pobierz">⬇️ Pobierz</button>
+                                    <button onclick="event.stopPropagation(); window.downloadAttachment(${att.id})" style="flex: 1; background: linear-gradient(135deg, #FFA500, #FF8C00); color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem; font-weight: 700; box-shadow: 0 2px 6px rgba(255,165,0,0.3);" title="Pobierz">⬇️ Pobierz</button>
                                     <button onclick="event.stopPropagation(); witnessesModule.deleteTestimonyAttachment(${att.id}, ${witnessId}, ${testimonyId}, ${caseId}, ${versionNumber})" style="background: #f44336; color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem;" title="Usuń">🗑️</button>
                                 </div>
                             </div>
@@ -1584,7 +1585,7 @@ window.witnessesModule = {
                     </div>
                     
                     <button onclick="witnessesModule.uploadTestimonyAttachment(${witnessId}, ${testimonyId}, ${caseId}, ${versionNumber})" 
-                        style="width: 100%; padding: 14px; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem;">
+                        style="width: 100%; padding: 14px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2332; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 3px 10px rgba(255,215,0,0.3);">
                         📤 Wgraj załącznik
                     </button>
                 </div>
@@ -1693,8 +1694,8 @@ window.witnessesModule = {
         
         modal.innerHTML = `
             <div style="background: white; border-radius: 16px; padding: 0; max-width: 500px; width: 90%;">
-                <div style="background: linear-gradient(135deg, #3B82F6, #1E40AF); padding: 20px; border-radius: 16px 16px 0 0; color: white;">
-                    <h3 style="margin: 0;">⚠️ Wycofanie świadka</h3>
+                <div style="background: linear-gradient(135deg, #FFD700, #FFA500); padding: 20px; border-radius: 16px 16px 0 0; color: #1a2332;">
+                    <h3 style="margin: 0; font-weight: 700;">⚠️ Wycofanie świadka</h3>
                 </div>
                 <div style="padding: 25px;">
                     <p style="margin: 0 0 20px 0; color: #666;">Podaj powód wycofania świadka:</p>
@@ -1703,7 +1704,7 @@ window.witnessesModule = {
                         <button onclick="document.getElementById('withdrawWitnessModal').remove()" style="flex: 1; padding: 12px; background: #95a5a6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
                             Anuluj
                         </button>
-                        <button onclick="witnessesModule.withdrawWitness(${witnessId}, ${caseId})" style="flex: 1; padding: 12px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        <button onclick="witnessesModule.withdrawWitness(${witnessId}, ${caseId})" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2332; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; box-shadow: 0 2px 8px rgba(255,215,0,0.3);">
                             ⚠️ Wycofaj
                         </button>
                     </div>
