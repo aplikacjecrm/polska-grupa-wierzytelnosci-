@@ -571,33 +571,150 @@ router.post('/:witnessId/testimonies', verifyToken, (req, res) => {
   });
 });
 
-// Oznacz zeznanie jako wycofane
-router.post('/:witnessId/testimonies/:testimonyId/retract', verifyToken, (req, res) => {
+// Oznacz zeznanie jako wycofane (z logowaniem do historii + oznaczenie załączników)
+router.post('/:witnessId/testimonies/:testimonyId/retract', verifyToken, async (req, res) => {
   const db = getDatabase();
-  const { testimonyId } = req.params;
+  const { witnessId, testimonyId } = req.params;
   const { retraction_reason } = req.body;
+  const userId = req.user.userId;
   
-  console.log('❌ Wycofywanie zeznania:', testimonyId);
+  console.log('❌ Wycofywanie zeznania:', testimonyId, 'świadka:', witnessId);
+  console.log('   Powód:', retraction_reason);
   
-  db.run(
-    `UPDATE witness_testimonies
-     SET is_retracted = 1, retraction_date = CURRENT_TIMESTAMP, retraction_reason = ?
-     WHERE id = ?`,
-    [retraction_reason || null, testimonyId],
-    function(err) {
-      if (err) {
-        console.error('❌ Błąd wycofywania zeznania:', err);
-        return res.status(500).json({ error: 'Błąd wycofywania zeznania' });
-      }
-      
-      if (this.changes === 0) {
-        return res.status(404).json({ error: 'Zeznanie nie znalezione' });
-      }
-      
-      console.log('✅ Zeznanie wycofane');
-      res.json({ success: true });
+  try {
+    // 1️⃣ Pobierz pełne dane zeznania + świadka + sprawy
+    const testimony = await new Promise((resolve, reject) => {
+      db.get(
+        `SELECT t.*, 
+                w.first_name, w.last_name, w.witness_code, w.case_id,
+                c.case_number,
+                u.name as recorded_by_name
+         FROM witness_testimonies t
+         LEFT JOIN case_witnesses w ON t.witness_id = w.id
+         LEFT JOIN cases c ON w.case_id = c.id
+         LEFT JOIN users u ON t.recorded_by = u.id
+         WHERE t.id = ?`,
+        [testimonyId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+    
+    if (!testimony) {
+      return res.status(404).json({ error: 'Zeznanie nie znalezione' });
     }
-  );
+    
+    // 2️⃣ Pobierz dane użytkownika wycofującego
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT name, email FROM users WHERE id = ?', [userId], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    
+    console.log('   → Zeznanie:', `${testimony.first_name} ${testimony.last_name} (${testimony.witness_code}) - Wersja ${testimony.version_number}`);
+    console.log('   → Wycofuje:', user.name);
+    
+    // 3️⃣ Oznacz zeznanie jako wycofane
+    await new Promise((resolve, reject) => {
+      db.run(
+        `UPDATE witness_testimonies
+         SET is_retracted = 1, 
+             retraction_date = CURRENT_TIMESTAMP, 
+             retraction_reason = ?,
+             retracted_by = ?
+         WHERE id = ?`,
+        [retraction_reason || null, userId, testimonyId],
+        function(err) {
+          if (err) reject(err);
+          else {
+            console.log('   ✅ Zeznanie oznaczone jako wycofane');
+            resolve();
+          }
+        }
+      );
+    });
+    
+    // 4️⃣ Dodaj kolumnę is_retracted do attachments jeśli nie istnieje
+    await new Promise((resolve) => {
+      db.run(`ALTER TABLE attachments ADD COLUMN is_retracted INTEGER DEFAULT 0`, (err) => {
+        // Ignoruj błąd jeśli kolumna już istnieje
+        resolve();
+      });
+    });
+    
+    // 5️⃣ Oznacz wszystkie załączniki zeznania jako wycofane
+    const attachmentsUpdated = await new Promise((resolve, reject) => {
+      db.run(
+        `UPDATE attachments 
+         SET is_retracted = 1,
+             description = CASE 
+               WHEN description IS NULL THEN '⚠️ WYCOFANE: ' || ?
+               ELSE description || ' | ⚠️ WYCOFANE: ' || ?
+             END
+         WHERE entity_type = 'testimony' AND entity_id = ?`,
+        [retraction_reason || 'Zeznanie wycofane', retraction_reason || 'Zeznanie wycofane', testimonyId],
+        function(err) {
+          if (err) reject(err);
+          else {
+            console.log(`   ✅ Oznaczono ${this.changes} załączników jako wycofane`);
+            resolve(this.changes);
+          }
+        }
+      );
+    });
+    
+    // 6️⃣ LOGUJ DO EMPLOYEE_ACTIVITY_LOGS (szczegółowo)
+    await logEmployeeActivity({
+      userId: userId,
+      actionType: 'testimony_retracted',
+      actionCategory: 'witness',
+      description: `⚠️ WYCOFANO ZEZNANIE: ${testimony.first_name} ${testimony.last_name} (${testimony.witness_code}) - Wersja ${testimony.version_number} | Powód: ${retraction_reason}`,
+      caseId: testimony.case_id,
+      details: JSON.stringify({
+        testimony_id: testimonyId,
+        witness_id: witnessId,
+        witness_name: `${testimony.first_name} ${testimony.last_name}`,
+        witness_code: testimony.witness_code,
+        case_number: testimony.case_number,
+        version_number: testimony.version_number,
+        testimony_type: testimony.testimony_type,
+        testimony_date: testimony.testimony_date,
+        retraction_reason: retraction_reason,
+        retracted_by: user.name,
+        retracted_by_email: user.email,
+        attachments_marked: attachmentsUpdated,
+        recorded_by: testimony.recorded_by_name,
+        timestamp: new Date().toISOString()
+      })
+    });
+    
+    console.log('   ✅ Zapisano w historii sprawy (employee_activity_logs)');
+    
+    // 7️⃣ Zwróć szczegółowe info
+    res.json({ 
+      success: true,
+      message: 'Zeznanie wycofane pomyślnie',
+      details: {
+        testimony_id: testimonyId,
+        witness_name: `${testimony.first_name} ${testimony.last_name}`,
+        witness_code: testimony.witness_code,
+        version_number: testimony.version_number,
+        retraction_reason: retraction_reason,
+        retracted_by: user.name,
+        attachments_updated: attachmentsUpdated,
+        retraction_date: new Date().toISOString()
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Błąd wycofywania zeznania:', error);
+    return res.status(500).json({ 
+      error: 'Błąd wycofywania zeznania: ' + error.message 
+    });
+  }
 });
 
 // === ZAPISZ ZEZNANIE PISEMNE JAKO ZAŁĄCZNIK TXT ===

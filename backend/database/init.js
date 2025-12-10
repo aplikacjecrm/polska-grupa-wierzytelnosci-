@@ -851,6 +851,13 @@ async function initDatabase() {
         )
       `);
       
+      // Dodaj kolumnę retracted_by jeśli nie istnieje (kto wycofał zeznanie)
+      db.run(`ALTER TABLE witness_testimonies ADD COLUMN retracted_by INTEGER`, (err) => {
+        if (err && !err.message.includes('duplicate column')) {
+          console.error('Błąd dodawania kolumny retracted_by:', err);
+        }
+      });
+      
       // Tabela dokumentów świadków (załączniki do świadka)
       db.run(`
         CREATE TABLE IF NOT EXISTS witness_documents (
