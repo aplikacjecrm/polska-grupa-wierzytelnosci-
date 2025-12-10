@@ -3475,19 +3475,9 @@ window.crmManager.loadCaseDashboard = async function(caseId) {
 
 // Renderowanie zakładki Dokumenty
 window.crmManager.renderCaseDocumentsTab = async function(caseId) {
-    console.log('%c✅ V2027 - ALL DOCS !IMPORTANT! ✅', 'background: red; color: yellow; font-size: 18px; font-weight: bold; padding: 5px;');
-    const response = await window.api.request(`/cases/${caseId}/documents`);
-    const documents = response.documents || [];
-    
-    // DEBUG: Sprawdź co backend zwraca
-    console.log('🔍 DEBUG DOKUMENTY - Zwrócono:', documents.length);
-    if (documents.length > 0) {
-        console.log('🔍 Pierwszy dokument:', documents[0]);
-        console.log('🔍 attachment_code:', documents[0].attachment_code);
-        console.log('🔍 document_number:', documents[0].document_number);
-        console.log('🔍 description:', documents[0].description);
-        console.log('🔍 CZY MA OPIS?', documents[0].description ? 'TAK' : 'NIE');
-    }
+    try {
+        const response = await window.api.request(`/cases/${caseId}/documents`);
+        const documents = response.documents || [];
     
     const addButtonHtml = `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15)); border-radius: 12px; margin-bottom: 20px; border: 2px solid #d4af37;">
@@ -3585,13 +3575,16 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
         </style>
         <div style="display: flex; gap: 20px; padding: 20px; position: relative;">
             <!-- STICKY SIDEBAR - Szybkie zakładki kategorii -->
-            <div style="position: sticky; top: 80px; align-self: flex-start; min-width: 220px; max-width: 220px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 2px solid #d4af37; max-height: calc(100vh - 100px); overflow-y: auto;">
+            <div style="position: sticky; top: 80px; align-self: flex-start; min-width: 220px; max-width: 220px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 2px solid #d4af37; max-height: calc(100vh - 100px); overflow-y: auto;" class="docs-sidebar">
                 <h4 style="margin: 0 0 15px 0; color: #1a2332; font-size: 1rem; font-weight: 800; padding-bottom: 10px; border-bottom: 2px solid #d4af37;">
                     📂 Kategorie
                 </h4>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     ${sortedCategories.map(category => `
-                        <button onclick="document.getElementById('${safeCategoryId(category)}').scrollIntoView({behavior: 'smooth', block: 'start'})" 
+                        <button 
+                            onclick="document.getElementById('${safeCategoryId(category)}').scrollIntoView({behavior: 'smooth', block: 'start'})" 
+                            aria-label="Przejdź do kategorii ${categoryNames[category] || category}"
+                            title="Przejdź do kategorii ${categoryNames[category] || category}"
                             style="text-align: left; padding: 10px 12px; background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15)); border: 1px solid #d4af37; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #1a2332; transition: all 0.3s; display: flex; justify-content: space-between; align-items: center;"
                             onmouseover="this.style.background='linear-gradient(135deg, #FFD700, #d4af37)'; this.style.transform='translateX(5px)'"
                             onmouseout="this.style.background='linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'; this.style.transform='translateX(0)'">
@@ -3679,7 +3672,7 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                                 <span style="font-size: 1.2rem;">👁️</span>
                                 <span>Pokaż</span>
                             </button>
-                            <button onclick="crmManager.downloadDocument(${doc.id}, '${window.crmManager.escapeHtml(doc.filename)}', '${doc.source_type || 'document'}', ${caseId})" 
+                            <button onclick="crmManager.downloadDocument(${doc.id}, ${JSON.stringify(window.crmManager.escapeHtml(doc.filename))}, '${doc.source_type || 'document'}', ${caseId})" 
                                 style="padding: 12px 20px; background: linear-gradient(135deg, #1a2332, #2c3e50); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 3px 10px rgba(26,35,50,0.3); transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; justify-content: center;"
                                 onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(26,35,50,0.5)'"
                                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 10px rgba(26,35,50,0.3)'">
@@ -3696,8 +3689,48 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                 </div>
             `).join('')}
             </div>
+            
+            <!-- SCROLL TO TOP BUTTON -->
+            <button 
+                onclick="window.scrollTo({top: 0, behavior: 'smooth'})" 
+                style="position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; border: none; box-shadow: 0 4px 15px rgba(212,175,55,0.4); cursor: pointer; font-size: 1.5rem; transition: all 0.3s; z-index: 1000; display: flex; align-items: center; justify-content: center;"
+                onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(212,175,55,0.6)'"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(212,175,55,0.4)'"
+                aria-label="Przewiń do góry"
+                title="Przewiń do góry">
+                ⬆️
+            </button>
         </div>
+        
+        <style>
+            /* Responsywność sidebar */
+            @media (max-width: 768px) {
+                .docs-sidebar {
+                    display: none !important;
+                }
+            }
+        </style>
     `;
+    } catch (error) {
+        console.error('❌ Błąd ładowania dokumentów:', error);
+        return `
+            <div style="padding: 60px 20px; text-align: center; background: linear-gradient(135deg, #fff5f5, #ffebee); border-radius: 12px; border: 2px solid #dc3545;">
+                <div style="font-size: 4rem; margin-bottom: 20px; opacity: 0.5;">⚠️</div>
+                <h3 style="color: #dc3545; margin: 0 0 15px 0; font-size: 1.5rem; font-weight: 800;">Błąd ładowania dokumentów</h3>
+                <p style="color: #666; margin: 0 0 25px 0; font-size: 1rem;">Nie udało się pobrać dokumentów z serwera</p>
+                <button 
+                    onclick="window.crmManager.switchCaseTab(${caseId}, 'documents')" 
+                    style="padding: 12px 24px; background: linear-gradient(135deg, #dc3545, #c0392b); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 3px 10px rgba(220,53,69,0.3); transition: all 0.3s;"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(220,53,69,0.5)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 10px rgba(220,53,69,0.3)'">
+                    🔄 Spróbuj ponownie
+                </button>
+                <div style="margin-top: 15px; padding: 12px; background: white; border-radius: 6px; font-size: 0.85rem; color: #999; font-family: monospace;">
+                    ${error.message || 'Nieznany błąd'}
+                </div>
+            </div>
+        `;
+    }
 };
 
 // === NOWY PROSTY MODAL WYDARZEŃ ===
