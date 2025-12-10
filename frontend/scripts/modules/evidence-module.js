@@ -2530,25 +2530,205 @@ const evidenceModule = {
   
   // === USUŃ DOWÓD ===
   async deleteEvidence(evidenceId) {
-    if (!confirm('Czy na pewno chcesz usunąć ten dowód?\n\nTEJ OPERACJI NIE MOŻNA COFNĄĆ!')) {
-      return;
-    }
+    // Znajdź dowód w liście
+    const evidence = this.evidenceList.find(e => e.id === evidenceId);
+    const evidenceName = evidence ? evidence.name : `Dowód #${evidenceId}`;
+    const evidenceCode = evidence ? evidence.evidence_code : '';
     
-    try {
-      await window.api.request(`/evidence/${evidenceId}`, {
-        method: 'DELETE'
-      });
-      
-      window.showNotification('✅ Dowód usunięty', 'success');
-      this.renderTab(this.currentCaseId);
-      
-      if (window.eventBus) {
-        window.eventBus.emit('evidence:deleted', { evidenceId });
+    // Stwórz piękny modal potwierdzenia z polem hasła
+    const modal = document.createElement('div');
+    modal.id = 'deleteEvidenceModal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0,0,0,0.85); z-index: 10005; display: flex; justify-content: center; align-items: center; padding: 20px;';
+    
+    modal.innerHTML = `
+      <div style="background: white; border-radius: 20px; width: 90vw; max-width: 550px; box-shadow: 0 20px 60px rgba(220,53,69,0.4); overflow: hidden; animation: modalSlideIn 0.3s ease-out;">
+        <style>
+          @keyframes modalSlideIn {
+            from {
+              opacity: 0;
+              transform: translateY(-30px) scale(0.95);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+          }
+          .shake-animation {
+            animation: shake 0.5s ease-in-out;
+          }
+        </style>
+        
+        <!-- NAGŁÓWEK Z GRADIENTEM -->
+        <div style="background: linear-gradient(135deg, #dc3545, #c82333); padding: 30px; text-align: center; color: white;">
+          <div style="font-size: 4rem; margin-bottom: 15px;">⚠️</div>
+          <h2 style="margin: 0 0 10px 0; font-size: 1.8rem; font-weight: 700;">Potwierdzenie usunięcia</h2>
+          <p style="margin: 0; opacity: 0.95; font-size: 0.95rem;">Ta operacja jest NIEODWRACALNA!</p>
+        </div>
+        
+        <!-- TREŚĆ -->
+        <div style="padding: 30px;">
+          <!-- INFO O DOWODZIE -->
+          <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+            <div style="display: flex; align-items: start; gap: 15px;">
+              <div style="font-size: 2.5rem; flex-shrink: 0;">🗑️</div>
+              <div style="flex: 1;">
+                <div style="font-weight: 700; color: #1a2332; font-size: 1.1rem; margin-bottom: 5px;">
+                  ${window.crmManager.escapeHtml(evidenceName)}
+                </div>
+                ${evidenceCode ? `
+                  <div style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">
+                    ${evidenceCode}
+                  </div>
+                ` : ''}
+                <div style="color: #856404; font-size: 0.9rem; line-height: 1.5;">
+                  <strong>⚠️ UWAGA:</strong> Usunięcie dowodu spowoduje:<br>
+                  • Nieodwracalną utratę danych<br>
+                  • Usunięcie wszystkich załączników<br>
+                  • Zapis w historii sprawy
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- POLE HASŁA -->
+          <div style="margin-bottom: 25px;">
+            <label style="display: block; font-weight: 700; margin-bottom: 12px; color: #1a2332; font-size: 1.05rem;">
+              🔐 Wpisz swoje hasło aby potwierdzić usunięcie:
+            </label>
+            <input 
+              type="password" 
+              id="deletePasswordInput" 
+              placeholder="Twoje hasło"
+              style="width: 100%; padding: 15px; border: 3px solid #dc3545; border-radius: 10px; font-size: 1rem; font-weight: 600; color: #1a2332; transition: all 0.3s;"
+              onfocus="this.style.borderColor='#c82333'; this.style.boxShadow='0 0 0 4px rgba(220,53,69,0.2)'"
+              onblur="this.style.borderColor='#dc3545'; this.style.boxShadow='none'"
+            >
+            <small style="color: #666; display: block; margin-top: 8px;">
+              💡 To hasło które używasz do logowania się do systemu
+            </small>
+            <div id="passwordError" style="color: #dc3545; font-weight: 600; margin-top: 10px; display: none;">
+              ❌ Nieprawidłowe hasło! Spróbuj ponownie.
+            </div>
+          </div>
+          
+          <!-- PRZYCISKI -->
+          <div style="display: flex; gap: 15px;">
+            <button 
+              onclick="document.getElementById('deleteEvidenceModal').remove()" 
+              style="flex: 1; padding: 16px; background: linear-gradient(135deg, #6c757d, #5a6268); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 1.05rem; transition: all 0.3s;"
+              onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(108,117,125,0.4)'"
+              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+              ← Anuluj
+            </button>
+            <button 
+              id="confirmDeleteBtn"
+              style="flex: 1; padding: 16px; background: linear-gradient(135deg, #dc3545, #c82333); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 1.05rem; transition: all 0.3s;"
+              onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(220,53,69,0.5)'"
+              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+              🗑️ USUŃ TRWALE
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Focus na pole hasła
+    setTimeout(() => {
+      document.getElementById('deletePasswordInput').focus();
+    }, 100);
+    
+    // Obsługa Enter w polu hasła
+    document.getElementById('deletePasswordInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('confirmDeleteBtn').click();
       }
-    } catch (error) {
-      console.error('❌ Błąd usuwania:', error);
-      alert('Błąd: ' + error.message);
-    }
+    });
+    
+    // Obsługa kliknięcia przycisku usuwania
+    document.getElementById('confirmDeleteBtn').onclick = async () => {
+      const password = document.getElementById('deletePasswordInput').value;
+      const errorDiv = document.getElementById('passwordError');
+      const passwordInput = document.getElementById('deletePasswordInput');
+      
+      if (!password) {
+        passwordInput.classList.add('shake-animation');
+        passwordInput.style.borderColor = '#dc3545';
+        errorDiv.textContent = '❌ Musisz wpisać hasło!';
+        errorDiv.style.display = 'block';
+        setTimeout(() => passwordInput.classList.remove('shake-animation'), 500);
+        return;
+      }
+      
+      // Disable przycisku podczas weryfikacji
+      const btn = document.getElementById('confirmDeleteBtn');
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      btn.innerHTML = '⏳ Weryfikacja...';
+      
+      try {
+        // Usuń dowód z weryfikacją hasła
+        await window.api.request(`/evidence/${evidenceId}`, {
+          method: 'DELETE',
+          body: {
+            password: password,
+            evidence_name: evidenceName,
+            evidence_code: evidenceCode
+          }
+        });
+        
+        // Zamknij modal
+        modal.remove();
+        
+        // Powiadomienie
+        window.showNotification('✅ Dowód usunięty i zapisany w historii sprawy', 'success');
+        
+        // Odśwież listę
+        this.renderTab(this.currentCaseId);
+        
+        // Event bus
+        if (window.eventBus) {
+          window.eventBus.emit('evidence:deleted', { evidenceId, evidenceName, evidenceCode });
+        }
+        
+      } catch (error) {
+        console.error('❌ Błąd usuwania:', error);
+        
+        // Sprawdź czy to błąd hasła
+        if (error.message && error.message.includes('hasł')) {
+          passwordInput.classList.add('shake-animation');
+          passwordInput.style.borderColor = '#dc3545';
+          passwordInput.value = '';
+          errorDiv.textContent = '❌ Nieprawidłowe hasło! Spróbuj ponownie.';
+          errorDiv.style.display = 'block';
+          setTimeout(() => passwordInput.classList.remove('shake-animation'), 500);
+          
+          // Re-enable przycisk
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.innerHTML = '🗑️ USUŃ TRWALE';
+          
+          // Focus z powrotem na pole
+          passwordInput.focus();
+        } else {
+          modal.remove();
+          alert('❌ Błąd: ' + error.message);
+        }
+      }
+    };
+    
+    // Zamknij modal klikając w tło
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
   },
   
   // === POBIERZ ZAŁĄCZNIK ===

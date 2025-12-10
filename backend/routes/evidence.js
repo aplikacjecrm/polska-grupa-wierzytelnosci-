@@ -707,42 +707,130 @@ router.put('/:id', verifyToken, (req, res) => {
 
 // === USUŃ DOWÓD ===
 
-router.delete('/:id', verifyToken, (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
   const db = getDatabase();
   const { id } = req.params;
   const userId = req.user.userId;
+  const { password, evidence_name, evidence_code } = req.body;
   
-  // Najpierw pobierz dane dowodu do logowania
-  db.get('SELECT name, case_id FROM case_evidence WHERE id = ?', [id], (err, evidence) => {
-    if (err || !evidence) {
+  console.log('🗑️ DELETE /evidence/:id - Próba usunięcia dowodu:', id);
+  console.log('   - userId:', userId);
+  console.log('   - hasło podane:', password ? 'TAK' : 'NIE');
+  
+  // WERYFIKACJA HASŁA - OBOWIĄZKOWA!
+  if (!password) {
+    console.log('❌ Brak hasła w żądaniu');
+    return res.status(400).json({ error: 'Hasło jest wymagane do usunięcia dowodu' });
+  }
+  
+  try {
+    // Pobierz użytkownika z bazy (musimy mieć hasło do weryfikacji)
+    const bcrypt = require('bcrypt');
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT id, name, email, password FROM users WHERE id = ?', [userId], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    
+    if (!user) {
+      console.log('❌ Użytkownik nie znaleziony:', userId);
+      return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+    }
+    
+    // Weryfikuj hasło
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    if (!isPasswordValid) {
+      console.log('❌ Nieprawidłowe hasło dla użytkownika:', user.email);
+      return res.status(401).json({ error: 'Nieprawidłowe hasło. Usunięcie dowodu wymaga potwierdzenia hasłem.' });
+    }
+    
+    console.log('✅ Hasło poprawne - kontynuacja usuwania');
+    
+    // Najpierw pobierz dane dowodu do logowania
+    const evidence = await new Promise((resolve, reject) => {
+      db.get('SELECT * FROM case_evidence WHERE id = ?', [id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    
+    if (!evidence) {
+      console.log('❌ Dowód nie znaleziony:', id);
       return res.status(404).json({ error: 'Dowód nie znaleziony' });
     }
     
-    const evidenceName = evidence.name;
+    const evidenceName = evidence_name || evidence.name;
+    const evidenceCodeFinal = evidence_code || evidence.evidence_code;
     const caseId = evidence.case_id;
     
-    db.run('DELETE FROM case_evidence WHERE id = ?', [id], function(err) {
-      if (err) {
-        console.error('❌ Błąd usuwania dowodu:', err);
-        return res.status(500).json({ error: 'Błąd usuwania dowodu' });
-      }
-      
-      // 📊 LOGUJ USUNIĘCIE DO HISTORII SPRAWY
-      logEmployeeActivity({
-        userId: userId,
-        actionType: 'evidence_deleted',
-        actionCategory: 'evidence',
-        description: `Usunięto dowód: ${evidenceName}`,
-        caseId: caseId
-      });
-      
-      console.log('✅ Dowód usunięty:', id);
-      res.json({ 
-        success: true, 
-        message: 'Dowód usunięty pomyślnie' 
+    console.log(`🗑️ Usuwanie dowodu: ${evidenceName} (${evidenceCodeFinal})`);
+    
+    // USUŃ DOWÓD
+    await new Promise((resolve, reject) => {
+      db.run('DELETE FROM case_evidence WHERE id = ?', [id], function(err) {
+        if (err) reject(err);
+        else resolve();
       });
     });
-  });
+    
+    // ZAPISZ DO HISTORII DOWODU (evidence_history)
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO evidence_history (evidence_id, action, field_changed, old_value, new_value, changed_by, notes)
+         VALUES (?, 'deleted', 'status', 'active', 'deleted', ?, ?)`,
+        [
+          id,
+          userId,
+          `🗑️ DOWÓD USUNIĘTY: ${evidenceName} (${evidenceCodeFinal}) - Usunięcie potwierdzone hasłem użytkownika ${user.name} (${user.email})`
+        ],
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+    
+    // 📊 LOGUJ USUNIĘCIE DO HISTORII SPRAWY (employee_activity)
+    await logEmployeeActivity({
+      userId: userId,
+      actionType: 'evidence_deleted',
+      actionCategory: 'evidence',
+      description: `🗑️ USUNIĘTO DOWÓD: ${evidenceName} (${evidenceCodeFinal}) - Potwierdzono hasłem`,
+      caseId: caseId,
+      details: JSON.stringify({
+        evidence_id: id,
+        evidence_name: evidenceName,
+        evidence_code: evidenceCodeFinal,
+        evidence_type: evidence.evidence_type,
+        deleted_by: user.name,
+        deleted_by_email: user.email,
+        confirmed_with_password: true,
+        timestamp: new Date().toISOString()
+      })
+    });
+    
+    console.log('✅ Dowód usunięty i zapisany w historii:', id);
+    console.log('   - Historia dowodu: zapisana');
+    console.log('   - Historia sprawy: zapisana');
+    
+    res.json({ 
+      success: true, 
+      message: 'Dowód usunięty pomyślnie i zapisany w historii sprawy',
+      deleted_evidence: {
+        id: id,
+        name: evidenceName,
+        code: evidenceCodeFinal
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Błąd usuwania dowodu:', error);
+    return res.status(500).json({ 
+      error: 'Błąd usuwania dowodu: ' + error.message 
+    });
+  }
 });
 
 // === PRZEDSTAW DOWÓD W SĄDZIE ===
