@@ -1114,6 +1114,7 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       d.id,
       d.case_id,
       d.document_number,
+      d.document_code,
       NULL as attachment_code,
       d.title,
       d.description,
@@ -1128,6 +1129,7 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       d.uploaded_at as created_at,
       d.uploaded_by,
       u.name as uploaded_by_name,
+      NULL as is_retracted,
       'document' as source_type
      FROM documents d
      LEFT JOIN users u ON d.uploaded_by = u.id
@@ -1139,6 +1141,7 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       a.id,
       a.case_id,
       NULL as document_number,
+      NULL as document_code,
       a.attachment_code,
       a.title,
       a.description,
@@ -1153,6 +1156,7 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       a.uploaded_at as created_at,
       a.uploaded_by,
       u.name as uploaded_by_name,
+      a.is_retracted,
       'attachment' as source_type
      FROM attachments a
      LEFT JOIN users u ON a.uploaded_by = u.id
@@ -1164,6 +1168,7 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       wd.id,
       wd.case_id,
       wd.document_code as document_number,
+      wd.document_code,
       wd.document_code as attachment_code,
       wd.title,
       wd.description,
@@ -1178,6 +1183,7 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       wd.uploaded_at as created_at,
       wd.uploaded_by,
       u.name as uploaded_by_name,
+      NULL as is_retracted,
       'witness_document' as source_type
      FROM witness_documents wd
      LEFT JOIN users u ON wd.uploaded_by = u.id
