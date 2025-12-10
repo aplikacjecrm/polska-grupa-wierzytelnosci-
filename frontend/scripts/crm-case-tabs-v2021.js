@@ -3505,10 +3505,55 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
         return addButtonHtml + '<p style="text-align: center; color: #999; padding: 20px;">Brak dokumentów w sprawie</p>';
     }
     
+    // Grupuj dokumenty po kategorii
+    const grouped = {};
+    documents.forEach(doc => {
+        const category = doc.category || 'INN';
+        if (!grouped[category]) {
+            grouped[category] = [];
+        }
+        grouped[category].push(doc);
+    });
+    
+    // Mapowanie kategorii na nazwy
+    const categoryNames = {
+        'POZ': '📄 Pozwy',
+        'ODP': '📝 Odpowiedzi na pozew',
+        'WNI': '📑 Wnioski',
+        'ZAL': '📎 Załączniki',
+        'ODW': '🔄 Odwołania',
+        'ZAZ': '⚡ Zażalenia',
+        'WYR': '⚖️ Wyroki',
+        'POS': '📋 Postanowienia',
+        'NAK': '📜 Nakazy zapłaty',
+        'UZA': '✅ Uzasadnienia',
+        'UMO': '💼 Umowy',
+        'FAK': '💰 Faktury',
+        'RAC': '🧾 Rachunki',
+        'PRZ': '📤 Przelewy',
+        'KOR': '📧 Korespondencja',
+        'POC': '📨 Poczta',
+        'ZAW': '📬 Zawiadomienia',
+        'WEZ': '📞 Wezwania',
+        'ZDJ': '📸 Zdjęcia',
+        'NAG': '🎥 Nagrania',
+        'EKS': '🔬 Ekspertyzy',
+        'NOT': '📝 Notatki',
+        'zeznanie': '👤 Zeznania świadków',
+        'świadek': '👥 Dokumenty świadków',
+        'INN': '📂 Inne dokumenty'
+    };
+    
     return `
         <div style="display: flex; flex-direction: column; gap: 20px; padding: 20px;">
             ${addButtonHtml}
-            ${documents.map(doc => {
+            ${Object.keys(grouped).map(category => `
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #1a2332; font-size: 1.3rem; font-weight: 800; margin: 0 0 20px 0; padding: 15px 20px; background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(255,215,0,0.2)); border-left: 5px solid #d4af37; border-radius: 8px;">
+                        ${categoryNames[category] || category}
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        ${grouped[category].map(doc => {
                 const isRetracted = doc.is_retracted === 1 || doc.is_retracted === true;
                 return `
                 <div data-document-id="${doc.id}" style="background: ${isRetracted ? 'linear-gradient(135deg, #ffebee, #ffcdd2)' : 'white'}; padding: 20px; border-radius: 10px; border-left: 5px solid ${isRetracted ? '#dc3545' : '#d4af37'}; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; position: relative;" onmouseover="this.style.boxShadow='0 5px 20px rgba(${isRetracted ? '220, 53, 69' : '212, 175, 55'}, 0.3)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.boxShadow='0 3px 10px rgba(0, 0, 0, 0.1)'; this.style.transform='translateY(0)';">
@@ -3596,6 +3641,9 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                 </div>
             `;
             }).join('')}
+                    </div>
+                </div>
+            `).join('')}
         </div>
     `;
 };
