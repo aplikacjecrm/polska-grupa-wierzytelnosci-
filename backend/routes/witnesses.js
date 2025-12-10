@@ -854,8 +854,8 @@ Data zapisu: ${new Date().toLocaleString('pl-PL')}
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           testimony.case_id,
-          'witness',
-          witnessId,
+          'testimony',  // ✅ POPRAWIONE: testimony zamiast witness
+          testimonyId,  // ✅ POPRAWIONE: testimonyId zamiast witnessId
           attachmentCode,
           `Zeznanie pisemne - ${testimony.first_name} ${testimony.last_name} v${testimony.version_number}`,
           `Zeznanie z dnia ${new Date(testimony.testimony_date).toLocaleDateString('pl-PL')}`,
