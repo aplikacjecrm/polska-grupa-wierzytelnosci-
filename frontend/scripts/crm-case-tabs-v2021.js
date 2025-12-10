@@ -3553,7 +3553,36 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
         'INN': '📂 Inne dokumenty'
     };
     
+    // Sortuj kategorie według priorytetu
+    const categoryPriority = {
+        'POZ': 1, 'ODP': 2, 'WNI': 3, 'zeznanie': 4, 'świadek': 5,
+        'ZAL': 6, 'WYR': 7, 'POS': 8, 'NAK': 9, 'UZA': 10,
+        'ODW': 11, 'ZAZ': 12, 'UMO': 13, 'FAK': 14, 'RAC': 15,
+        'PRZ': 16, 'KOR': 17, 'POC': 18, 'ZAW': 19, 'WEZ': 20,
+        'ZDJ': 21, 'NAG': 22, 'EKS': 23, 'NOT': 24, 'INN': 999
+    };
+    const sortedCategories = Object.keys(grouped).sort((a, b) => {
+        return (categoryPriority[a] || 999) - (categoryPriority[b] || 999);
+    });
+    
+    // Generuj bezpieczne ID dla kategorii
+    const safeCategoryId = (cat) => {
+        return 'cat_' + cat.replace(/[^a-zA-Z0-9]/g, '_');
+    };
+    
     return `
+        <style>
+            @keyframes pulseRetracted {
+                0%, 100% { 
+                    transform: scale(1);
+                    box-shadow: 0 3px 10px rgba(220,53,69,0.5);
+                }
+                50% { 
+                    transform: scale(1.05);
+                    box-shadow: 0 5px 15px rgba(220,53,69,0.7);
+                }
+            }
+        </style>
         <div style="display: flex; gap: 20px; padding: 20px; position: relative;">
             <!-- STICKY SIDEBAR - Szybkie zakładki kategorii -->
             <div style="position: sticky; top: 80px; align-self: flex-start; min-width: 220px; max-width: 220px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 2px solid #d4af37; max-height: calc(100vh - 100px); overflow-y: auto;">
@@ -3561,8 +3590,8 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                     📂 Kategorie
                 </h4>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                    ${Object.keys(grouped).map(category => `
-                        <button onclick="document.getElementById('category_${category}').scrollIntoView({behavior: 'smooth', block: 'start'})" 
+                    ${sortedCategories.map(category => `
+                        <button onclick="document.getElementById('${safeCategoryId(category)}').scrollIntoView({behavior: 'smooth', block: 'start'})" 
                             style="text-align: left; padding: 10px 12px; background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15)); border: 1px solid #d4af37; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #1a2332; transition: all 0.3s; display: flex; justify-content: space-between; align-items: center;"
                             onmouseover="this.style.background='linear-gradient(135deg, #FFD700, #d4af37)'; this.style.transform='translateX(5px)'"
                             onmouseout="this.style.background='linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'; this.style.transform='translateX(0)'">
@@ -3578,8 +3607,8 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
             <!-- GŁÓWNA TREŚĆ - Dokumenty -->
             <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
                 ${addButtonHtml}
-                ${Object.keys(grouped).map(category => `
-                    <div id="category_${category}" style="margin-bottom: 30px; scroll-margin-top: 80px;">
+                ${sortedCategories.map(category => `
+                    <div id="${safeCategoryId(category)}" style="margin-bottom: 30px; scroll-margin-top: 80px;">
                         <h3 style="color: #1a2332; font-size: 1.3rem; font-weight: 800; margin: 0 0 20px 0; padding: 15px 20px; background: linear-gradient(135deg, #FFD700, #d4af37); border-left: 5px solid #1a2332; border-radius: 8px; box-shadow: 0 2px 8px rgba(212,175,55,0.3); display: flex; justify-content: space-between; align-items: center;">
                             <span>${categoryNames[category] || category}</span>
                             <span style="background: #1a2332; color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
@@ -3595,18 +3624,6 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                         <div style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; padding: 8px 14px; border-radius: 8px; font-weight: 800; font-size: 0.9rem; box-shadow: 0 3px 10px rgba(220,53,69,0.5); animation: pulseRetracted 2s infinite; z-index: 10;">
                             🚫 WYCOFANE
                         </div>
-                        <style>
-                            @keyframes pulseRetracted {
-                                0%, 100% { 
-                                    transform: scale(1);
-                                    box-shadow: 0 3px 10px rgba(220,53,69,0.5);
-                                }
-                                50% { 
-                                    transform: scale(1.05);
-                                    box-shadow: 0 5px 15px rgba(220,53,69,0.7);
-                                }
-                            }
-                        </style>
                     ` : ''}
                     <div style="display: flex; justify-content: space-between; align-items: start;">
                         <div style="flex: 1;">
@@ -3626,7 +3643,7 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                             </div>
                             <h4 style="margin: 0 0 12px 0; font-size: 1.3rem; font-weight: 800; color: ${isRetracted ? '#c0392b' : '#1a2332'} !important; display: flex; align-items: center; gap: 8px;">
                                 <span style="font-size: 1.5rem;">${isRetracted ? '🚫' : '📄'}</span>
-                                <span>${window.crmManager.escapeHtml(doc.title)}</span>
+                                <span>${window.crmManager.escapeHtml(doc.title || doc.filename || 'Bez tytułu')}</span>
                             </h4>
                             <div style="font-size: 1rem; color: #1a2332 !important; font-weight: 600; line-height: 1.8; display: flex; flex-wrap: wrap; gap: 12px;">
                                 <span style="display: inline-flex; align-items: center; gap: 6px;">
