@@ -3983,35 +3983,311 @@ class CRMManager {
         }
     }
 
-    // Usuń komentarz (z potwierdzeniem hasła)
+    // Usuń komentarz (z hasłem i pięknym modalem)
     async deleteComment(caseId, commentId) {
-        // Pierwsze potwierdzenie
-        const confirmed = await this.customConfirm('Czy na pewno chcesz usunąć ten komentarz? Ta operacja jest nieodwracalna!');
-        if (!confirmed) return;
+        console.log('🗑️ Usuwanie komentarza:', commentId);
         
-        // Zapytaj o hasło administratora
-        const password = await this.customPrompt('Wprowadź hasło administratora:', 'password');
-        if (!password) {
-            await this.customAlert('Usuwanie anulowane', 'info');
-            return;
-        }
-        
+        // Pobierz informacje o komentarzu
         try {
-            console.log('🗑️ Usuwanie komentarza:', commentId);
+            const commentsResponse = await window.api.request(`/comments/case/${caseId}`);
+            const comment = commentsResponse.comments?.find(c => c.id === commentId);
             
-            const response = await window.api.request(`/comments/${commentId}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-Admin-Password': password
-                }
-            });
-            
-            if (!response.success) {
-                throw new Error(response.error || response.message || 'Błąd usuwania komentarza');
+            if (!comment) {
+                await this.customAlert('Nie znaleziono komentarza', 'error');
+                return;
             }
             
-            // Przeładuj tylko listę komentarzy
-            await this.reloadCommentsList(caseId);
+            const commentAuthor = comment.author_name || comment.user_name || 'Nieznany użytkownik';
+            const commentPreview = comment.comment.substring(0, 100) + (comment.comment.length > 100 ? '...' : '');
+            const hasAttachments = comment.attachments && comment.attachments.length > 0;
+            const attachmentsCount = hasAttachments ? comment.attachments.length : 0;
+            
+            // Modal z polem hasła
+            const modal = document.createElement('div');
+            modal.id = 'deleteCommentModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background: rgba(0,0,0,0.85);
+                z-index: 10003;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                animation: fadeIn 0.3s;
+            `;
+            
+            modal.innerHTML = `
+                <style>
+                    @keyframes shake-animation {
+                        0%, 100% { transform: translateX(0); }
+                        10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+                        20%, 40%, 60%, 80% { transform: translateX(10px); }
+                    }
+                    .shake-animation {
+                        animation: shake-animation 0.5s;
+                    }
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes slideIn {
+                        from { transform: translateY(-50px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                </style>
+                <div style="
+                    background: white;
+                    border-radius: 20px;
+                    padding: 0;
+                    max-width: 550px;
+                    width: 90%;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                    animation: slideIn 0.4s ease-out;
+                ">
+                    <!-- Header -->
+                    <div style="
+                        background: linear-gradient(135deg, #dc3545, #b02a37);
+                        padding: 25px;
+                        border-radius: 20px 20px 0 0;
+                        color: white;
+                        text-align: center;
+                        position: relative;
+                    ">
+                        <div style="font-size: 3.5rem; margin-bottom: 15px; animation: pulse 2s infinite;">⚠️</div>
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.5rem; font-weight: 800;">USUWANIE KOMENTARZA</h3>
+                        <p style="margin: 0; opacity: 0.95; font-size: 0.95rem;">To działanie jest NIEODWRACALNE!</p>
+                    </div>
+                    
+                    <!-- Body -->
+                    <div style="padding: 30px;">
+                        <!-- Info o komentarzu -->
+                        <div style="
+                            padding: 20px;
+                            background: linear-gradient(135deg, rgba(220,53,69,0.1), rgba(176,42,55,0.1));
+                            border-left: 5px solid #dc3545;
+                            border-radius: 12px;
+                            margin-bottom: 25px;
+                        ">
+                            <div style="font-size: 0.85rem; color: #999; margin-bottom: 8px; font-weight: 600; text-transform: uppercase;">Usuwasz komentarz od:</div>
+                            <div style="font-size: 1.2rem; color: #1a2332; font-weight: 700; margin-bottom: 12px;">👤 ${this.escapeHtml(commentAuthor)}</div>
+                            <div style="font-size: 0.9rem; color: #666; background: white; padding: 12px; border-radius: 8px; font-style: italic; line-height: 1.6;">"${this.escapeHtml(commentPreview)}"</div>
+                        </div>
+                        
+                        <!-- Ostrzeżenie -->
+                        <div style="
+                            padding: 18px;
+                            background: #fff3cd;
+                            border: 2px solid #ffc107;
+                            border-radius: 12px;
+                            margin-bottom: 25px;
+                            display: flex;
+                            align-items: center;
+                            gap: 15px;
+                        ">
+                            <div style="font-size: 2.5rem; flex-shrink: 0;">🔥</div>
+                            <div>
+                                <div style="color: #856404; font-weight: 700; margin-bottom: 5px; font-size: 0.95rem;">Zostaną usunięte:</div>
+                                <div style="color: #856404; font-size: 0.85rem; line-height: 1.6;">
+                                    • Treść komentarza<br>
+                                    ${hasAttachments ? `• ${attachmentsCount} załącznik(ów)<br>` : ''}
+                                    • Wszystkie odpowiedzi<br>
+                                    • Historia i logi
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pole hasła -->
+                        <div style="margin-bottom: 25px;">
+                            <label style="
+                                display: block;
+                                color: #1a2332;
+                                font-weight: 700;
+                                margin-bottom: 10px;
+                                font-size: 1rem;
+                            ">🔐 Wpisz swoje hasło aby potwierdzić:</label>
+                            <input 
+                                type="password" 
+                                id="commentDeletePassword" 
+                                placeholder="Twoje hasło..." 
+                                autocomplete="current-password"
+                                style="
+                                    width: 100%;
+                                    padding: 15px;
+                                    border: 3px solid #e0e0e0;
+                                    border-radius: 12px;
+                                    font-size: 1.05rem;
+                                    transition: all 0.3s;
+                                    box-sizing: border-box;
+                                "
+                                onkeypress="if(event.key==='Enter') document.getElementById('confirmDeleteCommentBtn').click()"
+                                onfocus="this.style.borderColor='#dc3545'; this.style.boxShadow='0 0 0 4px rgba(220,53,69,0.1)'"
+                                onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'"
+                            />
+                        </div>
+                        
+                        <!-- Błąd -->
+                        <div id="commentPasswordError" style="
+                            display: none;
+                            padding: 12px;
+                            background: #f8d7da;
+                            border: 2px solid #dc3545;
+                            border-radius: 8px;
+                            color: #721c24;
+                            font-weight: 600;
+                            margin-bottom: 20px;
+                            text-align: center;
+                        "></div>
+                        
+                        <!-- Przyciski -->
+                        <div style="display: flex; gap: 12px; margin-top: 30px;">
+                            <button 
+                                onclick="document.getElementById('deleteCommentModal').remove()" 
+                                style="
+                                    flex: 1;
+                                    padding: 16px;
+                                    background: #6c757d;
+                                    color: white;
+                                    border: none;
+                                    border-radius: 12px;
+                                    cursor: pointer;
+                                    font-weight: 700;
+                                    font-size: 1rem;
+                                    transition: all 0.3s;
+                                "
+                                onmouseover="this.style.background='#5a6268'"
+                                onmouseout="this.style.background='#6c757d'"
+                            >
+                                ❌ Anuluj
+                            </button>
+                            <button 
+                                id="confirmDeleteCommentBtn"
+                                style="
+                                    flex: 2;
+                                    padding: 16px;
+                                    background: linear-gradient(135deg, #dc3545, #b02a37);
+                                    color: white;
+                                    border: none;
+                                    border-radius: 12px;
+                                    cursor: pointer;
+                                    font-weight: 800;
+                                    font-size: 1.05rem;
+                                    box-shadow: 0 4px 15px rgba(220,53,69,0.4);
+                                    transition: all 0.3s;
+                                "
+                                onmouseover="if(!this.disabled) { this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(220,53,69,0.6)'; }"
+                                onmouseout="if(!this.disabled) { this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(220,53,69,0.4)'; }"
+                            >
+                                🗑️ USUŃ TRWALE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Focus na pole hasła
+            setTimeout(() => {
+                document.getElementById('commentDeletePassword')?.focus();
+            }, 100);
+            
+            // Handler usuwania
+            document.getElementById('confirmDeleteCommentBtn').onclick = async () => {
+                const passwordInput = document.getElementById('commentDeletePassword');
+                const errorDiv = document.getElementById('commentPasswordError');
+                const password = passwordInput.value.trim();
+                
+                // Walidacja
+                if (!password) {
+                    passwordInput.classList.add('shake-animation');
+                    passwordInput.style.borderColor = '#dc3545';
+                    errorDiv.textContent = '❌ Wpisz hasło!';
+                    errorDiv.style.display = 'block';
+                    setTimeout(() => passwordInput.classList.remove('shake-animation'), 500);
+                    return;
+                }
+                
+                // Disable przycisku
+                const btn = document.getElementById('confirmDeleteCommentBtn');
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+                btn.innerHTML = '⏳ Weryfikacja...';
+                
+                try {
+                    // Usuń komentarz z weryfikacją hasła
+                    const response = await window.api.request(`/comments/${commentId}`, {
+                        method: 'DELETE',
+                        body: {
+                            password: password,
+                            comment_author: commentAuthor,
+                            comment_preview: commentPreview
+                        }
+                    });
+                    
+                    // Zamknij modal
+                    modal.remove();
+                    
+                    // Powiadomienie z szczegółami
+                    const repliesCount = response.deleted_comment?.replies_deleted || 0;
+                    const attachmentsDeleted = response.deleted_comment?.attachments_deleted || 0;
+                    const details = repliesCount > 0 || attachmentsDeleted > 0
+                        ? ` (+ ${repliesCount} odpowiedzi, ${attachmentsDeleted} załączników)`
+                        : '';
+                    
+                    if (window.showNotification) {
+                        window.showNotification(`✅ Komentarz usunięty i zapisany w historii${details}`, 'success');
+                    } else {
+                        await this.customAlert(`✅ Komentarz usunięty${details}`, 'success');
+                    }
+                    
+                    // Przeładuj listę komentarzy
+                    await this.reloadCommentsList(caseId);
+                    
+                    // Event bus
+                    if (window.eventBus) {
+                        window.eventBus.emit('comment:deleted', {
+                            commentId,
+                            commentAuthor,
+                            repliesDeleted: repliesCount,
+                            attachmentsDeleted: attachmentsDeleted
+                        });
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Błąd usuwania:', error);
+                    
+                    // Sprawdź czy to błąd hasła
+                    if (error.message && error.message.includes('hasł')) {
+                        passwordInput.classList.add('shake-animation');
+                        passwordInput.style.borderColor = '#dc3545';
+                        passwordInput.value = '';
+                        errorDiv.textContent = '❌ Nieprawidłowe hasło! Spróbuj ponownie.';
+                        errorDiv.style.display = 'block';
+                        setTimeout(() => passwordInput.classList.remove('shake-animation'), 500);
+                        
+                        // Re-enable przycisk
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.innerHTML = '🗑️ USUŃ TRWALE';
+                        
+                        // Focus z powrotem na pole
+                        passwordInput.focus();
+                    } else {
+                        modal.remove();
+                        await this.customAlert('❌ Błąd: ' + error.message, 'error');
+                    }
+                }
+            };
+            
+            // Zamknij modal klikając w tło
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
             
         } catch (error) {
             console.error('❌ Błąd usuwania komentarza:', error);
