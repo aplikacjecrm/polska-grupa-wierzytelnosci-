@@ -1324,10 +1324,10 @@ const evidenceModule = {
                     <!-- Nazwa pliku -->
                     <div style="font-weight: 700; color: #1a2332; margin-bottom: 6px; font-size: 1rem;">${doc.filename}</div>
                     
-                    <!-- Numer dokumentu -->
-                    ${doc.document_number ? `
+                    <!-- Numer dokumentu lub załącznika -->
+                    ${doc.document_number || doc.attachment_code ? `
                       <div style="display: inline-block; background: #9c27b0; color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-bottom: 6px;">
-                        📋 ${doc.document_number}
+                        📋 ${doc.document_number || doc.attachment_code}
                       </div>
                     ` : ''}
                     
