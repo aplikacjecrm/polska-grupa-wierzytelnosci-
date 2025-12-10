@@ -1216,6 +1216,7 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
      LEFT JOIN case_witnesses w ON wt.witness_id = w.id
      LEFT JOIN users u ON wt.recorded_by = u.id
      WHERE w.case_id = ?
+       AND wt.testimony_type != 'written'
      
      ORDER BY uploaded_at DESC`,
     [id, id, id, id],
