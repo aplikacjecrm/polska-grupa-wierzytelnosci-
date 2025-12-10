@@ -767,11 +767,47 @@ router.delete('/:id', verifyToken, async (req, res) => {
     
     console.log(`🗑️ Usuwanie dowodu: ${evidenceName} (${evidenceCodeFinal})`);
     
-    // USUŃ DOWÓD
+    // 1️⃣ USUŃ ZAŁĄCZNIKI DOWODU (attachments)
+    console.log('   → Usuwam załączniki dowodu...');
+    const attachmentsDeleted = await new Promise((resolve, reject) => {
+      db.run(
+        'DELETE FROM attachments WHERE entity_type = ? AND entity_id = ?',
+        ['evidence', id],
+        function(err) {
+          if (err) reject(err);
+          else {
+            console.log(`   ✅ Usunięto ${this.changes} załączników`);
+            resolve(this.changes);
+          }
+        }
+      );
+    });
+    
+    // 2️⃣ USUŃ LINKI DO DOKUMENTÓW SYSTEMU (evidence_document_links)
+    console.log('   → Usuwam linki do dokumentów systemu...');
+    const linksDeleted = await new Promise((resolve, reject) => {
+      db.run(
+        'DELETE FROM evidence_document_links WHERE evidence_id = ?',
+        [id],
+        function(err) {
+          if (err) reject(err);
+          else {
+            console.log(`   ✅ Usunięto ${this.changes} linków do dokumentów`);
+            resolve(this.changes);
+          }
+        }
+      );
+    });
+    
+    // 3️⃣ USUŃ DOWÓD
+    console.log('   → Usuwam dowód z tabeli case_evidence...');
     await new Promise((resolve, reject) => {
       db.run('DELETE FROM case_evidence WHERE id = ?', [id], function(err) {
         if (err) reject(err);
-        else resolve();
+        else {
+          console.log('   ✅ Dowód usunięty');
+          resolve();
+        }
       });
     });
     
@@ -797,7 +833,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
       userId: userId,
       actionType: 'evidence_deleted',
       actionCategory: 'evidence',
-      description: `🗑️ USUNIĘTO DOWÓD: ${evidenceName} (${evidenceCodeFinal}) - Potwierdzono hasłem`,
+      description: `🗑️ USUNIĘTO DOWÓD: ${evidenceName} (${evidenceCodeFinal}) - Potwierdzono hasłem (+ ${attachmentsDeleted} załączników, ${linksDeleted} linków)`,
       caseId: caseId,
       details: JSON.stringify({
         evidence_id: id,
@@ -807,21 +843,27 @@ router.delete('/:id', verifyToken, async (req, res) => {
         deleted_by: user.name,
         deleted_by_email: user.email,
         confirmed_with_password: true,
+        attachments_deleted: attachmentsDeleted,
+        document_links_deleted: linksDeleted,
         timestamp: new Date().toISOString()
       })
     });
     
-    console.log('✅ Dowód usunięty i zapisany w historii:', id);
+    console.log('✅ Dowód usunięty wraz z powiązaniami:', id);
+    console.log(`   - Załączniki usunięte: ${attachmentsDeleted}`);
+    console.log(`   - Linki do dokumentów usunięte: ${linksDeleted}`);
     console.log('   - Historia dowodu: zapisana');
     console.log('   - Historia sprawy: zapisana');
     
     res.json({ 
       success: true, 
-      message: 'Dowód usunięty pomyślnie i zapisany w historii sprawy',
+      message: `Dowód usunięty pomyślnie wraz z ${attachmentsDeleted} załącznikami i ${linksDeleted} linkami`,
       deleted_evidence: {
         id: id,
         name: evidenceName,
-        code: evidenceCodeFinal
+        code: evidenceCodeFinal,
+        attachments_deleted: attachmentsDeleted,
+        document_links_deleted: linksDeleted
       }
     });
     

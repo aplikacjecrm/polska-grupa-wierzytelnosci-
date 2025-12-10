@@ -2674,7 +2674,7 @@ const evidenceModule = {
       
       try {
         // Usuń dowód z weryfikacją hasła
-        await window.api.request(`/evidence/${evidenceId}`, {
+        const response = await window.api.request(`/evidence/${evidenceId}`, {
           method: 'DELETE',
           body: {
             password: password,
@@ -2686,15 +2686,26 @@ const evidenceModule = {
         // Zamknij modal
         modal.remove();
         
-        // Powiadomienie
-        window.showNotification('✅ Dowód usunięty i zapisany w historii sprawy', 'success');
+        // Powiadomienie z szczegółami
+        const attachmentsCount = response.deleted_evidence?.attachments_deleted || 0;
+        const linksCount = response.deleted_evidence?.document_links_deleted || 0;
+        const details = attachmentsCount > 0 || linksCount > 0 
+          ? ` (+ ${attachmentsCount} załączników, ${linksCount} linków)`
+          : '';
+        window.showNotification(`✅ Dowód usunięty i zapisany w historii${details}`, 'success');
         
         // Odśwież listę
         this.renderTab(this.currentCaseId);
         
         // Event bus
         if (window.eventBus) {
-          window.eventBus.emit('evidence:deleted', { evidenceId, evidenceName, evidenceCode });
+          window.eventBus.emit('evidence:deleted', { 
+            evidenceId, 
+            evidenceName, 
+            evidenceCode,
+            attachmentsDeleted: attachmentsCount,
+            linksDeleted: linksCount
+          });
         }
         
       } catch (error) {
