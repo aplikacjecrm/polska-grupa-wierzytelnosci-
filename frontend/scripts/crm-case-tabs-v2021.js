@@ -3573,23 +3573,23 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                 }
             }
         </style>
-        <div style="display: flex; gap: 20px; padding: 20px; position: relative;">
-            <!-- STICKY SIDEBAR - Szybkie zakładki kategorii -->
-            <div style="position: sticky; top: 80px; align-self: flex-start; min-width: 250px; max-width: 250px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 2px solid #d4af37; max-height: calc(100vh - 100px); overflow-y: auto;" class="docs-sidebar">
-                <h4 style="margin: 0 0 15px 0; color: #1a2332; font-size: 1rem; font-weight: 800; padding-bottom: 10px; border-bottom: 2px solid #d4af37;">
-                    📂 Kategorie
-                </h4>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    ${sortedCategories.map(category => `
+        <div style="padding: 20px;">
+            ${addButtonHtml}
+            
+            <!-- HORIZONTAL TABS - Zakładki jak w notatniku -->
+            <div style="position: sticky; top: 70px; background: white; z-index: 100; margin: 0 -20px 20px -20px; padding: 0 20px 10px 20px; border-bottom: 3px solid #d4af37; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <div style="display: flex; gap: 8px; overflow-x: auto; padding: 10px 0;">
+                    ${sortedCategories.map((category, index) => `
                         <button 
-                            onclick="document.getElementById('${safeCategoryId(category)}').scrollIntoView({behavior: 'smooth', block: 'start'})" 
-                            aria-label="Przejdź do kategorii ${categoryNames[category] || category}"
-                            title="Przejdź do kategorii ${categoryNames[category] || category}"
-                            style="text-align: left; padding: 8px 10px; background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15)); border: 1px solid #d4af37; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #1a2332; transition: all 0.3s; display: flex; justify-content: space-between; align-items: center; gap: 8px;"
-                            onmouseover="this.style.background='linear-gradient(135deg, #FFD700, #d4af37)'; this.style.transform='translateX(5px)'"
-                            onmouseout="this.style.background='linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'; this.style.transform='translateX(0)'">
-                            <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${categoryNames[category] || category}</span>
-                            <span style="background: #1a2332; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; min-width: 25px; text-align: center;">
+                            onclick="window.crmManager.switchDocCategory('${safeCategoryId(category)}')"
+                            id="tab_${safeCategoryId(category)}"
+                            class="doc-category-tab ${index === 0 ? 'active' : ''}"
+                            aria-label="${categoryNames[category] || category}"
+                            style="padding: 10px 20px; background: ${index === 0 ? 'linear-gradient(135deg, #FFD700, #d4af37)' : 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'}; border: 2px solid ${index === 0 ? '#1a2332' : '#d4af37'}; border-bottom: none; border-radius: 10px 10px 0 0; cursor: pointer; font-size: 0.9rem; font-weight: 700; color: #1a2332; transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; position: relative; top: 3px;"
+                            onmouseover="if(!this.classList.contains('active')) this.style.background='linear-gradient(135deg, rgba(255,215,0,0.3), rgba(212,175,55,0.3))'"
+                            onmouseout="if(!this.classList.contains('active')) this.style.background='linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'">
+                            <span>${categoryNames[category] || category}</span>
+                            <span style="background: #1a2332; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
                                 ${grouped[category].length}
                             </span>
                         </button>
@@ -3597,17 +3597,9 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                 </div>
             </div>
             
-            <!-- GŁÓWNA TREŚĆ - Dokumenty -->
-            <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
-                ${addButtonHtml}
-                ${sortedCategories.map(category => `
-                    <div id="${safeCategoryId(category)}" style="margin-bottom: 30px; scroll-margin-top: 80px;">
-                        <h3 style="color: #1a2332; font-size: 1.1rem; font-weight: 800; margin: 0 0 12px 0; padding: 10px 15px; background: linear-gradient(135deg, #FFD700, #d4af37); border-left: 4px solid #1a2332; border-radius: 6px; box-shadow: 0 2px 6px rgba(212,175,55,0.25); display: flex; justify-content: space-between; align-items: center;">
-                            <span>${categoryNames[category] || category}</span>
-                            <span style="background: #1a2332; color: white; padding: 4px 10px; border-radius: 16px; font-size: 0.8rem; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                                ${grouped[category].length}
-                            </span>
-                        </h3>
+            <!-- CONTENT AREAS - Po jednej dla każdej kategorii -->
+            ${sortedCategories.map((category, index) => `
+                <div id="${safeCategoryId(category)}" class="doc-category-content" style="display: ${index === 0 ? 'block' : 'none'};">
                     <div style="display: flex; flex-direction: column; gap: 15px;">
                         ${grouped[category].map(doc => {
                 const isRetracted = doc.is_retracted === 1 || doc.is_retracted === true;
@@ -3688,7 +3680,6 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                     </div>
                 </div>
             `).join('')}
-            </div>
             
             <!-- SCROLL TO TOP BUTTON -->
             <button 
@@ -3702,14 +3693,38 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
             </button>
         </div>
         
-        <style>
-            /* Responsywność sidebar */
-            @media (max-width: 768px) {
-                .docs-sidebar {
-                    display: none !important;
-                }
+        <script>
+            // Funkcja przełączania zakładek kategorii
+            if (!window.crmManager.switchDocCategory) {
+                window.crmManager.switchDocCategory = function(categoryId) {
+                    // Ukryj wszystkie content areas
+                    document.querySelectorAll('.doc-category-content').forEach(el => {
+                        el.style.display = 'none';
+                    });
+                    
+                    // Usuń active ze wszystkich tabów
+                    document.querySelectorAll('.doc-category-tab').forEach(tab => {
+                        tab.classList.remove('active');
+                        tab.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))';
+                        tab.style.border = '2px solid #d4af37';
+                    });
+                    
+                    // Pokaż wybrany content
+                    const content = document.getElementById(categoryId);
+                    if (content) {
+                        content.style.display = 'block';
+                    }
+                    
+                    // Dodaj active do wybranego taba
+                    const tab = document.getElementById('tab_' + categoryId);
+                    if (tab) {
+                        tab.classList.add('active');
+                        tab.style.background = 'linear-gradient(135deg, #FFD700, #d4af37)';
+                        tab.style.border = '2px solid #1a2332';
+                    }
+                };
             }
-        </style>
+        </script>
     `;
     } catch (error) {
         console.error('❌ Błąd ładowania dokumentów:', error);
