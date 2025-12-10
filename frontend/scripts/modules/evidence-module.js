@@ -608,8 +608,8 @@ const evidenceModule = {
                 </div>
               </div>
               
-              <!-- POSZLAKI (jeśli typ = circumstantial) -->
-              <div id="circumstantial_section" style="background: #fff9c4; border: 2px solid #fbc02d; border-radius: 8px; padding: 20px; margin-bottom: 20px; display: none;">
+              <!-- POSZLAKI (jeśli typ = circumstantial) - UKRYTE -->
+              <div id="circumstantial_section" style="display: none !important;">
                 <h3 style="margin: 0 0 15px 0; color: #f57f17;">🔍 Szczegóły poszlaki</h3>
                 
                 <div style="margin-bottom: 15px;">
@@ -726,15 +726,8 @@ const evidenceModule = {
       // Załaduj świadków
       this.loadWitnessesForSelect(caseId);
       
-      // Pokaż sekcję poszlak gdy wybrano typ "circumstantial"
-      document.getElementById('evidence_type').addEventListener('change', (e) => {
-        const circumstantialSection = document.getElementById('circumstantial_section');
-        if (e.target.value === 'circumstantial') {
-          circumstantialSection.style.display = 'block';
-        } else {
-          circumstantialSection.style.display = 'none';
-        }
-      });
+      // SEKCJA POSZLAKI WYŁĄCZONA - nieużywana funkcjonalność
+      // (kod event listenera usunięty)
       
       // Pokaż sekcję zeznania i załączników gdy wybrano świadka
       document.getElementById('witness_id').addEventListener('change', async (e) => {
@@ -1680,15 +1673,7 @@ const evidenceModule = {
               </div>
             ` : ''}
             
-            ${evidence.circumstantial_type ? `
-              <div style="background: #fff9c4; border-left: 4px solid #fbc02d; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <h3 style="margin: 0 0 10px 0; color: #f57f17;">🔍 Szczegóły poszlaki</h3>
-                <p style="margin: 5px 0;"><strong>Typ poszlaki:</strong> ${evidence.circumstantial_type}</p>
-                ${evidence.circumstantial_strength ? `<p style="margin: 5px 0;"><strong>Siła dowodowa:</strong> ${evidence.circumstantial_strength}</p>` : ''}
-                ${evidence.circumstantial_connections ? `<p style="margin: 5px 0;"><strong>Powiązania:</strong> ${evidence.circumstantial_connections}</p>` : ''}
-                ${evidence.alternative_explanations ? `<p style="margin: 5px 0;"><strong>Alternatywne wyjaśnienia:</strong> ${evidence.alternative_explanations}</p>` : ''}
-              </div>
-            ` : ''}
+            <!-- SEKCJA POSZLAKI UKRYTA - NIEUŻYWANA -->
             
             ${evidence.notes ? `
               <div style="background: #F8FAFC; border-left: 4px solid #3B82F6; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -2113,8 +2098,8 @@ const evidenceModule = {
               </div>
             </div>
             
-            <!-- POSZLAKI (gdy typ = circumstantial) -->
-            <div id="edit_circumstantial_section" style="background: #fff9c4; border: 2px solid #fbc02d; border-radius: 8px; padding: 20px; margin-bottom: 20px; display: ${evidence.evidence_type === 'circumstantial' ? 'block' : 'none'};">
+            <!-- POSZLAKI (gdy typ = circumstantial) - UKRYTE -->
+            <div id="edit_circumstantial_section" style="display: none !important;">
               <h3 style="margin: 0 0 15px 0; color: #f57f17;">🔍 Szczegóły poszlaki</h3>
               
               <div style="margin-bottom: 15px;">
@@ -2269,15 +2254,8 @@ const evidenceModule = {
       // Załaduj świadków
       this.loadWitnessesForEditSelect(evidence.case_id, evidence.witness_id);
       
-      // Pokaż sekcję poszlak gdy wybrano typ "circumstantial"
-      document.getElementById('edit_evidence_type').addEventListener('change', (e) => {
-        const circumstantialSection = document.getElementById('edit_circumstantial_section');
-        if (e.target.value === 'circumstantial') {
-          circumstantialSection.style.display = 'block';
-        } else {
-          circumstantialSection.style.display = 'none';
-        }
-      });
+      // SEKCJA POSZLAKI WYŁĄCZONA - nieużywana funkcjonalność
+      // (kod event listenera usunięty)
       
       // Pokaż sekcję zeznania gdy wybrano świadka
       document.getElementById('edit_witness_id').addEventListener('change', async (e) => {
