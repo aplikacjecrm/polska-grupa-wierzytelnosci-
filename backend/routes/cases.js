@@ -1120,10 +1120,12 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       d.category,
       d.filename,
       d.filepath as file_path,
-      NULL as file_size,
-      NULL as file_type,
+      d.file_size,
+      d.file_type,
       NULL as file_data,
       d.uploaded_at,
+      d.uploaded_at as upload_date,
+      d.uploaded_at as created_at,
       d.uploaded_by,
       u.name as uploaded_by_name,
       'document' as source_type
@@ -1147,6 +1149,8 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       a.file_type,
       a.file_data,
       a.uploaded_at,
+      a.uploaded_at as upload_date,
+      a.uploaded_at as created_at,
       a.uploaded_by,
       u.name as uploaded_by_name,
       'attachment' as source_type
@@ -1170,6 +1174,8 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       wd.file_type,
       wd.file_data,
       wd.uploaded_at,
+      wd.uploaded_at as upload_date,
+      wd.uploaded_at as created_at,
       wd.uploaded_by,
       u.name as uploaded_by_name,
       'witness_document' as source_type
