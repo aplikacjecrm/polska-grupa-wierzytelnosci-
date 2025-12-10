@@ -1289,22 +1289,84 @@ const evidenceModule = {
           </div>
           
           <div style="flex: 1; overflow-y: auto; padding: 20px;">
-            ${documents.map(doc => `
-              <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.3s;" 
-                   onclick="this.classList.toggle('selected'); this.style.borderColor = this.classList.contains('selected') ? '#9c27b0' : 'transparent'; this.style.background = this.classList.contains('selected') ? '#f3e5f5' : '#f5f5f5';"
+            ${documents.map(doc => {
+              // Określ typ ikony i kolor
+              const filename = doc.filename || '';
+              const fileExt = filename.split('.').pop().toLowerCase();
+              const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
+              const isVideo = ['mp4', 'webm', 'mov', 'avi'].includes(fileExt);
+              const isPdf = fileExt === 'pdf';
+              const isDoc = ['doc', 'docx'].includes(fileExt);
+              const icon = isVideo ? '🎬' : isImage ? '🖼️' : isPdf ? '📄' : isDoc ? '📝' : '📎';
+              
+              // Data dodania
+              const uploadDate = doc.upload_date || doc.created_at || null;
+              const dateStr = uploadDate ? new Date(uploadDate).toLocaleDateString('pl-PL', {day: '2-digit', month: '2-digit', year: 'numeric'}) : 'Brak daty';
+              
+              return `
+              <div style="background: #f5f5f5; padding: 16px; border-radius: 12px; margin-bottom: 12px; border: 2px solid transparent; transition: all 0.3s; border-left: 4px solid #9c27b0;" 
                    data-doc-id="${doc.id}"
                    data-doc-filename="${doc.filename}"
                    data-doc-path="${doc.file_path || ''}">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                  <div style="font-size: 2rem;">📄</div>
+                <div style="display: flex; align-items: start; gap: 12px;">
+                  <!-- Checkbox -->
+                  <input type="checkbox" 
+                         class="doc-checkbox" 
+                         data-doc-id="${doc.id}"
+                         style="width: 20px; height: 20px; margin-top: 4px; cursor: pointer;"
+                         onchange="this.closest('[data-doc-id]').style.background = this.checked ? '#f3e5f5' : '#f5f5f5'; this.closest('[data-doc-id]').style.borderColor = this.checked ? '#9c27b0' : 'transparent';">
+                  
+                  <!-- Ikona -->
+                  <div style="font-size: 2.5rem;">${icon}</div>
+                  
+                  <!-- Informacje -->
                   <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a2332; margin-bottom: 4px;">${doc.filename}</div>
-                    <div style="font-size: 0.85rem; color: #666;">${doc.document_number || 'Brak numeru'} • ${(doc.file_size / 1024).toFixed(1)} KB</div>
+                    <!-- Nazwa pliku -->
+                    <div style="font-weight: 700; color: #1a2332; margin-bottom: 6px; font-size: 1rem;">${doc.filename}</div>
+                    
+                    <!-- Numer dokumentu -->
+                    ${doc.document_number ? `
+                      <div style="display: inline-block; background: #9c27b0; color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-bottom: 6px;">
+                        📋 ${doc.document_number}
+                      </div>
+                    ` : ''}
+                    
+                    <!-- Szczegóły -->
+                    <div style="font-size: 0.85rem; color: #666; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;">
+                      <span style="display: inline-flex; align-items: center; gap: 4px;">
+                        📊 <strong>${(doc.file_size / 1024).toFixed(1)} KB</strong>
+                      </span>
+                      <span style="color: #e0e0e0;">•</span>
+                      <span style="display: inline-flex; align-items: center; gap: 4px;">
+                        📅 <strong>${dateStr}</strong>
+                      </span>
+                      ${doc.uploaded_by_name ? `
+                        <span style="color: #e0e0e0;">•</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px;">
+                          👤 <strong>${doc.uploaded_by_name}</strong>
+                        </span>
+                      ` : ''}
+                    </div>
+                    
+                    <!-- Opis (jeśli istnieje) -->
+                    ${doc.description ? `
+                      <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 6px; font-size: 0.85rem; color: #555; font-style: italic;">
+                        💬 ${doc.description}
+                      </div>
+                    ` : ''}
                   </div>
-                  <div id="check_${doc.id}" style="width: 24px; height: 24px; border: 2px solid #9c27b0; border-radius: 4px; display: none; background: #9c27b0; color: white; text-align: center; line-height: 20px;">✓</div>
+                  
+                  <!-- Przycisk podglądu -->
+                  <button onclick="event.stopPropagation(); window.crmManager.viewDocument(${doc.id}, ${caseId}, 'document')" 
+                          style="padding: 10px 16px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2332; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; box-shadow: 0 2px 8px rgba(255,215,0,0.3); transition: all 0.3s; white-space: nowrap; height: fit-content;"
+                          onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,215,0,0.5)'"
+                          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(255,215,0,0.3)'">
+                    👁️ Podgląd
+                  </button>
                 </div>
               </div>
-            `).join('')}
+            `;
+            }).join('')}
           </div>
           
           <div style="padding: 20px; border-top: 2px solid #e0e0e0; display: flex; gap: 10px;">
@@ -1316,16 +1378,6 @@ const evidenceModule = {
       
       document.body.appendChild(modal);
       
-      // Toggle checkmark visibility
-      modal.querySelectorAll('[data-doc-id]').forEach(el => {
-        el.addEventListener('click', () => {
-          const check = el.querySelector('[id^="check_"]');
-          if (check) {
-            check.style.display = el.classList.contains('selected') ? 'block' : 'none';
-          }
-        });
-      });
-      
     } catch (error) {
       console.error('❌ Błąd ładowania dokumentów:', error);
       alert('Błąd: ' + error.message);
@@ -1336,19 +1388,22 @@ const evidenceModule = {
   
   async addSystemDocuments() {
     const modal = document.getElementById('systemDocsModal');
-    const selectedDocs = modal.querySelectorAll('[data-doc-id].selected');
+    const selectedCheckboxes = modal.querySelectorAll('.doc-checkbox:checked');
     
-    if (selectedDocs.length === 0) {
+    if (selectedCheckboxes.length === 0) {
       alert('Nie wybrano żadnych dokumentów');
       return;
     }
     
     // Zapisz wybrane dokumenty do globalnej zmiennej
-    this.selectedSystemDocs = Array.from(selectedDocs).map(el => ({
-      id: el.dataset.docId,
-      filename: el.dataset.docFilename,
-      path: el.dataset.docPath
-    }));
+    this.selectedSystemDocs = Array.from(selectedCheckboxes).map(checkbox => {
+      const docEl = checkbox.closest('[data-doc-id]');
+      return {
+        id: docEl.dataset.docId,
+        filename: docEl.dataset.docFilename,
+        path: docEl.dataset.docPath
+      };
+    });
     
     // Pokaż listę wybranych
     const previewDiv = document.getElementById('selected_system_docs');
