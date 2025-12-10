@@ -3560,6 +3560,47 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
         return 'cat_' + cat.replace(/[^a-zA-Z0-9]/g, '_');
     };
     
+    // Funkcja przełączania zakładek - dodajemy PRZED renderowaniem
+    if (!window.crmManager.switchDocCategory) {
+        window.crmManager.switchDocCategory = function(categoryId) {
+            console.log('🔄 Przełączam na kategorię:', categoryId);
+            
+            // Ukryj wszystkie content areas
+            document.querySelectorAll('.doc-category-content').forEach(el => {
+                el.style.display = 'none';
+            });
+            
+            // Usuń active ze wszystkich tabów
+            document.querySelectorAll('.doc-category-tab').forEach(tab => {
+                tab.classList.remove('active');
+                tab.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))';
+                tab.style.border = '2px solid #d4af37';
+                tab.style.borderBottom = 'none';
+            });
+            
+            // Pokaż wybrany content
+            const content = document.getElementById(categoryId);
+            if (content) {
+                content.style.display = 'block';
+                console.log('✅ Pokazano content:', categoryId);
+            } else {
+                console.error('❌ Nie znaleziono content:', categoryId);
+            }
+            
+            // Dodaj active do wybranego taba
+            const tab = document.getElementById('tab_' + categoryId);
+            if (tab) {
+                tab.classList.add('active');
+                tab.style.background = 'linear-gradient(135deg, #FFD700, #d4af37)';
+                tab.style.border = '2px solid #1a2332';
+                tab.style.borderBottom = 'none';
+                console.log('✅ Podświetlono tab:', categoryId);
+            } else {
+                console.error('❌ Nie znaleziono tab:', categoryId);
+            }
+        };
+    }
+    
     return `
         <style>
             @keyframes pulseRetracted {
@@ -3585,7 +3626,7 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                             id="tab_${safeCategoryId(category)}"
                             class="doc-category-tab ${index === 0 ? 'active' : ''}"
                             aria-label="${categoryNames[category] || category}"
-                            style="padding: 10px 20px; background: ${index === 0 ? 'linear-gradient(135deg, #FFD700, #d4af37)' : 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'}; border: 2px solid ${index === 0 ? '#1a2332' : '#d4af37'}; border-bottom: none; border-radius: 10px 10px 0 0; cursor: pointer; font-size: 0.9rem; font-weight: 700; color: #1a2332; transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; position: relative; top: 3px;"
+                            style="padding: 10px 20px; background: ${index === 0 ? 'linear-gradient(135deg, #FFD700, #d4af37)' : 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'}; border: 2px solid ${index === 0 ? '#1a2332' : '#d4af37'}; border-bottom: none; border-radius: 10px 10px 0 0; cursor: pointer; font-size: 0.95rem; font-weight: 800; color: #000000; text-shadow: 0 1px 2px rgba(255,255,255,0.8); transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; position: relative; top: 3px;"
                             onmouseover="if(!this.classList.contains('active')) this.style.background='linear-gradient(135deg, rgba(255,215,0,0.3), rgba(212,175,55,0.3))'"
                             onmouseout="if(!this.classList.contains('active')) this.style.background='linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'">
                             <span>${categoryNames[category] || category}</span>
@@ -3692,39 +3733,6 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                 ⬆️
             </button>
         </div>
-        
-        <script>
-            // Funkcja przełączania zakładek kategorii
-            if (!window.crmManager.switchDocCategory) {
-                window.crmManager.switchDocCategory = function(categoryId) {
-                    // Ukryj wszystkie content areas
-                    document.querySelectorAll('.doc-category-content').forEach(el => {
-                        el.style.display = 'none';
-                    });
-                    
-                    // Usuń active ze wszystkich tabów
-                    document.querySelectorAll('.doc-category-tab').forEach(tab => {
-                        tab.classList.remove('active');
-                        tab.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))';
-                        tab.style.border = '2px solid #d4af37';
-                    });
-                    
-                    // Pokaż wybrany content
-                    const content = document.getElementById(categoryId);
-                    if (content) {
-                        content.style.display = 'block';
-                    }
-                    
-                    // Dodaj active do wybranego taba
-                    const tab = document.getElementById('tab_' + categoryId);
-                    if (tab) {
-                        tab.classList.add('active');
-                        tab.style.background = 'linear-gradient(135deg, #FFD700, #d4af37)';
-                        tab.style.border = '2px solid #1a2332';
-                    }
-                };
-            }
-        </script>
     `;
     } catch (error) {
         console.error('❌ Błąd ładowania dokumentów:', error);
