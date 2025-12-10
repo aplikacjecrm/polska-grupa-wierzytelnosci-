@@ -1189,8 +1189,36 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
      LEFT JOIN users u ON wd.uploaded_by = u.id
      WHERE wd.case_id = ?
      
+     UNION ALL
+     
+     SELECT 
+      wt.id,
+      w.case_id,
+      NULL as document_number,
+      NULL as document_code,
+      NULL as attachment_code,
+      'Zeznanie pisemne - ' || w.first_name || ' ' || w.last_name || ' v' || wt.version_number as title,
+      'Zeznanie z dnia ' || DATE(wt.testimony_date) as description,
+      'zeznanie' as category,
+      NULL as filename,
+      NULL as file_path,
+      NULL as file_size,
+      NULL as file_type,
+      NULL as file_data,
+      wt.testimony_date as uploaded_at,
+      wt.testimony_date as upload_date,
+      wt.created_at,
+      wt.recorded_by as uploaded_by,
+      u.name as uploaded_by_name,
+      wt.is_retracted,
+      'witness_testimony' as source_type
+     FROM witness_testimonies wt
+     LEFT JOIN case_witnesses w ON wt.witness_id = w.id
+     LEFT JOIN users u ON wt.recorded_by = u.id
+     WHERE w.case_id = ?
+     
      ORDER BY uploaded_at DESC`,
-    [id, id, id],
+    [id, id, id, id],
     (err, documents) => {
       if (err) {
         console.error('❌ Błąd pobierania dokumentów:', err);

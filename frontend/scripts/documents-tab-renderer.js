@@ -71,6 +71,8 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
             'NAG': '🎥 Nagrania',
             'EKS': '🔬 Ekspertyzy',
             'NOT': '📝 Notatki',
+            'zeznanie': '👤 Zeznania świadków',
+            'świadek': '👥 Dokumenty świadków',
             'INN': '📂 Inne dokumenty'
         };
         
@@ -160,10 +162,11 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                                                 <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #999;">
                                                     <span>📅 ${new Date(doc.uploaded_at).toLocaleDateString('pl-PL')}</span>
                                                     <span>👤 ${window.crmManager.escapeHtml(doc.uploaded_by_name || 'Nieznany')}</span>
-                                                    <span>📏 ${(doc.file_size / 1024).toFixed(1)} KB</span>
+                                                    ${doc.file_size ? `<span>📏 ${(doc.file_size / 1024).toFixed(1)} KB</span>` : '<span>📝 Zeznanie tekstowe</span>'}
                                                 </div>
                                             </div>
                                             
+                                            ${doc.filename ? `
                                             <div style="display: flex; gap: 10px;">
                                                 <button onclick="crmManager.viewDocument(${doc.id}, ${caseId}, 'document')" style="
                                                     padding: 10px 16px;
@@ -192,6 +195,7 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                                                     📥 Pobierz
                                                 </button>
                                             </div>
+                                            ` : ''}
                                         </div>
                                     </div>
                                 `;
