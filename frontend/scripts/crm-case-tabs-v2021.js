@@ -3574,7 +3574,7 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
             document.querySelectorAll('.doc-category-tab').forEach(tab => {
                 tab.classList.remove('active');
                 tab.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))';
-                tab.style.border = '2px solid #d4af37';
+                tab.style.border = '2px solid #000000';
                 tab.style.borderBottom = 'none';
             });
             
@@ -3613,20 +3613,41 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                     box-shadow: 0 5px 15px rgba(220,53,69,0.7);
                 }
             }
+            
+            /* Ukryj scrollbar ale zachowaj funkcjonalność przewijania */
+            .doc-tabs-container::-webkit-scrollbar {
+                height: 6px;
+            }
+            .doc-tabs-container::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .doc-tabs-container::-webkit-scrollbar-thumb {
+                background: rgba(0,0,0,0.2);
+                border-radius: 3px;
+            }
+            .doc-tabs-container::-webkit-scrollbar-thumb:hover {
+                background: rgba(0,0,0,0.4);
+            }
+            
+            /* Dla Firefox */
+            .doc-tabs-container {
+                scrollbar-width: thin;
+                scrollbar-color: rgba(0,0,0,0.2) transparent;
+            }
         </style>
         <div style="padding: 20px;">
             ${addButtonHtml}
             
             <!-- HORIZONTAL TABS - Zakładki jak w notatniku -->
             <div style="position: sticky; top: 70px; background: white; z-index: 100; margin: 0 -20px 20px -20px; padding: 0 20px 10px 20px; border-bottom: 3px solid #d4af37; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                <div style="display: flex; gap: 8px; overflow-x: auto; padding: 10px 0;">
+                <div class="doc-tabs-container" style="display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 10px 0; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;">
                     ${sortedCategories.map((category, index) => `
                         <button 
                             onclick="window.crmManager.switchDocCategory('${safeCategoryId(category)}')"
                             id="tab_${safeCategoryId(category)}"
                             class="doc-category-tab ${index === 0 ? 'active' : ''}"
                             aria-label="${categoryNames[category] || category}"
-                            style="padding: 10px 20px; background: ${index === 0 ? 'linear-gradient(135deg, #FFD700, #d4af37)' : 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'}; border: 2px solid ${index === 0 ? '#1a2332' : '#d4af37'}; border-bottom: none; border-radius: 10px 10px 0 0; cursor: pointer; font-size: 0.95rem; font-weight: 800; color: #000000; text-shadow: 0 1px 2px rgba(255,255,255,0.8); transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; position: relative; top: 3px;"
+                            style="padding: 10px 20px; background: ${index === 0 ? 'linear-gradient(135deg, #FFD700, #d4af37)' : 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'}; border: 2px solid ${index === 0 ? '#1a2332' : '#000000'}; border-bottom: none; border-radius: 10px 10px 0 0; cursor: pointer; font-size: 0.95rem; font-weight: 800; color: #000000; text-shadow: 0 1px 2px rgba(255,255,255,0.8); transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; position: relative; top: 3px;"
                             onmouseover="if(!this.classList.contains('active')) this.style.background='linear-gradient(135deg, rgba(255,215,0,0.3), rgba(212,175,55,0.3))'"
                             onmouseout="if(!this.classList.contains('active')) this.style.background='linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'">
                             <span>${categoryNames[category] || category}</span>
