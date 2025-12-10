@@ -611,13 +611,18 @@ Data zapisu: ${new Date().toLocaleString('pl-PL')}
     fs.writeFileSync(filepath, fileContent, 'utf8');
     console.log('✅ Plik TXT zapisany:', filepath);
     
-    // 5. Dodaj załącznik do bazy
+    // Konwertuj do base64 dla zapisu w bazie (PRIORYTET - zapewnia dostępność w produkcji)
+    const fileBuffer = Buffer.from(fileContent, 'utf8');
+    const fileDataBase64 = fileBuffer.toString('base64');
+    console.log('📦 Konwersja do base64:', fileDataBase64.length, 'znaków');
+    
+    // 5. Dodaj załącznik do bazy Z file_data (base64)
     const attachmentId = await new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO attachments (
           case_id, entity_type, entity_id, attachment_code, title, description,
-          file_name, file_path, file_size, file_type, category, uploaded_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          file_name, file_path, file_size, file_type, file_data, category, uploaded_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           testimony.case_id,
           'witness',
@@ -629,6 +634,7 @@ Data zapisu: ${new Date().toLocaleString('pl-PL')}
           filepath,
           Buffer.byteLength(fileContent, 'utf8'),
           'text/plain',
+          fileDataBase64,
           'zeznanie',
           userId
         ],
