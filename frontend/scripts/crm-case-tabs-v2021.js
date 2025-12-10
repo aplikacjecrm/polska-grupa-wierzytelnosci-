@@ -3508,8 +3508,27 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
     return `
         <div style="display: flex; flex-direction: column; gap: 20px; padding: 20px;">
             ${addButtonHtml}
-            ${documents.map(doc => `
-                <div data-document-id="${doc.id}" style="background: white; padding: 20px; border-radius: 10px; border-left: 5px solid #d4af37; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 5px 20px rgba(212, 175, 55, 0.3)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.boxShadow='0 3px 10px rgba(0, 0, 0, 0.1)'; this.style.transform='translateY(0)';">
+            ${documents.map(doc => {
+                const isRetracted = doc.is_retracted === 1 || doc.is_retracted === true;
+                return `
+                <div data-document-id="${doc.id}" style="background: ${isRetracted ? 'linear-gradient(135deg, #ffebee, #ffcdd2)' : 'white'}; padding: 20px; border-radius: 10px; border-left: 5px solid ${isRetracted ? '#dc3545' : '#d4af37'}; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; position: relative;" onmouseover="this.style.boxShadow='0 5px 20px rgba(${isRetracted ? '220, 53, 69' : '212, 175, 55'}, 0.3)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.boxShadow='0 3px 10px rgba(0, 0, 0, 0.1)'; this.style.transform='translateY(0)';">
+                    ${isRetracted ? `
+                        <div style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; padding: 8px 14px; border-radius: 8px; font-weight: 800; font-size: 0.9rem; box-shadow: 0 3px 10px rgba(220,53,69,0.5); animation: pulseRetracted 2s infinite; z-index: 10;">
+                            🚫 WYCOFANE
+                        </div>
+                        <style>
+                            @keyframes pulseRetracted {
+                                0%, 100% { 
+                                    transform: scale(1);
+                                    box-shadow: 0 3px 10px rgba(220,53,69,0.5);
+                                }
+                                50% { 
+                                    transform: scale(1.05);
+                                    box-shadow: 0 5px 15px rgba(220,53,69,0.7);
+                                }
+                            }
+                        </style>
+                    ` : ''}
                     <div style="display: flex; justify-content: space-between; align-items: start;">
                         <div style="flex: 1;">
                             <div style="display: flex; gap: 10px; margin-bottom: 8px;">
@@ -3526,8 +3545,8 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                                 `}
                                 ${doc.category ? `<span style="background: linear-gradient(135deg, #e0e0e0, #d0d0d0); padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: #1a2332;">${window.crmManager.escapeHtml(doc.category)}</span>` : ''}
                             </div>
-                            <h4 style="margin: 0 0 12px 0; font-size: 1.3rem; font-weight: 800; color: #1a2332 !important; display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 1.5rem;">📄</span>
+                            <h4 style="margin: 0 0 12px 0; font-size: 1.3rem; font-weight: 800; color: ${isRetracted ? '#c0392b' : '#1a2332'} !important; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.5rem;">${isRetracted ? '🚫' : '📄'}</span>
                                 <span>${window.crmManager.escapeHtml(doc.title)}</span>
                             </h4>
                             <div style="font-size: 1rem; color: #1a2332 !important; font-weight: 600; line-height: 1.8; display: flex; flex-wrap: wrap; gap: 12px;">
@@ -3535,10 +3554,12 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                                     <span style="font-size: 1.2rem;">📅</span>
                                     <span>${new Date(doc.uploaded_at + 'Z').toLocaleString('pl-PL')}</span>
                                 </span>
+                                ${doc.filename ? `
                                 <span style="display: inline-flex; align-items: center; gap: 6px;">
                                     <span style="font-size: 1.2rem;">📄</span>
                                     <span style="font-weight: 800; color: #d4af37 !important;">${window.crmManager.escapeHtml(doc.filename)}</span>
                                 </span>
+                                ` : '<span style="display: inline-flex; align-items: center; gap: 6px; color: #999;"><span style="font-size: 1.2rem;">📝</span><span>Zeznanie tekstowe</span></span>'}
                                 ${doc.uploaded_by_name ? `
                                     <span style="display: inline-flex; align-items: center; gap: 6px;">
                                         <span style="font-size: 1.2rem;">👤</span>
@@ -3553,6 +3574,7 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                                 </div>
                             ` : ''}
                         </div>
+                        ${doc.filename ? `
                         <div style="display: flex; gap: 12px; flex-direction: column;">
                             <button onclick="crmManager.viewDocument(${doc.id}, ${caseId}, '${doc.source_type || 'document'}')" 
                                 style="padding: 12px 20px; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 3px 10px rgba(212,175,55,0.3); transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; justify-content: center;"
@@ -3569,9 +3591,11 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                                 <span>Pobierz</span>
                             </button>
                         </div>
+                        ` : ''}
                     </div>
                 </div>
-            `).join('')}
+            `;
+            }).join('')}
         </div>
     `;
 };
