@@ -3515,6 +3515,15 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
         grouped[category].push(doc);
     });
     
+    // Sortuj dokumenty w każdej kategorii - najnowsze na górze
+    Object.keys(grouped).forEach(category => {
+        grouped[category].sort((a, b) => {
+            const dateA = new Date(a.uploaded_at);
+            const dateB = new Date(b.uploaded_at);
+            return dateB - dateA; // DESC - najnowsze na górze
+        });
+    });
+    
     // Mapowanie kategorii na nazwy
     const categoryNames = {
         'POZ': '📄 Pozwy',
@@ -3549,8 +3558,11 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
             ${addButtonHtml}
             ${Object.keys(grouped).map(category => `
                 <div style="margin-bottom: 30px;">
-                    <h3 style="color: #1a2332; font-size: 1.3rem; font-weight: 800; margin: 0 0 20px 0; padding: 15px 20px; background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(255,215,0,0.2)); border-left: 5px solid #d4af37; border-radius: 8px;">
-                        ${categoryNames[category] || category}
+                    <h3 style="color: #1a2332; font-size: 1.3rem; font-weight: 800; margin: 0 0 20px 0; padding: 15px 20px; background: linear-gradient(135deg, #FFD700, #d4af37); border-left: 5px solid #1a2332; border-radius: 8px; box-shadow: 0 2px 8px rgba(212,175,55,0.3); display: flex; justify-content: space-between; align-items: center;">
+                        <span>${categoryNames[category] || category}</span>
+                        <span style="background: #1a2332; color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
+                            ${grouped[category].length}
+                        </span>
                     </h3>
                     <div style="display: flex; flex-direction: column; gap: 20px;">
                         ${grouped[category].map(doc => {
