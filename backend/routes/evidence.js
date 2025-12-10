@@ -159,10 +159,10 @@ router.get('/:id', verifyToken, (req, res) => {
             edl.document_id,
             edl.attachment_id,
             edl.linked_at,
-            COALESCE(d.file_name, d.title, a.file_name, a.title) as filename,
+            COALESCE(d.filename, d.title, a.file_name, a.title) as filename,
             COALESCE(d.file_type, a.file_type) as mimetype,
             COALESCE(d.file_size, a.file_size) as filesize,
-            a.attachment_code,
+            COALESCE(d.document_number, a.attachment_code) as attachment_code,
             CASE WHEN edl.document_id IS NOT NULL THEN 'document' ELSE 'attachment' END as source_type
            FROM evidence_document_links edl
            LEFT JOIN documents d ON edl.document_id = d.id

@@ -2664,6 +2664,37 @@ const evidenceModule = {
         `;
       } else if (blob.type.includes('pdf')) {
         contentHtml = `<iframe src="${objectUrl}" style="width: 90vw; height: 85vh; border: none; border-radius: 8px;"></iframe>`;
+      } else if (blob.type.includes('text') || filename?.endsWith('.txt')) {
+        // Dla plików TXT - pokaż treść
+        iconEmoji = '📝';
+        try {
+          const text = await blob.text();
+          contentHtml = `
+            <div style="
+              background: white;
+              border: 4px solid #9333ea;
+              border-radius: 16px;
+              padding: 30px;
+              max-width: 90vw;
+              max-height: 80vh;
+              overflow-y: auto;
+              box-shadow: 0 8px 32px rgba(147,51,234,0.3);
+            ">
+              <pre style="
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                font-family: 'Courier New', monospace;
+                font-size: 0.95rem;
+                line-height: 1.6;
+                color: #1a2332;
+                margin: 0;
+              ">${text}</pre>
+            </div>
+          `;
+        } catch (err) {
+          console.error('Błąd odczytu TXT:', err);
+          contentHtml = `<div style="color: white; padding: 40px;">Błąd odczytu pliku tekstowego</div>`;
+        }
       } else {
         // Dla innych plików - pobierz
         const a = document.createElement('a');
@@ -2672,6 +2703,7 @@ const evidenceModule = {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(objectUrl);
         return;
       }
       
