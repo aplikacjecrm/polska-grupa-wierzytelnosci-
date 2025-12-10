@@ -2167,7 +2167,7 @@ window.witnessesModule = {
                                             </div>
                                         ` : `
                                             <div style="text-align: right;">
-                                                <button onclick="if(confirm('Na pewno wycofać to zeznanie?')) witnessesModule.retractTestimony(${witnessId}, ${t.id})" style="
+                                                <button onclick="witnessesModule.showRetractTestimonyModal(${witnessId}, ${t.id})" style="
                                                     padding: 8px 16px;
                                                     background: #dc3545;
                                                     color: white;
@@ -2491,10 +2491,98 @@ window.witnessesModule = {
                 this.stopMediaStream();
             }
             
-            alert(`✅ Zeznanie zapisane (wersja ${response.version_number})`);
+            // Piękny modal sukcesu zamiast alertu
+            const successModal = document.createElement('div');
+            successModal.id = 'testimonySuccessModal';
+            successModal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background: rgba(0,0,0,0.85);
+                z-index: 10004;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                animation: fadeIn 0.3s;
+            `;
             
-            // Zamknij modala dodawania
-            document.getElementById('addTestimonyModal').remove();
+            successModal.innerHTML = `
+                <style>
+                    @keyframes success-pulse {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.1); }
+                    }
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes slideInUp {
+                        from { transform: translateY(100px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                </style>
+                <div style="
+                    background: white;
+                    border-radius: 20px;
+                    padding: 0;
+                    max-width: 450px;
+                    width: 90%;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                    animation: slideInUp 0.4s ease-out;
+                ">
+                    <div style="
+                        background: linear-gradient(135deg, #28a745, #20c997);
+                        padding: 30px;
+                        border-radius: 20px 20px 0 0;
+                        text-align: center;
+                        color: white;
+                    ">
+                        <div style="font-size: 4.5rem; margin-bottom: 15px; animation: success-pulse 1.5s infinite;">✅</div>
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.6rem; font-weight: 800;">ZEZNANIE ZAPISANE!</h3>
+                        <p style="margin: 0; opacity: 0.95; font-size: 1rem;">Wersja ${response.version_number}</p>
+                    </div>
+                    
+                    <div style="padding: 30px; text-align: center;">
+                        <div style="
+                            padding: 20px;
+                            background: linear-gradient(135deg, rgba(40,167,69,0.1), rgba(32,201,151,0.1));
+                            border-radius: 12px;
+                            margin-bottom: 25px;
+                        ">
+                            <div style="font-size: 1.1rem; color: #28a745; font-weight: 700; margin-bottom: 8px;">📝 Zeznanie dodane pomyślnie</div>
+                            <div style="font-size: 0.95rem; color: #666;">Możesz teraz dodać załączniki lub przejść do listy zeznań</div>
+                        </div>
+                        
+                        <button onclick="document.getElementById('testimonySuccessModal').remove(); document.getElementById('addTestimonyModal').remove();" style="
+                            width: 100%;
+                            padding: 16px;
+                            background: linear-gradient(135deg, #28a745, #20c997);
+                            color: white;
+                            border: none;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            font-weight: 800;
+                            font-size: 1.05rem;
+                            box-shadow: 0 4px 15px rgba(40,167,69,0.4);
+                            transition: all 0.3s;
+                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(40,167,69,0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(40,167,69,0.4)'">
+                            👍 OK, zamknij
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(successModal);
+            
+            // Auto-zamknij po 3 sekundach
+            setTimeout(() => {
+                if (document.getElementById('testimonySuccessModal')) {
+                    document.getElementById('testimonySuccessModal').remove();
+                    document.getElementById('addTestimonyModal').remove();
+                }
+            }, 3000);
             
             // Odśwież listę zeznań
             const testimModal = document.getElementById('testimoniesModal');
@@ -2509,10 +2597,142 @@ window.witnessesModule = {
         }
     },
     
+    // Pokaż modal wycofania zeznania
+    showRetractTestimonyModal: function(witnessId, testimonyId) {
+        const modal = document.createElement('div');
+        modal.id = 'retractTestimonyModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0,0,0,0.85);
+            z-index: 10005;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s;
+        `;
+        
+        modal.innerHTML = `
+            <style>
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideIn {
+                    from { transform: translateY(-50px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+            </style>
+            <div style="
+                background: white;
+                border-radius: 20px;
+                padding: 0;
+                max-width: 500px;
+                width: 90%;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                animation: slideIn 0.4s ease-out;
+            ">
+                <div style="
+                    background: linear-gradient(135deg, #ffc107, #ff9800);
+                    padding: 25px;
+                    border-radius: 20px 20px 0 0;
+                    text-align: center;
+                    color: #1a2332;
+                ">
+                    <div style="font-size: 3.5rem; margin-bottom: 15px;">⚠️</div>
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.5rem; font-weight: 800;">WYCOFANIE ZEZNANIA</h3>
+                    <p style="margin: 0; opacity: 0.95; font-size: 0.95rem;">Ta operacja zostanie zapisana w historii</p>
+                </div>
+                
+                <div style="padding: 30px;">
+                    <div style="
+                        padding: 18px;
+                        background: #fff3cd;
+                        border: 2px solid #ffc107;
+                        border-radius: 12px;
+                        margin-bottom: 20px;
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                    ">
+                        <div style="font-size: 2rem;">📝</div>
+                        <div style="color: #856404; font-size: 0.9rem; line-height: 1.5;">
+                            <strong>Wycofanie zeznania</strong> zostanie odnotowane w systemie. Podaj powód wycofania.
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; color: #1a2332; font-weight: 700; margin-bottom: 10px; font-size: 1rem;">📋 Powód wycofania zeznania:</label>
+                        <textarea id="retractReasonInput" placeholder="Wpisz powód wycofania..." style="
+                            width: 100%;
+                            padding: 15px;
+                            border: 3px solid #e0e0e0;
+                            border-radius: 12px;
+                            font-size: 1rem;
+                            min-height: 100px;
+                            resize: vertical;
+                            box-sizing: border-box;
+                            transition: all 0.3s;
+                        " onfocus="this.style.borderColor='#ffc107'; this.style.boxShadow='0 0 0 4px rgba(255,193,7,0.1)'" onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'"></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px;">
+                        <button onclick="document.getElementById('retractTestimonyModal').remove()" style="
+                            flex: 1;
+                            padding: 16px;
+                            background: #6c757d;
+                            color: white;
+                            border: none;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            font-weight: 700;
+                            font-size: 1rem;
+                            transition: all 0.3s;
+                        " onmouseover="this.style.background='#5a6268'" onmouseout="this.style.background='#6c757d'">
+                            ❌ Anuluj
+                        </button>
+                        <button onclick="witnessesModule.retractTestimony(${witnessId}, ${testimonyId})" style="
+                            flex: 2;
+                            padding: 16px;
+                            background: linear-gradient(135deg, #ffc107, #ff9800);
+                            color: #1a2332;
+                            border: none;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            font-weight: 800;
+                            font-size: 1.05rem;
+                            box-shadow: 0 4px 15px rgba(255,193,7,0.4);
+                            transition: all 0.3s;
+                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255,193,7,0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255,193,7,0.4)'">
+                            ⚠️ WYCOFAJ ZEZNANIE
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Focus na textarea
+        setTimeout(() => {
+            document.getElementById('retractReasonInput')?.focus();
+        }, 100);
+    },
+    
     // Wycofaj zeznanie
     retractTestimony: async function(witnessId, testimonyId) {
-        const reason = prompt('Podaj powód wycofania zeznania:');
-        if (!reason) return;
+        const reasonInput = document.getElementById('retractReasonInput');
+        const reason = reasonInput?.value.trim();
+        
+        if (!reason) {
+            reasonInput.style.borderColor = '#dc3545';
+            reasonInput.style.boxShadow = '0 0 0 4px rgba(220,53,69,0.1)';
+            reasonInput.placeholder = '❌ Podaj powód wycofania!';
+            return;
+        }
         
         try {
             console.log('❌ Wycofuję zeznanie:', testimonyId);
@@ -2523,11 +2743,89 @@ window.witnessesModule = {
             });
             
             console.log('✅ Zeznanie wycofane');
-            alert('✅ Zeznanie wycofane');
             
-            // Odśwież listę
-            document.getElementById('testimoniesModal').remove();
-            this.showTestimonies(witnessId);
+            // Piękny modal sukcesu
+            const successModal = document.createElement('div');
+            successModal.id = 'retractSuccessModal';
+            successModal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background: rgba(0,0,0,0.85);
+                z-index: 10006;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                animation: fadeIn 0.3s;
+            `;
+            
+            successModal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 20px;
+                    padding: 0;
+                    max-width: 450px;
+                    width: 90%;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                    animation: slideIn 0.4s ease-out;
+                ">
+                    <div style="
+                        background: linear-gradient(135deg, #ffc107, #ff9800);
+                        padding: 30px;
+                        border-radius: 20px 20px 0 0;
+                        text-align: center;
+                        color: #1a2332;
+                    ">
+                        <div style="font-size: 4.5rem; margin-bottom: 15px;">✅</div>
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.6rem; font-weight: 800;">ZEZNANIE WYCOFANE</h3>
+                        <p style="margin: 0; opacity: 0.95; font-size: 1rem;">Operacja zapisana w historii</p>
+                    </div>
+                    
+                    <div style="padding: 30px; text-align: center;">
+                        <div style="
+                            padding: 20px;
+                            background: linear-gradient(135deg, rgba(255,193,7,0.1), rgba(255,152,0,0.1));
+                            border-radius: 12px;
+                            margin-bottom: 25px;
+                        ">
+                            <div style="font-size: 1rem; color: #856404; line-height: 1.6;">
+                                Zeznanie zostało oznaczone jako wycofane i nie będzie używane w sprawie.
+                            </div>
+                        </div>
+                        
+                        <button onclick="document.getElementById('retractSuccessModal').remove(); document.getElementById('retractTestimonyModal').remove();" style="
+                            width: 100%;
+                            padding: 16px;
+                            background: linear-gradient(135deg, #ffc107, #ff9800);
+                            color: #1a2332;
+                            border: none;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            font-weight: 800;
+                            font-size: 1.05rem;
+                            box-shadow: 0 4px 15px rgba(255,193,7,0.4);
+                            transition: all 0.3s;
+                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255,193,7,0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255,193,7,0.4)'">
+                            👍 OK, rozumiem
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(successModal);
+            
+            // Auto-zamknij po 3 sekundach
+            setTimeout(() => {
+                if (document.getElementById('retractSuccessModal')) {
+                    document.getElementById('retractSuccessModal').remove();
+                    document.getElementById('retractTestimonyModal').remove();
+                    // Odśwież listę
+                    document.getElementById('testimoniesModal').remove();
+                    witnessesModule.showTestimonies(witnessId);
+                }
+            }, 3000);
             
         } catch (error) {
             console.error('❌ Błąd wycofywania zeznania:', error);
