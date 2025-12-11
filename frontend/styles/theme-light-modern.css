@@ -665,13 +665,13 @@ body[data-theme="light"] [style*="background-color: #ffb3ba"] {
     color: #2C3E50 !important;
 }
 
-/* Wszystkie tła z "background:" zawierające różne kolory */
-body[data-theme="light"] [style*="background:"][style*="#ff"],
-body[data-theme="light"] [style*="background:"][style*="#e9"],
-body[data-theme="light"] [style*="background:"][style*="#9c"],
-body[data-theme="light"] [style*="background:"][style*="pink"],
-body[data-theme="light"] [style*="background:"][style*="coral"],
-body[data-theme="light"] [style*="background:"][style*="salmon"] {
+/* Wszystkie tła z "background:" zawierające różne kolory - WYKLUCZ zakładki dokumentów */
+body[data-theme="light"] [style*="background:"][style*="#ff"]:not(.doc-category-tab),
+body[data-theme="light"] [style*="background:"][style*="#e9"]:not(.doc-category-tab),
+body[data-theme="light"] [style*="background:"][style*="#9c"]:not(.doc-category-tab),
+body[data-theme="light"] [style*="background:"][style*="pink"]:not(.doc-category-tab),
+body[data-theme="light"] [style*="background:"][style*="coral"]:not(.doc-category-tab),
+body[data-theme="light"] [style*="background:"][style*="salmon"]:not(.doc-category-tab) {
     background: linear-gradient(145deg, 
         #E6C7C2 0%, 
         #D4A5A5 35%,
@@ -680,13 +680,13 @@ body[data-theme="light"] [style*="background:"][style*="salmon"] {
     color: #2C3E50 !important;
 }
 
-/* PRECYZYJNE różowe rgba - tylko jasnoróżowe */
-body[data-theme="light"] [style*="background: rgba(255, 204, 204"],
-body[data-theme="light"] [style*="background: rgba(255, 192, 192"],
-body[data-theme="light"] [style*="background: rgba(255, 182, 182"],
-body[data-theme="light"] [style*="background: rgba(255, 220, 220"],
-body[data-theme="light"] [style*="background: rgba(255, 230, 230"],
-body[data-theme="light"] [style*="background: rgba(248, 187, 208"] {
+/* PRECYZYJNE różowe rgba - tylko jasnoróżowe - WYKLUCZ zakładki */
+body[data-theme="light"] [style*="background: rgba(255, 204, 204"]:not(.doc-category-tab),
+body[data-theme="light"] [style*="background: rgba(255, 192, 192"]:not(.doc-category-tab),
+body[data-theme="light"] [style*="background: rgba(255, 182, 182"]:not(.doc-category-tab),
+body[data-theme="light"] [style*="background: rgba(255, 220, 220"]:not(.doc-category-tab),
+body[data-theme="light"] [style*="background: rgba(255, 230, 230"]:not(.doc-category-tab),
+body[data-theme="light"] [style*="background: rgba(248, 187, 208"]:not(.doc-category-tab) {
     background: linear-gradient(145deg, 
         #E6C7C2 0%, 
         #D4A5A5 35%,
