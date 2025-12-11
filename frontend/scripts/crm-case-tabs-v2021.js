@@ -3670,10 +3670,10 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                 }
             }
         </style>
-        <div style="padding: 20px;">
+        <div style="padding: 20px 20px 0 20px;">
             
             <!-- Nagłówek z przyciskiem - NORMALNY (nie sticky) -->
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15)); border-radius: 12px; margin-bottom: 20px; border: 2px solid #d4af37;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15)); border-radius: 12px; margin-bottom: 0; border: 2px solid #d4af37;">
                 <h3 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: #1a2332 !important;">📋 Dokumenty w sprawie</h3>
                 <button onclick="crmManager.showAddCaseDocument(${caseId})" style="padding: 14px 28px; background: linear-gradient(135deg, #1a2332, #2c3e50); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 1.05rem; box-shadow: 0 4px 15px rgba(26,35,50,0.3); transition: all 0.3s; display: inline-flex; align-items: center; gap: 10px;"
                     onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(26,35,50,0.5)'"
@@ -3683,8 +3683,8 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                 </button>
             </div>
             
-            <!-- TYLKO ZAKŁADKI - STICKY U GÓRY -->
-            <div style="position: -webkit-sticky; position: sticky; top: 0; left: 0; right: 0; background: white; z-index: 1000; margin: 0 -20px 20px -20px; padding: 10px 20px; border-bottom: 3px solid #d4af37; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <!-- TYLKO ZAKŁADKI - STICKY U GÓRY BEZ ODSTĘPU -->
+            <div style="position: -webkit-sticky; position: sticky; top: 0; left: 0; right: 0; background: white; z-index: 1000; margin: 0 -20px 20px -20px; padding: 10px 20px 10px 20px; border-bottom: 3px solid #d4af37; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                 <div class="doc-tabs-container" style="display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 10px 0; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; scrollbar-width: thin;">
                     ${sortedCategories.map((category, index) => `
                         <button 
