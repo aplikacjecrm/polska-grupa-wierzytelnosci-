@@ -3576,6 +3576,7 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                 tab.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))';
                 tab.style.border = '2px solid #000000';
                 tab.style.borderBottom = 'none';
+                tab.style.borderLeft = 'transparent';
                 tab.style.color = '#1a2332';
             });
             
@@ -3595,6 +3596,7 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                 tab.style.background = 'linear-gradient(135deg, #FFD700, #d4af37)';
                 tab.style.border = '2px solid #1a2332';
                 tab.style.borderBottom = 'none';
+                tab.style.borderLeft = '4px solid #d4af37';
                 console.log('✅ Podświetlono tab:', categoryId);
             } else {
                 console.error('❌ Nie znaleziono tab:', categoryId);
@@ -3692,7 +3694,7 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                             id="tab_${safeCategoryId(category)}"
                             class="doc-category-tab ${index === 0 ? 'active' : ''}"
                             aria-label="${categoryNames[category] || category}"
-                            style="padding: 10px 20px; background: ${index === 0 ? 'linear-gradient(135deg, #FFD700, #d4af37)' : 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'}; border: 2px solid ${index === 0 ? '#1a2332' : '#000000'}; border-bottom: none; border-radius: 10px 10px 0 0; cursor: pointer; font-size: 0.95rem; font-weight: 800; color: ${index === 0 ? '#000000' : '#1a2332 !important'}; text-shadow: ${index === 0 ? '0 1px 2px rgba(255,255,255,0.8)' : 'none'}; transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; position: relative; top: 3px;"
+                            style="padding: 10px 20px; background: ${index === 0 ? 'linear-gradient(135deg, #FFD700, #d4af37)' : 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'}; border: 2px solid ${index === 0 ? '#1a2332' : '#000000'}; border-bottom: none; border-left: 4px solid ${index === 0 ? '#d4af37' : 'transparent'}; border-radius: 10px 10px 0 0; cursor: pointer; font-size: 0.95rem; font-weight: 800; color: ${index === 0 ? '#000000' : '#1a2332 !important'}; text-shadow: ${index === 0 ? '0 1px 2px rgba(255,255,255,0.8)' : 'none'}; transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; position: relative; top: 3px;"
                             onmouseover="if(!this.classList.contains('active')) this.style.background='linear-gradient(135deg, rgba(255,215,0,0.3), rgba(212,175,55,0.3))'"
                             onmouseout="if(!this.classList.contains('active')) this.style.background='linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'">
                             <span>${categoryNames[category] || category}</span>
