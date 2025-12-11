@@ -3685,8 +3685,8 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                 </button>
             </div>
             
-            <!-- TYLKO ZAKŁADKI - STICKY U GÓRY BEZ ODSTĘPU -->
-            <div style="position: -webkit-sticky; position: sticky; top: 0; left: 0; right: 0; background: white; z-index: 1000; margin: 0 -20px 20px -20px; padding: 10px 20px 10px 20px; border-bottom: 3px solid #d4af37; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <!-- TYLKO ZAKŁADKI - STICKY POD GÓRNYM MENU BEZ SZPARY -->
+            <div style="position: -webkit-sticky; position: sticky; top: 60px; left: 0; right: 0; background: white; z-index: 999; margin: 0 -20px 20px -20px; padding: 10px 20px 10px 20px; border-bottom: 3px solid #d4af37; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                 <div class="doc-tabs-container" style="display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 10px 0; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; scrollbar-width: thin;">
                     ${sortedCategories.map((category, index) => `
                         <button 
