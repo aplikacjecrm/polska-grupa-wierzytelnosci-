@@ -3639,8 +3639,8 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
             ${addButtonHtml}
             
             <!-- HORIZONTAL TABS - Zakładki jak w notatniku -->
-            <div style="position: sticky; top: 70px; background: white; z-index: 100; margin: 0 -20px 20px -20px; padding: 0 20px 10px 20px; border-bottom: 3px solid #d4af37; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                <div class="doc-tabs-container" style="display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 10px 0; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;">
+            <div style="position: -webkit-sticky; position: sticky; top: 0; left: 0; right: 0; background: white; z-index: 1000; margin: 0 -20px 20px -20px; padding: 10px 20px; border-bottom: 3px solid #d4af37; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <div class="doc-tabs-container" style="display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 10px 0; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; scrollbar-width: thin;">
                     ${sortedCategories.map((category, index) => `
                         <button 
                             onclick="window.crmManager.switchDocCategory('${safeCategoryId(category)}')"
