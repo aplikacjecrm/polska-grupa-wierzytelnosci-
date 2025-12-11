@@ -3634,6 +3634,40 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                 scrollbar-width: thin;
                 scrollbar-color: rgba(0,0,0,0.2) transparent;
             }
+            
+            /* RESPONSYWNOŚĆ - MAŁE EKRANY */
+            @media (max-width: 768px) {
+                .doc-category-tab {
+                    padding: 8px 12px !important;
+                    font-size: 0.8rem !important;
+                    gap: 4px !important;
+                }
+                .doc-category-tab span:first-child {
+                    font-size: 0.8rem !important;
+                }
+                .doc-category-tab span:last-child {
+                    padding: 2px 6px !important;
+                    font-size: 0.65rem !important;
+                }
+                .doc-tabs-container {
+                    gap: 4px !important;
+                    padding: 8px 0 !important;
+                }
+            }
+            
+            @media (max-width: 480px) {
+                .doc-category-tab {
+                    padding: 6px 10px !important;
+                    font-size: 0.75rem !important;
+                }
+                .doc-category-tab span:first-child {
+                    font-size: 0.75rem !important;
+                }
+                .doc-category-tab span:last-child {
+                    padding: 2px 5px !important;
+                    font-size: 0.6rem !important;
+                }
+            }
         </style>
         <div style="padding: 20px;">
             ${addButtonHtml}
