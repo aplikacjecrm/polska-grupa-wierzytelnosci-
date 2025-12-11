@@ -2,7 +2,7 @@
 nixPkgs = ['nodejs_20', 'python3']
 
 [phases.install]
-cmds = ['npm ci --omit=dev --production']
+cmds = ['npm install --omit=dev --production']
 
 [phases.build]
 cmds = ['echo "No build step required"']
