@@ -1,7 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const { getDatabase } = require('../database/init');
 const nodemailer = require('nodemailer');
+
+// Sprawdź czy używamy bazy danych (lokalnie) czy tylko email (produkcja)
+const USE_DATABASE = process.env.NODE_ENV !== 'production';
+let getDatabase;
+
+if (USE_DATABASE) {
+  try {
+    getDatabase = require('../database/init').getDatabase;
+    console.log('✅ Używam bazy danych dla zapytań');
+  } catch (err) {
+    console.log('⚠️ Baza danych niedostępna - tylko email');
+  }
+}
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
@@ -35,28 +47,15 @@ router.post('/', async (req, res) => {
       });
     }
     
-    const db = getDatabase();
     const ip_address = req.ip || req.connection.remoteAddress;
     const user_agent = req.get('user-agent');
+    const inquiryId = Date.now(); // Tymczasowe ID
     
-    db.run(
-      `INSERT INTO website_inquiries 
-       (name, phone, email, subject, message, ip_address, user_agent, status, priority) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'new', 'normal')`,
-      [name, phone, email, subject, message, ip_address, user_agent],
-      async function(err) {
-        if (err) {
-          console.error('Błąd zapisywania zapytania:', err);
-          return res.status(500).json({ 
-            success: false, 
-            message: 'Błąd serwera' 
-          });
-        }
-        
-        const inquiryId = this.lastID;
-        console.log(`✅ Nowe zapytanie ze strony: ${name} (${email}) - ${subject}`);
-        
-        try {
+    console.log(`✅ Nowe zapytanie ze strony: ${name} (${email}) - ${subject}`);
+    
+    // Funkcja wysyłania emaila
+    const sendEmail = async () => {
+      try {
           const emailHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #c9b037; border-bottom: 2px solid #c9b037; padding-bottom: 10px;">
@@ -96,18 +95,62 @@ router.post('/', async (req, res) => {
             replyTo: email
           });
           
-          console.log(`📧 Email wysłany na: ${process.env.INQUIRY_EMAIL || 'info@polska-grupa-wierzytelnosci.pl'}`);
-        } catch (emailError) {
-          console.error('⚠️ Błąd wysyłania emaila (zapytanie zapisane):', emailError.message);
+        console.log(`📧 Email wysłany na: ${process.env.INQUIRY_EMAIL || 'info@polska-grupa-wierzytelnosci.pl'}`);
+        return true;
+      } catch (emailError) {
+        console.error('⚠️ Błąd wysyłania emaila:', emailError.message);
+        throw emailError;
+      }
+    };
+    
+    // Zapisz do bazy (jeśli dostępna)
+    const saveToDatabase = () => {
+      return new Promise((resolve, reject) => {
+        if (!USE_DATABASE || !getDatabase) {
+          console.log('📝 Pomijam bazę danych (tylko email)');
+          return resolve();
         }
         
-        res.json({ 
-          success: true, 
-          message: 'Dziękujemy! Twoje zapytanie zostało przesłane. Skontaktujemy się wkrótce.',
-          inquiryId: inquiryId
-        });
-      }
-    );
+        try {
+          const db = getDatabase();
+          db.run(
+            `INSERT INTO website_inquiries 
+             (name, phone, email, subject, message, ip_address, user_agent, status, priority) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'new', 'normal')`,
+            [name, phone, email, subject, message, ip_address, user_agent],
+            function(err) {
+              if (err) {
+                console.error('⚠️ Błąd zapisywania do bazy:', err.message);
+                return resolve(); // Kontynuuj mimo błędu
+              }
+              console.log('💾 Zapytanie zapisane w bazie ID:', this.lastID);
+              resolve();
+            }
+          );
+        } catch (err) {
+          console.error('⚠️ Błąd dostępu do bazy:', err.message);
+          resolve(); // Kontynuuj mimo błędu
+        }
+      });
+    };
+    
+    // Wyślij email i zapisz do bazy
+    try {
+      await sendEmail();
+      await saveToDatabase();
+      
+      res.json({ 
+        success: true, 
+        message: 'Dziękujemy! Twoje zapytanie zostało przesłane. Skontaktujemy się wkrótce.',
+        inquiryId: inquiryId
+      });
+    } catch (error) {
+      console.error('❌ Błąd krytyczny:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Wystąpił błąd podczas wysyłania. Spróbuj ponownie lub skontaktuj się telefonicznie.' 
+      });
+    }
   } catch (error) {
     console.error('Błąd przetwarzania zapytania:', error);
     res.status(500).json({ 
