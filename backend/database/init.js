@@ -7,8 +7,10 @@ const fs = require('fs');
 const VOLUME_DB_PATH = '/app/data/komunikator.db';
 const SEED_DB_PATH = '/app/db-seed/komunikator.db';  // This is NOT covered by Volume mount
 
-const isRailway = process.env.RAILWAY_ENVIRONMENT === 'production' || process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === 'production';
+const isRailway = process.env.RAILWAY_ENVIRONMENT === 'production';
 
+console.log('[DB INIT] isProduction:', isProduction);
 console.log('[DB INIT] isRailway:', isRailway);
 console.log('[DB INIT] SEED_DB_PATH:', SEED_DB_PATH);
 console.log('[DB INIT] SEED exists:', fs.existsSync(SEED_DB_PATH));
@@ -26,7 +28,7 @@ if (fs.existsSync(VOLUME_DB_PATH)) {
 }
 
 // SEED DATABASE: Skopiuj seed DB jeśli volume jest pusty/mały LUB seed jest nowszy
-if (isRailway && fs.existsSync(SEED_DB_PATH)) {
+if (!isProduction && isRailway && fs.existsSync(SEED_DB_PATH)) {
     const volumeSize = fs.existsSync(VOLUME_DB_PATH) ? fs.statSync(VOLUME_DB_PATH).size : 0;
     const seedSize = fs.statSync(SEED_DB_PATH).size;
     
@@ -50,29 +52,53 @@ if (isRailway && fs.existsSync(SEED_DB_PATH)) {
     }
 }
 
+// GŁÓWNA BAZA DANYCH
+let DB_PATH;
+let db;
 
-// GŁÓWNA BAZA DANYCH - ZAWSZE use bazy w głównym katalogu data/ (NIE backend/data/)
-// Ścieżka: komunikator-app/data/komunikator.db
-const DB_PATH = isRailway ? VOLUME_DB_PATH : path.resolve(__dirname, '..', '..', 'data', 'komunikator.db');
-console.log('?? Database path:', DB_PATH);
-
-// Check if to prawidłowa baza (powinna mieć > 5MB)
-if (fs.existsSync(DB_PATH)) {
-  const stats = fs.statSync(DB_PATH);
-  const sizeMB = stats.size / (1024 * 1024);
-  console.log(`?? Database size: ${sizeMB.toFixed(2)} MB`);
-  if (sizeMB < 1) {
-    console.warn('?? UWAGA: Baza danych jest mała! Może to być zła baza.');
+if (isProduction) {
+  // PRODUKCJA (Render/inne) - użyj bazy w pamięci
+  console.log(' PRODUCTION MODE: Using in-memory database');
+  DB_PATH = ':memory:';
+  db = new sqlite3.Database(':memory:');
+} else if (isRailway) {
+  // Railway z Volume
+  DB_PATH = VOLUME_DB_PATH;
+  console.log(' RAILWAY MODE: Database path:', DB_PATH);
+  
+  if (fs.existsSync(DB_PATH)) {
+    const stats = fs.statSync(DB_PATH);
+    const sizeMB = stats.size / (1024 * 1024);
+    console.log(` Database size: ${sizeMB.toFixed(2)} MB`);
   }
+  
+  const dataDir = path.dirname(DB_PATH);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  
+  db = new sqlite3.Database(DB_PATH);
+} else {
+  // LOKALNE ŚRODOWISKO
+  DB_PATH = path.resolve(__dirname, '..', '..', 'data', 'komunikator.db');
+  console.log(' LOCAL MODE: Database path:', DB_PATH);
+  
+  if (fs.existsSync(DB_PATH)) {
+    const stats = fs.statSync(DB_PATH);
+    const sizeMB = stats.size / (1024 * 1024);
+    console.log(` Database size: ${sizeMB.toFixed(2)} MB`);
+    if (sizeMB < 1) {
+      console.warn(' UWAGA: Baza danych jest mała! Może to być zła baza.');
+    }
+  }
+  
+  const dataDir = path.dirname(DB_PATH);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  
+  db = new sqlite3.Database(DB_PATH);
 }
-
-// Upewnij się że katalog data istnieje
-const dataDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-const db = new sqlite3.Database(DB_PATH);
 
 async function initDatabase() {
   return new Promise((resolve, reject) => {
