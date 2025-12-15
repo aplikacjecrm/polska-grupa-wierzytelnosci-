@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Sprawdź czy używamy bazy danych (lokalnie) czy tylko email (produkcja)
 const USE_DATABASE = process.env.NODE_ENV !== 'production';
@@ -15,15 +17,6 @@ if (USE_DATABASE) {
   }
 }
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'pgw.atthost24.pl',
-  port: parseInt(process.env.SMTP_PORT) || 465,
-  secure: process.env.SMTP_SECURE === 'true' || true,
-  auth: {
-    user: process.env.SMTP_USER || 'info@kancelaria-pro-meritum.pl',
-    pass: process.env.SMTP_PASSWORD
-  }
-});
 
 // POST /api/website-inquiries - Nowe zapytanie ze strony WWW
 router.post('/', async (req, res) => {
@@ -87,13 +80,17 @@ router.post('/', async (req, res) => {
             </div>
           `;
           
-          await transporter.sendMail({
-            from: `"Formularz Kontaktowy - Pro Meritum" <${process.env.GMAIL_USER || 'info@polska-grupa-wierzytelnosci.pl'}>`,
-            to: process.env.INQUIRY_EMAIL || 'info@polska-grupa-wierzytelnosci.pl',
+          const { data, error } = await resend.emails.send({
+            from: 'Formularz Kontaktowy <onboarding@resend.dev>',
+            to: [process.env.INQUIRY_EMAIL || 'info@polska-grupa-wierzytelnosci.pl'],
             subject: `🌐 Nowe zapytanie: ${subject}`,
             html: emailHtml,
-            replyTo: email
+            reply_to: email
           });
+          
+          if (error) {
+            throw new Error(`Resend API error: ${error.message}`);
+          }
           
         console.log(`📧 Email wysłany na: ${process.env.INQUIRY_EMAIL || 'info@polska-grupa-wierzytelnosci.pl'}`);
         return true;
