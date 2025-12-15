@@ -16,12 +16,12 @@ if (USE_DATABASE) {
 }
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+  host: process.env.SMTP_HOST || 'pgw.atthost24.pl',
+  port: parseInt(process.env.SMTP_PORT) || 465,
+  secure: process.env.SMTP_SECURE === 'true' || true,
   auth: {
-    user: process.env.GMAIL_USER || 'info@polska-grupa-wierzytelnosci.pl',
-    pass: process.env.GMAIL_APP_PASSWORD
+    user: process.env.SMTP_USER || 'info@kancelaria-pro-meritum.pl',
+    pass: process.env.SMTP_PASSWORD
   }
 });
 
