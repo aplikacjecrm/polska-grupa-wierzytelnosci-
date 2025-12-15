@@ -1,6 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const { getDatabase } = require('../database/init');
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.GMAIL_USER || 'info@polska-grupa-wierzytelnosci.pl',
+    pass: process.env.GMAIL_APP_PASSWORD
+  }
+});
 
 // POST /api/website-inquiries - Nowe zapytanie ze strony WWW
 router.post('/', async (req, res) => {
@@ -33,7 +44,7 @@ router.post('/', async (req, res) => {
        (name, phone, email, subject, message, ip_address, user_agent, status, priority) 
        VALUES (?, ?, ?, ?, ?, ?, ?, 'new', 'normal')`,
       [name, phone, email, subject, message, ip_address, user_agent],
-      function(err) {
+      async function(err) {
         if (err) {
           console.error('Błąd zapisywania zapytania:', err);
           return res.status(500).json({ 
@@ -42,12 +53,58 @@ router.post('/', async (req, res) => {
           });
         }
         
+        const inquiryId = this.lastID;
         console.log(`✅ Nowe zapytanie ze strony: ${name} (${email}) - ${subject}`);
+        
+        try {
+          const emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #c9b037; border-bottom: 2px solid #c9b037; padding-bottom: 10px;">
+                🌐 Nowe zapytanie ze strony kancelaria-pro-meritum.pl
+              </h2>
+              
+              <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #333;">📋 Szczegóły zapytania:</h3>
+                <p><strong>Imię i nazwisko:</strong> ${name}</p>
+                <p><strong>Telefon:</strong> ${phone}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Temat:</strong> ${subject}</p>
+              </div>
+              
+              <div style="background: #fff; padding: 20px; border-left: 4px solid #c9b037; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #333;">💬 Wiadomość:</h3>
+                <p style="white-space: pre-wrap;">${message}</p>
+              </div>
+              
+              <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 5px 0;"><strong>📌 ID zapytania:</strong> ${inquiryId}</p>
+                <p style="margin: 5px 0;"><strong>🕐 Data:</strong> ${new Date().toLocaleString('pl-PL')}</p>
+                <p style="margin: 5px 0;"><strong>🌐 IP:</strong> ${ip_address}</p>
+              </div>
+              
+              <p style="color: #666; font-size: 0.9em; margin-top: 30px;">
+                <em>To zapytanie zostało automatycznie zapisane w systemie komunikatora.</em>
+              </p>
+            </div>
+          `;
+          
+          await transporter.sendMail({
+            from: `"Formularz Kontaktowy - Pro Meritum" <${process.env.GMAIL_USER || 'info@polska-grupa-wierzytelnosci.pl'}>`,
+            to: process.env.INQUIRY_EMAIL || 'info@polska-grupa-wierzytelnosci.pl',
+            subject: `🌐 Nowe zapytanie: ${subject}`,
+            html: emailHtml,
+            replyTo: email
+          });
+          
+          console.log(`📧 Email wysłany na: ${process.env.INQUIRY_EMAIL || 'info@polska-grupa-wierzytelnosci.pl'}`);
+        } catch (emailError) {
+          console.error('⚠️ Błąd wysyłania emaila (zapytanie zapisane):', emailError.message);
+        }
         
         res.json({ 
           success: true, 
           message: 'Dziękujemy! Twoje zapytanie zostało przesłane. Skontaktujemy się wkrótce.',
-          inquiryId: this.lastID
+          inquiryId: inquiryId
         });
       }
     );
