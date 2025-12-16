@@ -267,20 +267,6 @@ router.put('/:id', verifyToken, (req, res) => {
         return res.status(404).json({ error: 'Świadek nie znaleziony' });
       }
       
-      // 📊 LOGUJ EDYCJĘ DO HISTORII SPRAWY
-      const userId = req.user.userId;
-      db.get('SELECT case_id FROM case_witnesses WHERE id = ?', [id], (err, witness) => {
-        if (!err && witness) {
-          logEmployeeActivity({
-            userId: userId,
-            actionType: 'witness_updated',
-            actionCategory: 'witness',
-            description: `Zaktualizowano świadka: ${first_name} ${last_name}`,
-            caseId: witness.case_id
-          });
-        }
-      });
-      
       res.json({ success: true });
     }
   );
@@ -317,166 +303,34 @@ router.post('/:id/withdraw', verifyToken, (req, res) => {
   );
 });
 
-// === USUŃ ŚWIADKA (Z WERYFIKACJĄ HASŁA I SZCZEGÓŁOWYM LOGOWANIEM) ===
+// === USUŃ ŚWIADKA ===
 
-router.delete('/:id', verifyToken, async (req, res) => {
+router.delete('/:id', verifyToken, (req, res) => {
   const db = getDatabase();
   const { id } = req.params;
-  const userId = req.user.userId;
-  const { password, witness_name, witness_code } = req.body;
   
-  console.log('🗑️ DELETE /witnesses/:id - Próba usunięcia świadka:', id);
-  console.log('   - userId:', userId);
-  console.log('   - hasło podane:', password ? 'TAK' : 'NIE');
-  
-  // WERYFIKACJA HASŁA - OBOWIĄZKOWA!
-  if (!password) {
-    console.log('❌ Brak hasła w żądaniu');
-    return res.status(400).json({ error: 'Hasło jest wymagane do usunięcia świadka' });
-  }
-  
-  try {
-    // Pobierz użytkownika z bazy (musimy mieć hasło do weryfikacji)
-    const bcrypt = require('bcrypt');
-    const user = await new Promise((resolve, reject) => {
-      db.get('SELECT id, name, email, password FROM users WHERE id = ?', [userId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-    
-    if (!user) {
-      console.log('❌ Użytkownik nie znaleziony:', userId);
-      return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+  // Najpierw usuń zeznania
+  db.run('DELETE FROM witness_testimonies WHERE witness_id = ?', [id], (err) => {
+    if (err) {
+      console.error('❌ Błąd usuwania zeznań:', err);
+      return res.status(500).json({ error: 'Błąd usuwania zeznań' });
     }
     
-    // Weryfikuj hasło
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    
-    if (!isPasswordValid) {
-      console.log('❌ Nieprawidłowe hasło dla użytkownika:', user.email);
-      return res.status(401).json({ error: 'Nieprawidłowe hasło. Usunięcie świadka wymaga potwierdzenia hasłem.' });
-    }
-    
-    console.log('✅ Hasło poprawne - kontynuacja usuwania');
-    
-    // Najpierw pobierz dane świadka do logowania
-    const witness = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM case_witnesses WHERE id = ?', [id], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-    
-    if (!witness) {
-      console.log('❌ Świadek nie znaleziony:', id);
-      return res.status(404).json({ error: 'Świadek nie znaleziony' });
-    }
-    
-    const witnessNameFinal = witness_name || `${witness.first_name} ${witness.last_name}`;
-    const witnessCodeFinal = witness_code || witness.witness_code;
-    const caseId = witness.case_id;
-    
-    console.log(`🗑️ Usuwanie świadka: ${witnessNameFinal} (${witnessCodeFinal})`);
-    
-    // 1️⃣ USUŃ ZEZNANIA ŚWIADKA
-    console.log('   → Usuwam zeznania świadka...');
-    const testimoniesDeleted = await new Promise((resolve, reject) => {
-      db.run('DELETE FROM witness_testimonies WHERE witness_id = ?', [id], function(err) {
-        if (err) reject(err);
-        else {
-          console.log(`   ✅ Usunięto ${this.changes} zeznań`);
-          resolve(this.changes);
-        }
-      });
-    });
-    
-    // 2️⃣ USUŃ DOKUMENTY ŚWIADKA (witness_documents)
-    console.log('   → Usuwam dokumenty świadka...');
-    const documentsDeleted = await new Promise((resolve, reject) => {
-      db.run('DELETE FROM witness_documents WHERE witness_id = ?', [id], function(err) {
-        if (err) reject(err);
-        else {
-          console.log(`   ✅ Usunięto ${this.changes} dokumentów`);
-          resolve(this.changes);
-        }
-      });
-    });
-    
-    // 3️⃣ USUŃ ZAŁĄCZNIKI ŚWIADKA (attachments)
-    console.log('   → Usuwam załączniki świadka...');
-    const attachmentsDeleted = await new Promise((resolve, reject) => {
-      db.run(
-        'DELETE FROM attachments WHERE entity_type = ? AND entity_id = ?',
-        ['witness', id],
-        function(err) {
-          if (err) reject(err);
-          else {
-            console.log(`   ✅ Usunięto ${this.changes} załączników`);
-            resolve(this.changes);
-          }
-        }
-      );
-    });
-    
-    // 4️⃣ USUŃ ŚWIADKA
-    console.log('   → Usuwam świadka z tabeli case_witnesses...');
-    await new Promise((resolve, reject) => {
-      db.run('DELETE FROM case_witnesses WHERE id = ?', [id], function(err) {
-        if (err) reject(err);
-        else {
-          console.log('   ✅ Świadek usunięty');
-          resolve();
-        }
-      });
-    });
-    
-    // 📊 LOGUJ USUNIĘCIE DO HISTORII SPRAWY (employee_activity)
-    await logEmployeeActivity({
-      userId: userId,
-      actionType: 'witness_deleted',
-      actionCategory: 'witness',
-      description: `🗑️ USUNIĘTO ŚWIADKA: ${witnessNameFinal} (${witnessCodeFinal}) - Potwierdzono hasłem (+ ${testimoniesDeleted} zeznań, ${documentsDeleted} dokumentów)`,
-      caseId: caseId,
-      details: JSON.stringify({
-        witness_id: id,
-        witness_name: witnessNameFinal,
-        witness_code: witnessCodeFinal,
-        deleted_by: user.name,
-        deleted_by_email: user.email,
-        confirmed_with_password: true,
-        testimonies_deleted: testimoniesDeleted,
-        documents_deleted: documentsDeleted,
-        attachments_deleted: attachmentsDeleted,
-        timestamp: new Date().toISOString()
-      })
-    });
-    
-    console.log('✅ Świadek usunięty wraz z powiązaniami:', id);
-    console.log(`   - Zeznania usunięte: ${testimoniesDeleted}`);
-    console.log(`   - Dokumenty usunięte: ${documentsDeleted}`);
-    console.log(`   - Załączniki usunięte: ${attachmentsDeleted}`);
-    console.log('   - Historia sprawy: zapisana');
-    
-    res.json({ 
-      success: true, 
-      message: `Świadek usunięty pomyślnie wraz z ${testimoniesDeleted} zeznaniami i ${documentsDeleted} dokumentami`,
-      deleted_witness: {
-        id: id,
-        name: witnessNameFinal,
-        code: witnessCodeFinal,
-        testimonies_deleted: testimoniesDeleted,
-        documents_deleted: documentsDeleted,
-        attachments_deleted: attachmentsDeleted
+    // Potem usuń świadka
+    db.run('DELETE FROM case_witnesses WHERE id = ?', [id], function(err) {
+      if (err) {
+        console.error('❌ Błąd usuwania świadka:', err);
+        return res.status(500).json({ error: 'Błąd usuwania świadka' });
       }
+      
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Świadek nie znaleziony' });
+      }
+      
+      console.log('✅ Usunięto świadka:', id);
+      res.json({ success: true });
     });
-    
-  } catch (error) {
-    console.error('❌ Błąd usuwania świadka:', error);
-    return res.status(500).json({ 
-      error: 'Błąd usuwania świadka: ' + error.message 
-    });
-  }
+  });
 });
 
 // ================================================
@@ -571,150 +425,33 @@ router.post('/:witnessId/testimonies', verifyToken, (req, res) => {
   });
 });
 
-// Oznacz zeznanie jako wycofane (z logowaniem do historii + oznaczenie załączników)
-router.post('/:witnessId/testimonies/:testimonyId/retract', verifyToken, async (req, res) => {
+// Oznacz zeznanie jako wycofane
+router.post('/:witnessId/testimonies/:testimonyId/retract', verifyToken, (req, res) => {
   const db = getDatabase();
-  const { witnessId, testimonyId } = req.params;
+  const { testimonyId } = req.params;
   const { retraction_reason } = req.body;
-  const userId = req.user.userId;
   
-  console.log('❌ Wycofywanie zeznania:', testimonyId, 'świadka:', witnessId);
-  console.log('   Powód:', retraction_reason);
+  console.log('❌ Wycofywanie zeznania:', testimonyId);
   
-  try {
-    // 1️⃣ Pobierz pełne dane zeznania + świadka + sprawy
-    const testimony = await new Promise((resolve, reject) => {
-      db.get(
-        `SELECT t.*, 
-                w.first_name, w.last_name, w.witness_code, w.case_id,
-                c.case_number,
-                u.name as recorded_by_name
-         FROM witness_testimonies t
-         LEFT JOIN case_witnesses w ON t.witness_id = w.id
-         LEFT JOIN cases c ON w.case_id = c.id
-         LEFT JOIN users u ON t.recorded_by = u.id
-         WHERE t.id = ?`,
-        [testimonyId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
-    
-    if (!testimony) {
-      return res.status(404).json({ error: 'Zeznanie nie znalezione' });
-    }
-    
-    // 2️⃣ Pobierz dane użytkownika wycofującego
-    const user = await new Promise((resolve, reject) => {
-      db.get('SELECT name, email FROM users WHERE id = ?', [userId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-    
-    console.log('   → Zeznanie:', `${testimony.first_name} ${testimony.last_name} (${testimony.witness_code}) - Wersja ${testimony.version_number}`);
-    console.log('   → Wycofuje:', user.name);
-    
-    // 3️⃣ Oznacz zeznanie jako wycofane
-    await new Promise((resolve, reject) => {
-      db.run(
-        `UPDATE witness_testimonies
-         SET is_retracted = 1, 
-             retraction_date = CURRENT_TIMESTAMP, 
-             retraction_reason = ?,
-             retracted_by = ?
-         WHERE id = ?`,
-        [retraction_reason || null, userId, testimonyId],
-        function(err) {
-          if (err) reject(err);
-          else {
-            console.log('   ✅ Zeznanie oznaczone jako wycofane');
-            resolve();
-          }
-        }
-      );
-    });
-    
-    // 4️⃣ Dodaj kolumnę is_retracted do attachments jeśli nie istnieje
-    await new Promise((resolve) => {
-      db.run(`ALTER TABLE attachments ADD COLUMN is_retracted INTEGER DEFAULT 0`, (err) => {
-        // Ignoruj błąd jeśli kolumna już istnieje
-        resolve();
-      });
-    });
-    
-    // 5️⃣ Oznacz wszystkie załączniki zeznania jako wycofane
-    const attachmentsUpdated = await new Promise((resolve, reject) => {
-      db.run(
-        `UPDATE attachments 
-         SET is_retracted = 1,
-             description = CASE 
-               WHEN description IS NULL THEN '⚠️ WYCOFANE: ' || ?
-               ELSE description || ' | ⚠️ WYCOFANE: ' || ?
-             END
-         WHERE entity_type = 'testimony' AND entity_id = ?`,
-        [retraction_reason || 'Zeznanie wycofane', retraction_reason || 'Zeznanie wycofane', testimonyId],
-        function(err) {
-          if (err) reject(err);
-          else {
-            console.log(`   ✅ Oznaczono ${this.changes} załączników jako wycofane`);
-            resolve(this.changes);
-          }
-        }
-      );
-    });
-    
-    // 6️⃣ LOGUJ DO EMPLOYEE_ACTIVITY_LOGS (szczegółowo)
-    await logEmployeeActivity({
-      userId: userId,
-      actionType: 'testimony_retracted',
-      actionCategory: 'witness',
-      description: `⚠️ WYCOFANO ZEZNANIE: ${testimony.first_name} ${testimony.last_name} (${testimony.witness_code}) - Wersja ${testimony.version_number} | Powód: ${retraction_reason}`,
-      caseId: testimony.case_id,
-      details: JSON.stringify({
-        testimony_id: testimonyId,
-        witness_id: witnessId,
-        witness_name: `${testimony.first_name} ${testimony.last_name}`,
-        witness_code: testimony.witness_code,
-        case_number: testimony.case_number,
-        version_number: testimony.version_number,
-        testimony_type: testimony.testimony_type,
-        testimony_date: testimony.testimony_date,
-        retraction_reason: retraction_reason,
-        retracted_by: user.name,
-        retracted_by_email: user.email,
-        attachments_marked: attachmentsUpdated,
-        recorded_by: testimony.recorded_by_name,
-        timestamp: new Date().toISOString()
-      })
-    });
-    
-    console.log('   ✅ Zapisano w historii sprawy (employee_activity_logs)');
-    
-    // 7️⃣ Zwróć szczegółowe info
-    res.json({ 
-      success: true,
-      message: 'Zeznanie wycofane pomyślnie',
-      details: {
-        testimony_id: testimonyId,
-        witness_name: `${testimony.first_name} ${testimony.last_name}`,
-        witness_code: testimony.witness_code,
-        version_number: testimony.version_number,
-        retraction_reason: retraction_reason,
-        retracted_by: user.name,
-        attachments_updated: attachmentsUpdated,
-        retraction_date: new Date().toISOString()
+  db.run(
+    `UPDATE witness_testimonies
+     SET is_retracted = 1, retraction_date = CURRENT_TIMESTAMP, retraction_reason = ?
+     WHERE id = ?`,
+    [retraction_reason || null, testimonyId],
+    function(err) {
+      if (err) {
+        console.error('❌ Błąd wycofywania zeznania:', err);
+        return res.status(500).json({ error: 'Błąd wycofywania zeznania' });
       }
-    });
-    
-  } catch (error) {
-    console.error('❌ Błąd wycofywania zeznania:', error);
-    return res.status(500).json({ 
-      error: 'Błąd wycofywania zeznania: ' + error.message 
-    });
-  }
+      
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Zeznanie nie znalezione' });
+      }
+      
+      console.log('✅ Zeznanie wycofane');
+      res.json({ success: true });
+    }
+  );
 });
 
 // === ZAPISZ ZEZNANIE PISEMNE JAKO ZAŁĄCZNIK TXT ===
@@ -840,22 +577,17 @@ Data zapisu: ${new Date().toLocaleString('pl-PL')}
     fs.writeFileSync(filepath, fileContent, 'utf8');
     console.log('✅ Plik TXT zapisany:', filepath);
     
-    // Konwertuj do base64 dla zapisu w bazie (PRIORYTET - zapewnia dostępność w produkcji)
-    const fileBuffer = Buffer.from(fileContent, 'utf8');
-    const fileDataBase64 = fileBuffer.toString('base64');
-    console.log('📦 Konwersja do base64:', fileDataBase64.length, 'znaków');
-    
-    // 5. Dodaj załącznik do bazy Z file_data (base64)
+    // 5. Dodaj załącznik do bazy
     const attachmentId = await new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO attachments (
           case_id, entity_type, entity_id, attachment_code, title, description,
-          file_name, file_path, file_size, file_type, file_data, category, uploaded_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          file_name, file_path, file_size, file_type, category, uploaded_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           testimony.case_id,
-          'testimony',  // ✅ POPRAWIONE: testimony zamiast witness
-          testimonyId,  // ✅ POPRAWIONE: testimonyId zamiast witnessId
+          'witness',
+          witnessId,
           attachmentCode,
           `Zeznanie pisemne - ${testimony.first_name} ${testimony.last_name} v${testimony.version_number}`,
           `Zeznanie z dnia ${new Date(testimony.testimony_date).toLocaleDateString('pl-PL')}`,
@@ -863,7 +595,6 @@ Data zapisu: ${new Date().toLocaleString('pl-PL')}
           filepath,
           Buffer.byteLength(fileContent, 'utf8'),
           'text/plain',
-          fileDataBase64,
           'zeznanie',
           userId
         ],
@@ -956,300 +687,6 @@ router.get('/:id/testimonies', verifyToken, (req, res) => {
     
     console.log(`✅ Pobrano ${testimonies ? testimonies.length : 0} zeznań świadka ${witnessId}`);
     res.json({ testimonies: testimonies || [] });
-  });
-});
-
-// ================================================
-// ENDPOINTY DLA DOKUMENTÓW ŚWIADKÓW
-// ================================================
-
-const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-
-// Konfiguracja uploadu dla dokumentów świadków
-const witnessDocsStorage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    const uploadDir = path.join(__dirname, '../uploads/witness-documents');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function(req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    const name = path.basename(file.originalname, ext);
-    cb(null, `witness_${req.params.id}_${uniqueSuffix}${ext}`);
-  }
-});
-
-const witnessDocsUpload = multer({ 
-  storage: witnessDocsStorage,
-  limits: { fileSize: 50 * 1024 * 1024 } // 50MB
-});
-
-// Upload dokumentów świadka
-router.post('/:id/documents', verifyToken, witnessDocsUpload.array('documents', 10), async (req, res) => {
-  const db = getDatabase();
-  const witnessId = req.params.id;
-  const userId = req.user.userId;
-  const files = req.files;
-  
-  if (!files || files.length === 0) {
-    return res.status(400).json({ error: 'Brak plików do uploadu' });
-  }
-  
-  console.log(`📎 Upload ${files.length} dokumentów dla świadka ${witnessId}`);
-  
-  try {
-    // Pobierz dane świadka
-    const witness = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT w.*, c.case_number FROM case_witnesses w LEFT JOIN cases c ON w.case_id = c.id WHERE w.id = ?',
-        [witnessId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
-    
-    if (!witness) {
-      // Usuń uploady files
-      files.forEach(f => fs.unlinkSync(f.path));
-      return res.status(404).json({ error: 'Świadek nie znaleziony' });
-    }
-    
-    const uploadedDocs = [];
-    const witnessShortCode = witness.witness_code.split('/').pop();
-    const prefix = `DOK/SWI/ZEZ/${witness.case_number}/${witnessShortCode}/`;
-    
-    // Przetwarzaj pliki równolegle dla szybszości
-    const uploadPromises = files.map(async (file, index) => {
-      console.log(`📤 Przetwarzam plik ${index + 1}/${files.length}: ${file.originalname}`);
-      
-      // Pobierz ostatni numer dokumentu dla tego świadka (z lock aby uniknąć konfliktów)
-      const lastDoc = await new Promise((resolve, reject) => {
-        db.get(
-          `SELECT document_code FROM witness_documents 
-           WHERE witness_id = ? AND document_code LIKE ?
-           ORDER BY document_code DESC LIMIT 1`,
-          [witnessId, `${prefix}%`],
-          (err, row) => {
-            if (err) reject(err);
-            else resolve(row);
-          }
-        );
-      });
-      
-      let nextNumber = 1 + index; // Dodaj index aby uniknąć duplikatów przy równoległym przetwarzaniu
-      if (lastDoc && lastDoc.document_code) {
-        const lastNumberPart = lastDoc.document_code.split('/').pop();
-        nextNumber = parseInt(lastNumberPart) + 1 + index;
-      }
-      
-      const documentCode = `${prefix}${String(nextNumber).padStart(3, '0')}`;
-      console.log('📋 Kod dokumentu świadka:', documentCode);
-      
-      // Wczytaj plik jako base64 ASYNC (szybsze dla dużych plików)
-      const fileData = await fs.promises.readFile(file.path, { encoding: 'base64' });
-      console.log(`📦 Plik ${file.originalname} wczytany jako base64:`, Math.round(fileData.length / 1024), 'KB');
-      
-      const docId = await new Promise((resolve, reject) => {
-        db.run(
-          `INSERT INTO witness_documents (
-            witness_id, case_id, document_code, file_name, file_path, file_size, file_type,
-            file_data, document_type, title, uploaded_by
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            witnessId,
-            witness.case_id,
-            documentCode,
-            file.originalname,
-            file.path,
-            file.size,
-            file.mimetype,
-            fileData,  // Base64 data
-            'general',
-            file.originalname,
-            userId
-          ],
-          function(err) {
-            if (err) reject(err);
-            else resolve(this.lastID);
-          }
-        );
-      });
-      
-      // Usuń plik z dysku po zapisaniu do bazy
-      try {
-        await fs.promises.unlink(file.path);
-        console.log('🗑️ Plik usunięty z dysku (zapisany w bazie jako base64)');
-      } catch (e) {
-        console.warn('⚠️ Nie można usunąć pliku z dysku:', e.message);
-      }
-      
-      console.log(`✅ Dokument ${index + 1}/${files.length} zapisany: ${file.originalname} (ID: ${docId})`);
-      
-      return {
-        id: docId,
-        document_code: documentCode,
-        filename: file.originalname,
-        size: file.size
-      };
-    });
-    
-    // Czekaj na wszystkie pliki
-    const results = await Promise.all(uploadPromises);
-    uploadedDocs.push(...results);
-    
-    // Loguj aktywność
-    logEmployeeActivity({
-      userId: userId,
-      actionType: 'witness_documents_added',
-      actionCategory: 'witness',
-      description: `Dodano ${files.length} dokumentów do świadka: ${witness.first_name} ${witness.last_name}`,
-      caseId: witness.case_id
-    });
-    
-    res.json({
-      success: true,
-      count: uploadedDocs.length,
-      documents: uploadedDocs
-    });
-    
-  } catch (error) {
-    console.error('❌ Błąd uploadu dokumentów świadka:', error);
-    // Usuń pliki w przypadku błędu
-    files.forEach(f => {
-      try { fs.unlinkSync(f.path); } catch(e) {}
-    });
-    res.status(500).json({ error: 'Błąd uploadu dokumentów: ' + error.message });
-  }
-});
-
-// Pobierz dokumenty świadka
-router.get('/:id/documents', verifyToken, (req, res) => {
-  const db = getDatabase();
-  const witnessId = req.params.id;
-  
-  db.all(
-    `SELECT wd.*, u.name as uploaded_by_name
-     FROM witness_documents wd
-     LEFT JOIN users u ON wd.uploaded_by = u.id
-     WHERE wd.witness_id = ?
-     ORDER BY wd.uploaded_at DESC`,
-    [witnessId],
-    (err, documents) => {
-      if (err) {
-        console.error('❌ Błąd pobierania dokumentów świadka:', err);
-        return res.status(500).json({ error: 'Błąd pobierania dokumentów' });
-      }
-      
-      console.log(`✅ Pobrano ${documents ? documents.length : 0} dokumentów świadka ${witnessId}`);
-      res.json({ documents: documents || [] });
-    }
-  );
-});
-
-// Pobierz/podejrzyj pojedynczy dokument świadka
-router.get('/:witnessId/documents/:docId', verifyToken, (req, res) => {
-  const db = getDatabase();
-  const { docId } = req.params;
-  const isView = req.query.view === 'true';
-  
-  db.get(
-    'SELECT * FROM witness_documents WHERE id = ?',
-    [docId],
-    (err, doc) => {
-      if (err) {
-        console.error('❌ Błąd pobierania dokumentu:', err);
-        return res.status(500).json({ error: 'Błąd pobierania dokumentu' });
-      }
-      
-      if (!doc) {
-        return res.status(404).json({ error: 'Dokument nie znaleziony' });
-      }
-      
-      // PRIORITET 1: Sprawdź czy mamy base64 data w bazie
-      if (doc.file_data) {
-        console.log('📦 Używam base64 z bazy dla dokumentu:', doc.file_name);
-        const buffer = Buffer.from(doc.file_data, 'base64');
-        const disposition = isView ? 'inline' : 'attachment';
-        
-        res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
-        res.setHeader('Content-Length', buffer.length);
-        res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(doc.file_name)}"`);
-        
-        return res.send(buffer);
-      }
-      
-      // PRIORITET 2: Sprawdź czy plik istnieje na dysku (fallback dla starych plików)
-      if (fs.existsSync(doc.file_path)) {
-        console.log('📁 Używam pliku z dysku:', doc.file_path);
-        const disposition = isView ? 'inline' : 'attachment';
-        res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(doc.file_name)}"`);
-        res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
-        
-        return res.sendFile(doc.file_path, (err) => {
-          if (err) {
-            console.error('❌ Błąd wysyłania pliku:', err);
-            if (!res.headersSent) {
-              res.status(500).json({ error: 'Błąd pobierania pliku' });
-            }
-          }
-        });
-      }
-      
-      // Brak pliku zarówno w bazie jak i na dysku
-      console.error('❌ Plik nie znaleziony ani w bazie ani na dysku:', doc.file_name);
-      return res.status(404).json({ error: 'Plik nie znaleziony na serwerze' });
-    }
-  );
-});
-
-// Usuń dokument świadka
-router.delete('/:witnessId/documents/:docId', verifyToken, (req, res) => {
-  const db = getDatabase();
-  const { docId, witnessId } = req.params;
-  const userId = req.user.userId;
-  
-  // Pobierz dane dokumentu
-  db.get('SELECT * FROM witness_documents WHERE id = ? AND witness_id = ?', [docId, witnessId], (err, doc) => {
-    if (err || !doc) {
-      return res.status(404).json({ error: 'Dokument nie znaleziony' });
-    }
-    
-    // Usuń plik fizyczny
-    if (fs.existsSync(doc.file_path)) {
-      try {
-        fs.unlinkSync(doc.file_path);
-        console.log('✅ Plik fizyczny usunięty:', doc.file_path);
-      } catch (e) {
-        console.error('⚠️ Nie można usunąć pliku fizycznego:', e);
-      }
-    }
-    
-    // Usuń z bazy
-    db.run('DELETE FROM witness_documents WHERE id = ?', [docId], function(err) {
-      if (err) {
-        console.error('❌ Błąd usuwania dokumentu:', err);
-        return res.status(500).json({ error: 'Błąd usuwania dokumentu' });
-      }
-      
-      // Loguj
-      logEmployeeActivity({
-        userId: userId,
-        actionType: 'witness_document_deleted',
-        actionCategory: 'witness',
-        description: `Usunięto dokument świadka: ${doc.file_name}`,
-        caseId: doc.case_id
-      });
-      
-      console.log('✅ Dokument usunięty:', docId);
-      res.json({ success: true });
-    });
   });
 });
 

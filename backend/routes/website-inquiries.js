@@ -1,22 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Resend } = require('resend');
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-// Sprawdź czy używamy bazy danych (lokalnie) czy tylko email (produkcja)
-const USE_DATABASE = process.env.NODE_ENV !== 'production';
-let getDatabase;
-
-if (USE_DATABASE) {
-  try {
-    getDatabase = require('../database/init').getDatabase;
-    console.log('✅ Używam bazy danych dla zapytań');
-  } catch (err) {
-    console.log('⚠️ Baza danych niedostępna - tylko email');
-  }
-}
-
+const { getDatabase } = require('../database/init');
 
 // POST /api/website-inquiries - Nowe zapytanie ze strony WWW
 router.post('/', async (req, res) => {
@@ -40,114 +24,33 @@ router.post('/', async (req, res) => {
       });
     }
     
+    const db = getDatabase();
     const ip_address = req.ip || req.connection.remoteAddress;
     const user_agent = req.get('user-agent');
-    const inquiryId = Date.now(); // Tymczasowe ID
     
-    console.log(`✅ Nowe zapytanie ze strony: ${name} (${email}) - ${subject}`);
-    
-    // Funkcja wysyłania emaila
-    const sendEmail = async () => {
-      try {
-          const emailHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #c9b037; border-bottom: 2px solid #c9b037; padding-bottom: 10px;">
-                🌐 Nowe zapytanie ze strony kancelaria-pro-meritum.pl
-              </h2>
-              
-              <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="margin-top: 0; color: #333;">📋 Szczegóły zapytania:</h3>
-                <p><strong>Imię i nazwisko:</strong> ${name}</p>
-                <p><strong>Telefon:</strong> ${phone}</p>
-                <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Temat:</strong> ${subject}</p>
-              </div>
-              
-              <div style="background: #fff; padding: 20px; border-left: 4px solid #c9b037; margin: 20px 0;">
-                <h3 style="margin-top: 0; color: #333;">💬 Wiadomość:</h3>
-                <p style="white-space: pre-wrap;">${message}</p>
-              </div>
-              
-              <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <p style="margin: 5px 0;"><strong>📌 ID zapytania:</strong> ${inquiryId}</p>
-                <p style="margin: 5px 0;"><strong>🕐 Data:</strong> ${new Date().toLocaleString('pl-PL')}</p>
-                <p style="margin: 5px 0;"><strong>🌐 IP:</strong> ${ip_address}</p>
-              </div>
-              
-              <p style="color: #666; font-size: 0.9em; margin-top: 30px;">
-                <em>To zapytanie zostało automatycznie zapisane w systemie komunikatora.</em>
-              </p>
-            </div>
-          `;
-          
-          const { data, error } = await resend.emails.send({
-            from: 'Formularz Kontaktowy <onboarding@resend.dev>',
-            to: [process.env.INQUIRY_EMAIL || 'info@polska-grupa-wierzytelnosci.pl'],
-            subject: `🌐 Nowe zapytanie: ${subject}`,
-            html: emailHtml,
-            reply_to: email
+    db.run(
+      `INSERT INTO website_inquiries 
+       (name, phone, email, subject, message, ip_address, user_agent, status, priority) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'new', 'normal')`,
+      [name, phone, email, subject, message, ip_address, user_agent],
+      function(err) {
+        if (err) {
+          console.error('Błąd zapisywania zapytania:', err);
+          return res.status(500).json({ 
+            success: false, 
+            message: 'Błąd serwera' 
           });
-          
-          if (error) {
-            throw new Error(`Resend API error: ${error.message}`);
-          }
-          
-        console.log(`📧 Email wysłany na: ${process.env.INQUIRY_EMAIL || 'info@polska-grupa-wierzytelnosci.pl'}`);
-        return true;
-      } catch (emailError) {
-        console.error('⚠️ Błąd wysyłania emaila:', emailError.message);
-        throw emailError;
-      }
-    };
-    
-    // Zapisz do bazy (jeśli dostępna)
-    const saveToDatabase = () => {
-      return new Promise((resolve, reject) => {
-        if (!USE_DATABASE || !getDatabase) {
-          console.log('📝 Pomijam bazę danych (tylko email)');
-          return resolve();
         }
         
-        try {
-          const db = getDatabase();
-          db.run(
-            `INSERT INTO website_inquiries 
-             (name, phone, email, subject, message, ip_address, user_agent, status, priority) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'new', 'normal')`,
-            [name, phone, email, subject, message, ip_address, user_agent],
-            function(err) {
-              if (err) {
-                console.error('⚠️ Błąd zapisywania do bazy:', err.message);
-                return resolve(); // Kontynuuj mimo błędu
-              }
-              console.log('💾 Zapytanie zapisane w bazie ID:', this.lastID);
-              resolve();
-            }
-          );
-        } catch (err) {
-          console.error('⚠️ Błąd dostępu do bazy:', err.message);
-          resolve(); // Kontynuuj mimo błędu
-        }
-      });
-    };
-    
-    // Wyślij email i zapisz do bazy
-    try {
-      await sendEmail();
-      await saveToDatabase();
-      
-      res.json({ 
-        success: true, 
-        message: 'Dziękujemy! Twoje zapytanie zostało przesłane. Skontaktujemy się wkrótce.',
-        inquiryId: inquiryId
-      });
-    } catch (error) {
-      console.error('❌ Błąd krytyczny:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Wystąpił błąd podczas wysyłania. Spróbuj ponownie lub skontaktuj się telefonicznie.' 
-      });
-    }
+        console.log(`✅ Nowe zapytanie ze strony: ${name} (${email}) - ${subject}`);
+        
+        res.json({ 
+          success: true, 
+          message: 'Dziękujemy! Twoje zapytanie zostało przesłane. Skontaktujemy się wkrótce.',
+          inquiryId: this.lastID
+        });
+      }
+    );
   } catch (error) {
     console.error('Błąd przetwarzania zapytania:', error);
     res.status(500).json({ 

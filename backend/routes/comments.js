@@ -6,14 +6,16 @@ const { getDatabase } = require('../database/init');
 const { verifyToken } = require('../middleware/auth');
 const { canAccessCase, canViewInternalNotes, ROLES } = require('../middleware/permissions');
 const { logEmployeeActivity } = require('../utils/employee-activity');
-const uploadConfig = require('../config/uploads');
 
 const router = express.Router();
 
-// Konfiguracja multer dla PDF (używa centralnej konfiguracji)
+// Konfiguracja multer dla PDF
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = uploadConfig.paths.comments();
+    const uploadDir = path.join(__dirname, '../../uploads/comment-pdfs');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
@@ -278,179 +280,51 @@ router.post('/upload', verifyToken, upload.single('file'), (req, res) => {
   });
 });
 
-// Usuń komentarz (Z WERYFIKACJĄ HASŁA I SZCZEGÓŁOWYM LOGOWANIEM)
-router.delete('/:id', verifyToken, async (req, res) => {
+// Usuń komentarz (tylko własne lub admin/lawyer z hasłem)
+router.delete('/:id', verifyToken, (req, res) => {
   const db = getDatabase();
   const { id } = req.params;
   const userId = req.user.userId;
   const userRole = req.user.role;
-  const { password, comment_author, comment_preview } = req.body;
+  const adminPassword = req.headers['x-admin-password'];
 
-  console.log('🗑️ DELETE /comments/:id - Próba usunięcia komentarza:', id);
-  console.log('   - userId:', userId);
-  console.log('   - hasło podane:', password ? 'TAK' : 'NIE');
+  console.log('DELETE /comments/:id called');
+  console.log('Comment ID:', id);
+  console.log('User role:', userRole);
+  console.log('Admin password provided:', adminPassword ? 'YES' : 'NO');
 
-  // WERYFIKACJA HASŁA - OBOWIĄZKOWA!
-  if (!password) {
-    console.log('❌ Brak hasła w żądaniu');
-    return res.status(400).json({ error: 'Hasło jest wymagane do usunięcia komentarza' });
-  }
-
-  try {
-    // Pobierz użytkownika z bazy (musimy mieć hasło do weryfikacji)
-    const bcrypt = require('bcrypt');
-    const user = await new Promise((resolve, reject) => {
-      db.get('SELECT id, name, email, password FROM users WHERE id = ?', [userId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-
-    if (!user) {
-      console.log('❌ Użytkownik nie znaleziony:', userId);
-      return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+  // Sprawdź czy użytkownik może usunąć komentarz
+  db.get('SELECT * FROM case_comments WHERE id = ?', [id], (err, comment) => {
+    if (err) {
+      console.error('Błąd pobierania komentarza:', err);
+      return res.status(500).json({ error: 'Błąd pobierania komentarza' });
     }
-
-    // Weryfikuj hasło
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      console.log('❌ Nieprawidłowe hasło dla użytkownika:', user.email);
-      return res.status(401).json({ error: 'Nieprawidłowe hasło. Usunięcie komentarza wymaga potwierdzenia hasłem.' });
-    }
-
-    console.log('✅ Hasło poprawne - kontynuacja usuwania');
-
-    // Pobierz dane komentarza do logowania
-    const comment = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM case_comments WHERE id = ?', [id], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
 
     if (!comment) {
-      console.log('❌ Komentarz nie znaleziony:', id);
       return res.status(404).json({ error: 'Komentarz nie znaleziony' });
     }
 
-    const commentAuthorFinal = comment_author || 'Nieznany użytkownik';
-    const commentPreviewFinal = comment_preview || comment.comment.substring(0, 100);
-    const caseId = comment.case_id;
+    // Sprawdź hasło administratora
+    if (adminPassword !== 'Proadmin') {
+      console.log('Invalid admin password - rejecting request');
+      return res.status(401).json({ error: 'Nieprawidłowe hasło administratora' });
+    }
 
-    console.log(`🗑️ Usuwanie komentarza: ${commentPreviewFinal}...`);
-
-    // 1️⃣ POLICZ ODPOWIEDZI
-    console.log('   → Liczę odpowiedzi na komentarz...');
-    const repliesCount = await new Promise((resolve, reject) => {
-      db.get('SELECT COUNT(*) as count FROM case_comments WHERE parent_comment_id = ?', [id], (err, row) => {
-        if (err) reject(err);
-        else {
-          console.log(`   ✅ Znaleziono ${row.count} odpowiedzi`);
-          resolve(row.count);
+    // Można usunąć własny komentarz lub jeśli jest się adminem/prawnikiem
+    if (comment.user_id === userId || [ROLES.ADMIN, ROLES.LAWYER].includes(userRole)) {
+      // Usuń również wszystkie odpowiedzi na ten komentarz (CASCADE)
+      db.run('DELETE FROM case_comments WHERE id = ? OR parent_comment_id = ?', [id, id], function(err) {
+        if (err) {
+          console.error('Błąd usuwania komentarza:', err);
+          return res.status(500).json({ error: 'Błąd usuwania komentarza' });
         }
+        console.log('✅ Usunięto komentarz i odpowiedzi:', this.changes);
+        res.json({ success: true, message: 'Komentarz został usunięty' });
       });
-    });
-
-    // 2️⃣ USUŃ ZAŁĄCZNIKI KOMENTARZA (attachments)
-    console.log('   → Usuwam załączniki komentarza...');
-    const attachmentsDeleted = await new Promise((resolve, reject) => {
-      db.run(
-        'DELETE FROM attachments WHERE entity_type = ? AND entity_id = ?',
-        ['comment', id],
-        function(err) {
-          if (err) reject(err);
-          else {
-            console.log(`   ✅ Usunięto ${this.changes} załączników`);
-            resolve(this.changes);
-          }
-        }
-      );
-    });
-
-    // 3️⃣ USUŃ ZAŁĄCZNIKI Z TABELI DOCUMENTS (category = comment_attachment)
-    console.log('   → Usuwam dokumenty komentarza...');
-    const documentsDeleted = await new Promise((resolve, reject) => {
-      db.run(
-        'DELETE FROM documents WHERE comment_id = ? AND category = ?',
-        [id, 'comment_attachment'],
-        function(err) {
-          if (err) reject(err);
-          else {
-            console.log(`   ✅ Usunięto ${this.changes} dokumentów`);
-            resolve(this.changes);
-          }
-        }
-      );
-    });
-
-    // 4️⃣ USUŃ ODPOWIEDZI (CASCADE)
-    console.log('   → Usuwam odpowiedzi na komentarz...');
-    await new Promise((resolve, reject) => {
-      db.run('DELETE FROM case_comments WHERE parent_comment_id = ?', [id], function(err) {
-        if (err) reject(err);
-        else {
-          console.log(`   ✅ Usunięto ${this.changes} odpowiedzi`);
-          resolve();
-        }
-      });
-    });
-
-    // 5️⃣ USUŃ KOMENTARZ
-    console.log('   → Usuwam komentarz z tabeli case_comments...');
-    await new Promise((resolve, reject) => {
-      db.run('DELETE FROM case_comments WHERE id = ?', [id], function(err) {
-        if (err) reject(err);
-        else {
-          console.log('   ✅ Komentarz usunięty');
-          resolve();
-        }
-      });
-    });
-
-    // 📊 LOGUJ USUNIĘCIE DO HISTORII SPRAWY (employee_activity)
-    await logEmployeeActivity({
-      userId: userId,
-      actionType: 'comment_deleted',
-      actionCategory: 'comment',
-      description: `🗑️ USUNIĘTO KOMENTARZ: "${commentPreviewFinal}..." (autor: ${commentAuthorFinal}) - Potwierdzono hasłem (+ ${repliesCount} odpowiedzi, ${attachmentsDeleted + documentsDeleted} załączników)`,
-      caseId: caseId,
-      details: JSON.stringify({
-        comment_id: id,
-        comment_author: commentAuthorFinal,
-        comment_preview: commentPreviewFinal,
-        deleted_by: user.name,
-        deleted_by_email: user.email,
-        confirmed_with_password: true,
-        replies_deleted: repliesCount,
-        attachments_deleted: attachmentsDeleted + documentsDeleted,
-        timestamp: new Date().toISOString()
-      })
-    });
-
-    console.log('✅ Komentarz usunięty wraz z powiązaniami:', id);
-    console.log(`   - Odpowiedzi usunięte: ${repliesCount}`);
-    console.log(`   - Załączniki usunięte: ${attachmentsDeleted + documentsDeleted}`);
-    console.log('   - Historia sprawy: zapisana');
-
-    res.json({
-      success: true,
-      message: `Komentarz usunięty pomyślnie wraz z ${repliesCount} odpowiedziami i ${attachmentsDeleted + documentsDeleted} załącznikami`,
-      deleted_comment: {
-        id: id,
-        author: commentAuthorFinal,
-        preview: commentPreviewFinal,
-        replies_deleted: repliesCount,
-        attachments_deleted: attachmentsDeleted + documentsDeleted
-      }
-    });
-
-  } catch (error) {
-    console.error('❌ Błąd usuwania komentarza:', error);
-    return res.status(500).json({
-      error: 'Błąd usuwania komentarza: ' + error.message
-    });
-  }
+    } else {
+      return res.status(403).json({ error: 'Brak uprawnień do usunięcia komentarza' });
+    }
+  });
 });
 
 // Funkcja wysyłająca powiadomienia o nowym komentarzu

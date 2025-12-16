@@ -1,11 +1,8 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-// Ścieżka do bazy danych - UJEDNOLICONA z init.js!
-const isRailway = process.env.RAILWAY_ENVIRONMENT === 'production' || process.env.NODE_ENV === 'production';
-const dbPath = isRailway 
-    ? '/app/data/komunikator.db'  // Railway z Volume
-    : path.resolve(__dirname, '..', '..', 'data', 'komunikator.db'); // Local
+// Ścieżka do bazy danych
+const dbPath = path.join(__dirname, 'kancelaria.db');
 
 // Utwórz połączenie z bazą danych
 const db = new sqlite3.Database(dbPath, (err) => {

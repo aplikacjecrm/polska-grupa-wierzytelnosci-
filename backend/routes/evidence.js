@@ -159,10 +159,9 @@ router.get('/:id', verifyToken, (req, res) => {
             edl.document_id,
             edl.attachment_id,
             edl.linked_at,
-            COALESCE(d.filename, d.title, a.file_name, a.title) as filename,
-            COALESCE(d.file_type, a.file_type) as mimetype,
-            COALESCE(d.file_size, a.file_size) as filesize,
-            COALESCE(d.document_number, a.attachment_code) as attachment_code,
+            COALESCE(d.file_name, d.title, a.file_name, a.filename) as filename,
+            COALESCE(d.file_type, a.file_type, a.mimetype) as mimetype,
+            COALESCE(d.file_size, a.file_size, a.filesize) as filesize,
             CASE WHEN edl.document_id IS NOT NULL THEN 'document' ELSE 'attachment' END as source_type
            FROM evidence_document_links edl
            LEFT JOIN documents d ON edl.document_id = d.id
@@ -172,9 +171,6 @@ router.get('/:id', verifyToken, (req, res) => {
           (linkErr, linkedDocs) => {
             evidence.linkedDocuments = linkedDocs || [];
             console.log(`🔗 Znaleziono ${evidence.linkedDocuments.length} zlinkowanych dokumentów dla dowodu ${evidenceId}`);
-            if (linkedDocs && linkedDocs.length > 0) {
-              console.log('   Pierwszy link:', JSON.stringify(linkedDocs[0]));
-            }
             
             // Pobierz historię zmian
             db.all(
@@ -309,18 +305,13 @@ router.post('/', verifyToken, (req, res) => {
     // Załączniki
     attachments,
     // Dokumenty z systemu (tylko ID - linkowanie bez kopiowania)
-    systemDocIds,
-    // Załączniki zeznania (ID załączników do zlinkowania)
-    testimonyAttachmentIds
+    systemDocIds
   } = req.body;
   
   console.log('📥 POST /evidence - Otrzymane dane:');
   console.log('   - case_id:', case_id);
   console.log('   - name:', name);
   console.log('   - attachments:', attachments ? `${attachments.length} sztuk` : 'brak');
-  console.log('   - systemDocIds:', systemDocIds);
-  console.log('   - testimonyAttachmentIds:', testimonyAttachmentIds);
-  console.log('   - req.body keys:', Object.keys(req.body));
   if (attachments && attachments.length > 0) {
     attachments.forEach((a, i) => {
       console.log(`   - Załącznik ${i+1}: ${a.filename} (${a.size || a.filesize} bytes)`);
@@ -455,51 +446,13 @@ router.post('/', verifyToken, (req, res) => {
         });
       }
       
-      // Linkowanie załączników zeznania
-      if (testimonyAttachmentIds && Array.isArray(testimonyAttachmentIds) && testimonyAttachmentIds.length > 0) {
-        console.log(`📎 Linkuję ${testimonyAttachmentIds.length} załączników zeznania do dowodu ${evidenceId}...`);
-        console.log('   IDs:', testimonyAttachmentIds);
-        
-        testimonyAttachmentIds.forEach((attId) => {
-          const attachmentId = parseInt(attId, 10);
-          console.log(`   Szukam załącznika ID: ${attachmentId}`);
-          
-          db.get('SELECT * FROM attachments WHERE id = ?', [attachmentId], (attErr, att) => {
-            if (attErr) {
-              console.error(`❌ Błąd szukania załącznika ${attachmentId}:`, attErr);
-              return;
-            }
-            if (!att) {
-              console.warn(`⚠️ Załącznik ${attachmentId} nie znaleziony w bazie`);
-              return;
-            }
-            
-            console.log(`   Znaleziono załącznik: ${att.file_name || att.title}`);
-            db.run(
-              `INSERT OR IGNORE INTO evidence_document_links (evidence_id, attachment_id, linked_by) VALUES (?, ?, ?)`,
-              [evidenceId, attachmentId, userId],
-              function(linkErr) {
-                if (linkErr) {
-                  console.error(`❌ Błąd linkowania załącznika zeznania:`, linkErr);
-                } else {
-                  console.log(`✅ Załącznik zeznania ${att.file_name || att.title} zlinkowany do dowodu ${evidenceId}, lastID: ${this.lastID}, changes: ${this.changes}`);
-                }
-              }
-            );
-          });
-        });
-      } else {
-        console.log('📎 Brak załączników zeznania do zlinkowania');
-      }
-      
       console.log('✅ Dowód dodany:', evidenceId);
       res.json({ 
         success: true, 
         evidence_id: evidenceId,
         message: 'Dowód dodany pomyślnie',
         attachments_count: attachments ? attachments.length : 0,
-        docs_linked: systemDocIds ? systemDocIds.length : 0,
-        testimony_attachments_linked: testimonyAttachmentIds ? testimonyAttachmentIds.length : 0
+        docs_linked: systemDocIds ? systemDocIds.length : 0
       });
     }
   );
@@ -684,15 +637,6 @@ router.put('/:id', verifyToken, (req, res) => {
           });
         }
         
-        // 📊 LOGUJ EDYCJĘ DO HISTORII SPRAWY
-        logEmployeeActivity({
-          userId: userId,
-          actionType: 'evidence_updated',
-          actionCategory: 'evidence',
-          description: `Zaktualizowano dowód: ${name || oldEvidence.name}`,
-          caseId: oldEvidence.case_id
-        });
-        
         console.log('✅ Dowód zaktualizowany:', id);
         res.json({ 
           success: true, 
@@ -707,172 +651,22 @@ router.put('/:id', verifyToken, (req, res) => {
 
 // === USUŃ DOWÓD ===
 
-router.delete('/:id', verifyToken, async (req, res) => {
+router.delete('/:id', verifyToken, (req, res) => {
   const db = getDatabase();
   const { id } = req.params;
-  const userId = req.user.userId;
-  const { password, evidence_name, evidence_code } = req.body;
   
-  console.log('🗑️ DELETE /evidence/:id - Próba usunięcia dowodu:', id);
-  console.log('   - userId:', userId);
-  console.log('   - hasło podane:', password ? 'TAK' : 'NIE');
-  
-  // WERYFIKACJA HASŁA - OBOWIĄZKOWA!
-  if (!password) {
-    console.log('❌ Brak hasła w żądaniu');
-    return res.status(400).json({ error: 'Hasło jest wymagane do usunięcia dowodu' });
-  }
-  
-  try {
-    // Pobierz użytkownika z bazy (musimy mieć hasło do weryfikacji)
-    const bcrypt = require('bcrypt');
-    const user = await new Promise((resolve, reject) => {
-      db.get('SELECT id, name, email, password FROM users WHERE id = ?', [userId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-    
-    if (!user) {
-      console.log('❌ Użytkownik nie znaleziony:', userId);
-      return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+  db.run('DELETE FROM case_evidence WHERE id = ?', [id], function(err) {
+    if (err) {
+      console.error('❌ Błąd usuwania dowodu:', err);
+      return res.status(500).json({ error: 'Błąd usuwania dowodu' });
     }
     
-    // Weryfikuj hasło
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    
-    if (!isPasswordValid) {
-      console.log('❌ Nieprawidłowe hasło dla użytkownika:', user.email);
-      return res.status(401).json({ error: 'Nieprawidłowe hasło. Usunięcie dowodu wymaga potwierdzenia hasłem.' });
-    }
-    
-    console.log('✅ Hasło poprawne - kontynuacja usuwania');
-    
-    // Najpierw pobierz dane dowodu do logowania
-    const evidence = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM case_evidence WHERE id = ?', [id], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-    
-    if (!evidence) {
-      console.log('❌ Dowód nie znaleziony:', id);
-      return res.status(404).json({ error: 'Dowód nie znaleziony' });
-    }
-    
-    const evidenceName = evidence_name || evidence.name;
-    const evidenceCodeFinal = evidence_code || evidence.evidence_code;
-    const caseId = evidence.case_id;
-    
-    console.log(`🗑️ Usuwanie dowodu: ${evidenceName} (${evidenceCodeFinal})`);
-    
-    // 1️⃣ USUŃ ZAŁĄCZNIKI DOWODU (attachments)
-    console.log('   → Usuwam załączniki dowodu...');
-    const attachmentsDeleted = await new Promise((resolve, reject) => {
-      db.run(
-        'DELETE FROM attachments WHERE entity_type = ? AND entity_id = ?',
-        ['evidence', id],
-        function(err) {
-          if (err) reject(err);
-          else {
-            console.log(`   ✅ Usunięto ${this.changes} załączników`);
-            resolve(this.changes);
-          }
-        }
-      );
-    });
-    
-    // 2️⃣ USUŃ LINKI DO DOKUMENTÓW SYSTEMU (evidence_document_links)
-    console.log('   → Usuwam linki do dokumentów systemu...');
-    const linksDeleted = await new Promise((resolve, reject) => {
-      db.run(
-        'DELETE FROM evidence_document_links WHERE evidence_id = ?',
-        [id],
-        function(err) {
-          if (err) reject(err);
-          else {
-            console.log(`   ✅ Usunięto ${this.changes} linków do dokumentów`);
-            resolve(this.changes);
-          }
-        }
-      );
-    });
-    
-    // 3️⃣ USUŃ DOWÓD
-    console.log('   → Usuwam dowód z tabeli case_evidence...');
-    await new Promise((resolve, reject) => {
-      db.run('DELETE FROM case_evidence WHERE id = ?', [id], function(err) {
-        if (err) reject(err);
-        else {
-          console.log('   ✅ Dowód usunięty');
-          resolve();
-        }
-      });
-    });
-    
-    // ZAPISZ DO HISTORII DOWODU (evidence_history)
-    await new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO evidence_history (evidence_id, action, field_changed, old_value, new_value, changed_by, notes)
-         VALUES (?, 'deleted', 'status', 'active', 'deleted', ?, ?)`,
-        [
-          id,
-          userId,
-          `🗑️ DOWÓD USUNIĘTY: ${evidenceName} (${evidenceCodeFinal}) - Usunięcie potwierdzone hasłem użytkownika ${user.name} (${user.email})`
-        ],
-        (err) => {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
-    
-    // 📊 LOGUJ USUNIĘCIE DO HISTORII SPRAWY (employee_activity)
-    await logEmployeeActivity({
-      userId: userId,
-      actionType: 'evidence_deleted',
-      actionCategory: 'evidence',
-      description: `🗑️ USUNIĘTO DOWÓD: ${evidenceName} (${evidenceCodeFinal}) - Potwierdzono hasłem (+ ${attachmentsDeleted} załączników, ${linksDeleted} linków)`,
-      caseId: caseId,
-      details: JSON.stringify({
-        evidence_id: id,
-        evidence_name: evidenceName,
-        evidence_code: evidenceCodeFinal,
-        evidence_type: evidence.evidence_type,
-        deleted_by: user.name,
-        deleted_by_email: user.email,
-        confirmed_with_password: true,
-        attachments_deleted: attachmentsDeleted,
-        document_links_deleted: linksDeleted,
-        timestamp: new Date().toISOString()
-      })
-    });
-    
-    console.log('✅ Dowód usunięty wraz z powiązaniami:', id);
-    console.log(`   - Załączniki usunięte: ${attachmentsDeleted}`);
-    console.log(`   - Linki do dokumentów usunięte: ${linksDeleted}`);
-    console.log('   - Historia dowodu: zapisana');
-    console.log('   - Historia sprawy: zapisana');
-    
+    console.log('✅ Dowód usunięty:', id);
     res.json({ 
       success: true, 
-      message: `Dowód usunięty pomyślnie wraz z ${attachmentsDeleted} załącznikami i ${linksDeleted} linkami`,
-      deleted_evidence: {
-        id: id,
-        name: evidenceName,
-        code: evidenceCodeFinal,
-        attachments_deleted: attachmentsDeleted,
-        document_links_deleted: linksDeleted
-      }
+      message: 'Dowód usunięty pomyślnie' 
     });
-    
-  } catch (error) {
-    console.error('❌ Błąd usuwania dowodu:', error);
-    return res.status(500).json({ 
-      error: 'Błąd usuwania dowodu: ' + error.message 
-    });
-  }
+  });
 });
 
 // === PRZEDSTAW DOWÓD W SĄDZIE ===

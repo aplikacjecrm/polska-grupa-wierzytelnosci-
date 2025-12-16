@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { getDatabase } = require('../database/init');
-const { verifyToken } = require('../middleware/auth');
-const { logEmployeeActivity } = require('../utils/employee-activity');
 const db = getDatabase();
 
 // Pobierz ankietę dla sprawy
@@ -25,10 +23,9 @@ router.get('/cases/:caseId/questionnaire', (req, res) => {
 });
 
 // Zapisz/aktualizuj ankietę
-router.post('/cases/:caseId/questionnaire', verifyToken, (req, res) => {
+router.post('/cases/:caseId/questionnaire', (req, res) => {
     const { caseId } = req.params;
     const { questionnaire_type, answers, completed } = req.body;
-    const userId = req.user?.userId;
     
     // Sprawdź czy ankieta już istnieje
     db.get(`
@@ -52,8 +49,6 @@ router.post('/cases/:caseId/questionnaire', verifyToken, (req, res) => {
                     return res.status(500).json({ error: 'Błąd aktualizacji ankiety' });
                 }
                 
-                // NIE logujemy automatycznych aktualizacji ankiety - tylko pierwsze wypełnienie
-                
                 console.log(`✅ Zaktualizowano ankietę ID: ${existing.id}`);
                 res.json({ success: true, id: existing.id, action: 'updated' });
             });
@@ -67,17 +62,6 @@ router.post('/cases/:caseId/questionnaire', verifyToken, (req, res) => {
                 if (insertErr) {
                     console.error('❌ Błąd zapisu ankiety:', insertErr);
                     return res.status(500).json({ error: 'Błąd zapisu ankiety' });
-                }
-                
-                // 📊 LOGUJ WYPEŁNIENIE ANKIETY DO HISTORII SPRAWY
-                if (userId) {
-                    logEmployeeActivity({
-                        userId: userId,
-                        actionType: 'questionnaire_created',
-                        actionCategory: 'questionnaire',
-                        description: `Wypełniono ankietę: ${questionnaire_type}${completed ? ' (ukończona)' : ''}`,
-                        caseId: parseInt(caseId)
-                    });
                 }
                 
                 console.log(`✅ Utworzono ankietę ID: ${this.lastID}`);

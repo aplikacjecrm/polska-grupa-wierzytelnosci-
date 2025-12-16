@@ -1,0 +1,39 @@
+# Gmail API credentials - WAŻNE: NIE COMMITUJ!
+config/gmail-credentials.json
+config/gmail-token.json
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Database
+database.sqlite
+*.sqlite
+*.db
+
+# Logs
+*.log
+logs/
+server-debug.log
+backend-logs.txt
+backend-gemini-test.log
+
+# Node modules
+node_modules/
+
+# Uploads i temp
+uploads/
+temp/
+apify-results/
+
+# Backups
+backups/
+BACKUPS/
+backup_*/
+komunikator-app-backup*/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

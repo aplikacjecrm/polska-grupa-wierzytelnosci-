@@ -165,7 +165,6 @@ router.post('/:trainingId/approve', verifyToken, async (req, res) => {
     const { trainingId } = req.params;
     const { approval_notes } = req.body;
     const userRole = req.user.user_role || req.user.role;
-    const approverId = req.user.userId || req.user.id;
     
     if (!['admin', 'hr'].includes(userRole)) {
       return res.status(403).json({ error: 'Brak uprawnień' });
@@ -173,44 +172,16 @@ router.post('/:trainingId/approve', verifyToken, async (req, res) => {
     
     const db = getDatabase();
     
-    // Pobierz szkolenie żeby mieć employee_id
-    const training = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM employee_training WHERE id = ?', [trainingId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-    
     await new Promise((resolve, reject) => {
       db.run(`
         UPDATE employee_training 
         SET status = 'in_progress', approved_by = ?, approved_at = datetime('now'), approval_notes = ?
         WHERE id = ?
-      `, [approverId, approval_notes || null, trainingId], (err) => {
+      `, [req.user.userId, approval_notes || null, trainingId], (err) => {
         if (err) reject(err);
         else resolve();
       });
     });
-    
-    // Zaktualizuj powiązany ticket - oznacz jako zatwierdzony przez HR
-    if (training) {
-      await new Promise((resolve, reject) => {
-        db.run(`
-          UPDATE tickets 
-          SET hr_approved = 1, 
-              hr_approved_by = ?, 
-              hr_approved_at = datetime('now'),
-              status = 'W realizacji'
-          WHERE user_id = ? 
-            AND department = 'HR' 
-            AND (ticket_type LIKE '%szkolenie%' OR ticket_type LIKE '%training%' OR title LIKE '%szkolenie%')
-            AND status = 'Nowy'
-        `, [approverId, training.employee_id], (err) => {
-          if (err) console.error('⚠️ Błąd aktualizacji ticketu:', err);
-          resolve();
-        });
-      });
-    }
     
     res.json({ success: true, message: 'Szkolenie zatwierdzone i może się rozpocząć' });
   } catch (error) {
@@ -225,7 +196,6 @@ router.post('/:trainingId/reject', verifyToken, async (req, res) => {
     const { trainingId } = req.params;
     const { rejection_reason } = req.body;
     const userRole = req.user.user_role || req.user.role;
-    const approverId = req.user.userId || req.user.id;
     
     if (!['admin', 'hr'].includes(userRole)) {
       return res.status(403).json({ error: 'Brak uprawnień' });
@@ -233,45 +203,16 @@ router.post('/:trainingId/reject', verifyToken, async (req, res) => {
     
     const db = getDatabase();
     
-    // Pobierz szkolenie żeby mieć employee_id
-    const training = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM employee_training WHERE id = ?', [trainingId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-    
     await new Promise((resolve, reject) => {
       db.run(`
         UPDATE employee_training 
         SET status = 'cancelled', rejection_reason = ?, rejected_by = ?, rejected_at = datetime('now')
         WHERE id = ?
-      `, [rejection_reason, approverId, trainingId], (err) => {
+      `, [rejection_reason, req.user.userId, trainingId], (err) => {
         if (err) reject(err);
         else resolve();
       });
     });
-    
-    // Zaktualizuj powiązany ticket - oznacz jako odrzucony
-    if (training) {
-      await new Promise((resolve, reject) => {
-        db.run(`
-          UPDATE tickets 
-          SET hr_approved = 0, 
-              hr_approved_by = ?, 
-              hr_approved_at = datetime('now'),
-              status = 'Odrzucony',
-              admin_note = ?
-          WHERE user_id = ? 
-            AND department = 'HR' 
-            AND (ticket_type LIKE '%szkolenie%' OR ticket_type LIKE '%training%' OR title LIKE '%szkolenie%')
-            AND status = 'Nowy'
-        `, [approverId, rejection_reason || 'Odrzucony przez HR', training.employee_id], (err) => {
-          if (err) console.error('⚠️ Błąd aktualizacji ticketu:', err);
-          resolve();
-        });
-      });
-    }
     
     res.json({ success: true, message: 'Szkolenie odrzucone' });
   } catch (error) {

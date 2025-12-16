@@ -357,24 +357,7 @@ router.post('/:vacationId/approve', verifyToken, async (req, res) => {
       });
     }
     
-    // Zaktualizuj powiązany ticket (jeśli istnieje) - oznacz jako zatwierdzony przez HR
-    await new Promise((resolve, reject) => {
-      db.run(`
-        UPDATE tickets 
-        SET hr_approved = 1, 
-            hr_approved_by = ?, 
-            hr_approved_at = datetime('now'),
-            status = 'W realizacji'
-        WHERE user_id = ? 
-          AND department = 'HR' 
-          AND (ticket_type LIKE '%urlop%' OR ticket_type LIKE '%vacation%' OR title LIKE '%urlop%')
-          AND status = 'Nowy'
-      `, [approverId, vacation.employee_id], (err) => {
-        if (err) console.error('⚠️ Błąd aktualizacji ticketu:', err);
-        else console.log('✅ Ticket HR zatwierdzony');
-        resolve(); // Nie blokuj nawet jeśli błąd
-      });
-    });
+    // TODO: Wyślij powiadomienie do pracownika
     
     res.json({
       success: true,
@@ -403,14 +386,6 @@ router.post('/:vacationId/reject', verifyToken, async (req, res) => {
     
     const db = getDatabase();
     
-    // Pobierz wniosek żeby mieć employee_id
-    const vacation = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM employee_vacations WHERE id = ?', [vacationId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-    
     await new Promise((resolve, reject) => {
       db.run(`
         UPDATE employee_vacations
@@ -425,26 +400,7 @@ router.post('/:vacationId/reject', verifyToken, async (req, res) => {
       });
     });
     
-    // Zaktualizuj powiązany ticket - oznacz jako odrzucony
-    if (vacation) {
-      await new Promise((resolve, reject) => {
-        db.run(`
-          UPDATE tickets 
-          SET hr_approved = 0, 
-              hr_approved_by = ?, 
-              hr_approved_at = datetime('now'),
-              status = 'Odrzucony',
-              admin_note = ?
-          WHERE user_id = ? 
-            AND department = 'HR' 
-            AND (ticket_type LIKE '%urlop%' OR ticket_type LIKE '%vacation%' OR title LIKE '%urlop%')
-            AND status = 'Nowy'
-        `, [approverId, rejection_reason || 'Odrzucony przez HR', vacation.employee_id], (err) => {
-          if (err) console.error('⚠️ Błąd aktualizacji ticketu:', err);
-          resolve();
-        });
-      });
-    }
+    // TODO: Wyślij powiadomienie do pracownika
     
     res.json({
       success: true,

@@ -9,12 +9,14 @@ const path = require('path');
 const fs = require('fs');
 const { getDatabase } = require('../database/init');
 const { verifyToken } = require('../middleware/auth');
-const uploadConfig = require('../config/uploads');
 
-// Konfiguracja multer (używa centralnej konfiguracji)
+// Konfiguracja multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = uploadConfig.paths.employeeDocuments();
+    const uploadDir = path.join(__dirname, '../uploads/employee-documents');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {

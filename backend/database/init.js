@@ -2,103 +2,28 @@
 const path = require('path');
 const fs = require('fs');
 
-// === CLOUD DEPLOYMENT: Copy seed database to Volume ===
-// Volume mounts OVER /app/data, so we keep seed DB in /app/db-seed/
-const VOLUME_DB_PATH = '/app/data/komunikator.db';
-const SEED_DB_PATH = '/app/db-seed/komunikator.db';  // This is NOT covered by Volume mount
+// GŁÓWNA BAZA DANYCH - ZAWSZE używamy bazy w głównym katalogu data/ (NIE backend/data/)
+// Ścieżka: komunikator-app/data/komunikator.db
+const DB_PATH = path.resolve(__dirname, '..', '..', 'data', 'komunikator.db');
+console.log('📍 Database path:', DB_PATH);
 
-const isProduction = process.env.NODE_ENV === 'production';
-const isRailway = process.env.RAILWAY_ENVIRONMENT === 'production';
-
-console.log('[DB INIT] isProduction:', isProduction);
-console.log('[DB INIT] isRailway:', isRailway);
-console.log('[DB INIT] SEED_DB_PATH:', SEED_DB_PATH);
-console.log('[DB INIT] SEED exists:', fs.existsSync(SEED_DB_PATH));
-console.log('[DB INIT] VOLUME_DB_PATH:', VOLUME_DB_PATH);
-console.log('[DB INIT] VOLUME exists:', fs.existsSync(VOLUME_DB_PATH));
-
-if (fs.existsSync(SEED_DB_PATH)) {
-    const seedSize = fs.statSync(SEED_DB_PATH).size;
-    console.log('[DB INIT] SEED DB size:', seedSize, 'bytes (', (seedSize/1024/1024).toFixed(2), 'MB)');
+// Sprawdź czy to prawidłowa baza (powinna mieć > 5MB)
+if (fs.existsSync(DB_PATH)) {
+  const stats = fs.statSync(DB_PATH);
+  const sizeMB = stats.size / (1024 * 1024);
+  console.log(`📊 Database size: ${sizeMB.toFixed(2)} MB`);
+  if (sizeMB < 1) {
+    console.warn('⚠️ UWAGA: Baza danych jest mała! Może to być zła baza.');
+  }
 }
 
-if (fs.existsSync(VOLUME_DB_PATH)) {
-    const volSize = fs.statSync(VOLUME_DB_PATH).size;
-    console.log('[DB INIT] VOLUME DB size:', volSize, 'bytes (', (volSize/1024/1024).toFixed(2), 'MB)');
+// Upewnij się że katalog data istnieje
+const dataDir = path.dirname(DB_PATH);
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
 }
 
-// SEED DATABASE: Skopiuj seed DB jeśli volume jest pusty/mały LUB seed jest nowszy
-if (!isProduction && isRailway && fs.existsSync(SEED_DB_PATH)) {
-    const volumeSize = fs.existsSync(VOLUME_DB_PATH) ? fs.statSync(VOLUME_DB_PATH).size : 0;
-    const seedSize = fs.statSync(SEED_DB_PATH).size;
-    
-    console.log('[DB INIT] Checking: Volume size:', volumeSize, 'Seed size:', seedSize);
-    
-    // Kopiuj jeśli seed DB ma jakiekolwiek dane (>100KB) i (volume nie istnieje LUB jest pusty <100KB)
-    if (seedSize > 100000 && volumeSize < 100000) {
-        console.log('[DB INIT] COPYING seed database to Volume...');
-        try {
-            // Ensure /app/data directory exists
-            if (!fs.existsSync('/app/data')) {
-                fs.mkdirSync('/app/data', { recursive: true });
-            }
-            fs.copyFileSync(SEED_DB_PATH, VOLUME_DB_PATH);
-            console.log('[DB INIT] SUCCESS! Seed database copied to Volume!');
-        } catch (err) {
-            console.error('[DB INIT] ERROR copying database:', err.message);
-        }
-    } else {
-        console.log('[DB INIT] No copy needed. Seed:', seedSize, 'Volume:', volumeSize);
-    }
-}
-
-// GŁÓWNA BAZA DANYCH
-let DB_PATH;
-let db;
-
-if (isProduction) {
-  // PRODUKCJA (Render/inne) - użyj bazy w pamięci
-  console.log(' PRODUCTION MODE: Using in-memory database');
-  DB_PATH = ':memory:';
-  db = new sqlite3.Database(':memory:');
-} else if (isRailway) {
-  // Railway z Volume
-  DB_PATH = VOLUME_DB_PATH;
-  console.log(' RAILWAY MODE: Database path:', DB_PATH);
-  
-  if (fs.existsSync(DB_PATH)) {
-    const stats = fs.statSync(DB_PATH);
-    const sizeMB = stats.size / (1024 * 1024);
-    console.log(` Database size: ${sizeMB.toFixed(2)} MB`);
-  }
-  
-  const dataDir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-  
-  db = new sqlite3.Database(DB_PATH);
-} else {
-  // LOKALNE ŚRODOWISKO
-  DB_PATH = path.resolve(__dirname, '..', '..', 'data', 'komunikator.db');
-  console.log(' LOCAL MODE: Database path:', DB_PATH);
-  
-  if (fs.existsSync(DB_PATH)) {
-    const stats = fs.statSync(DB_PATH);
-    const sizeMB = stats.size / (1024 * 1024);
-    console.log(` Database size: ${sizeMB.toFixed(2)} MB`);
-    if (sizeMB < 1) {
-      console.warn(' UWAGA: Baza danych jest mała! Może to być zła baza.');
-    }
-  }
-  
-  const dataDir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-  
-  db = new sqlite3.Database(DB_PATH);
-}
+const db = new sqlite3.Database(DB_PATH);
 
 async function initDatabase() {
   return new Promise((resolve, reject) => {
@@ -328,7 +253,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny updated_by do clients:', err);
         } else {
-          console.log('? Dodano kolumnę updated_by do tabeli clients (śledzenie edycji)');
+          console.log('✅ Dodano kolumnę updated_by do tabeli clients (śledzenie edycji)');
         }
       });
       
@@ -339,7 +264,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny additional_caretaker do cases:', err);
         } else {
-          console.log('? Dodano kolumnę additional_caretaker (dodatkowy opiekun sprawy)');
+          console.log('✅ Dodano kolumnę additional_caretaker (dodatkowy opiekun sprawy)');
         }
       });
       
@@ -372,7 +297,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny prosecutor_id:', err);
         } else {
-          console.log('? Dodano kolumnę prosecutor_id (ID prokuratury z bazy)');
+          console.log('✅ Dodano kolumnę prosecutor_id (ID prokuratury z bazy)');
         }
       });
       
@@ -419,7 +344,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny case_subtype:', err);
         } else {
-          console.log('? Dodano kolumnę case_subtype dla podtypów spraw');
+          console.log('✅ Dodano kolumnę case_subtype dla podtypów spraw');
         }
       });
       
@@ -435,7 +360,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny court_id:', err);
         } else {
-          console.log('? Dodano kolumnę court_id (ID sądu z bazy)');
+          console.log('✅ Dodano kolumnę court_id (ID sądu z bazy)');
         }
       });
       
@@ -443,7 +368,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny court_signature:', err);
         } else {
-          console.log('? Dodano kolumnę court_signature (sygnatura akt w sądzie)');
+          console.log('✅ Dodano kolumnę court_signature (sygnatura akt w sądzie)');
         }
       });
       
@@ -451,7 +376,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny court_address:', err);
         } else {
-          console.log('? Dodano kolumnę court_address (pełny adres sądu)');
+          console.log('✅ Dodano kolumnę court_address (pełny adres sądu)');
         }
       });
       
@@ -459,7 +384,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny court_phone:', err);
         } else {
-          console.log('? Dodano kolumnę court_phone (telefon do sądu)');
+          console.log('✅ Dodano kolumnę court_phone (telefon do sądu)');
         }
       });
       
@@ -467,7 +392,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny court_email:', err);
         } else {
-          console.log('? Dodano kolumnę court_email (email sądu)');
+          console.log('✅ Dodano kolumnę court_email (email sądu)');
         }
       });
       
@@ -475,7 +400,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny court_coordinates:', err);
         } else {
-          console.log('? Dodano kolumnę court_coordinates (JSON: {lat, lng} dla mapy)');
+          console.log('✅ Dodano kolumnę court_coordinates (JSON: {lat, lng} dla mapy)');
         }
       });
       
@@ -483,7 +408,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny court_website:', err);
         } else {
-          console.log('? Dodano kolumnę court_website (strona internetowa sądu)');
+          console.log('✅ Dodano kolumnę court_website (strona internetowa sądu)');
         }
       });
       
@@ -493,7 +418,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny prosecutor_address:', err);
         } else {
-          console.log('? Dodano kolumnę prosecutor_address (adres prokuratury)');
+          console.log('✅ Dodano kolumnę prosecutor_address (adres prokuratury)');
         }
       });
       
@@ -501,7 +426,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny prosecutor_phone:', err);
         } else {
-          console.log('? Dodano kolumnę prosecutor_phone (telefon prokuratury)');
+          console.log('✅ Dodano kolumnę prosecutor_phone (telefon prokuratury)');
         }
       });
       
@@ -509,7 +434,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny prosecutor_email:', err);
         } else {
-          console.log('? Dodano kolumnę prosecutor_email (email prokuratury)');
+          console.log('✅ Dodano kolumnę prosecutor_email (email prokuratury)');
         }
       });
       
@@ -517,7 +442,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny prosecutor_website:', err);
         } else {
-          console.log('? Dodano kolumnę prosecutor_website (strona www prokuratury)');
+          console.log('✅ Dodano kolumnę prosecutor_website (strona www prokuratury)');
         }
       });
       
@@ -527,7 +452,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny police_id:', err);
         } else {
-          console.log('? Dodano kolumnę police_id (ID komendy z bazy)');
+          console.log('✅ Dodano kolumnę police_id (ID komendy z bazy)');
         }
       });
       
@@ -535,7 +460,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny police_address:', err);
         } else {
-          console.log('? Dodano kolumnę police_address (adres komendy)');
+          console.log('✅ Dodano kolumnę police_address (adres komendy)');
         }
       });
       
@@ -543,7 +468,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny police_phone:', err);
         } else {
-          console.log('? Dodano kolumnę police_phone (telefon komendy)');
+          console.log('✅ Dodano kolumnę police_phone (telefon komendy)');
         }
       });
       
@@ -551,7 +476,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny police_email:', err);
         } else {
-          console.log('? Dodano kolumnę police_email (email komendy)');
+          console.log('✅ Dodano kolumnę police_email (email komendy)');
         }
       });
       
@@ -559,7 +484,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny police_website:', err);
         } else {
-          console.log('? Dodano kolumnę police_website (strona www komendy)');
+          console.log('✅ Dodano kolumnę police_website (strona www komendy)');
         }
       });
       
@@ -568,7 +493,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny access_password:', err);
         } else {
-          console.log('? Dodano kolumnę access_password (hasło dostępu do szczegółów sprawy)');
+          console.log('✅ Dodano kolumnę access_password (hasło dostępu do szczegółów sprawy)');
         }
       });
       
@@ -682,7 +607,6 @@ async function initDatabase() {
           file_path TEXT NOT NULL,
           file_size INTEGER,
           file_type TEXT,
-          file_data TEXT,
           category TEXT,
           uploaded_by INTEGER NOT NULL,
           uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -690,13 +614,6 @@ async function initDatabase() {
           FOREIGN KEY (uploaded_by) REFERENCES users(id)
         )
       `);
-      
-      // Dodaj kolumnę file_data jeśli nie istnieje (dla starych baz)
-      db.run(`ALTER TABLE attachments ADD COLUMN file_data TEXT`, (err) => {
-        if (err && !err.message.includes('duplicate column')) {
-          console.error('Błąd dodawania kolumny file_data:', err);
-        }
-      });
 
       // Tabela notatek
       db.run(`
@@ -774,9 +691,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli calendar_entries:', err);
+          console.error('❌ Błąd tworzenia tabeli calendar_entries:', err);
         } else {
-          console.log('? Tabela calendar_entries utworzona');
+          console.log('✅ Tabela calendar_entries utworzona');
         }
       });
       
@@ -876,58 +793,6 @@ async function initDatabase() {
           FOREIGN KEY (recorded_by) REFERENCES users(id)
         )
       `);
-      
-      // Dodaj kolumnę retracted_by jeśli nie istnieje (kto wycofał zeznanie)
-      db.run(`ALTER TABLE witness_testimonies ADD COLUMN retracted_by INTEGER`, (err) => {
-        if (err && !err.message.includes('duplicate column')) {
-          console.error('Błąd dodawania kolumny retracted_by:', err);
-        }
-      });
-      
-      // Tabela dokumentów świadków (załączniki do świadka)
-      db.run(`
-        CREATE TABLE IF NOT EXISTS witness_documents (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          witness_id INTEGER NOT NULL,
-          case_id INTEGER NOT NULL,
-          document_code TEXT,
-          file_name TEXT NOT NULL,
-          file_path TEXT NOT NULL,
-          file_size INTEGER,
-          file_type TEXT,
-          document_type TEXT,
-          title TEXT,
-          description TEXT,
-          uploaded_by INTEGER NOT NULL,
-          uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (witness_id) REFERENCES case_witnesses(id) ON DELETE CASCADE,
-          FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE,
-          FOREIGN KEY (uploaded_by) REFERENCES users(id)
-        )
-      `, (err) => {
-        if (err) {
-          console.error('❌ Błąd tworzenia tabeli witness_documents:', err);
-        } else {
-          console.log('✅ Tabela witness_documents utworzona');
-        }
-      });
-      
-      // Dodaj kolumnę document_code jeśli nie istnieje
-      db.run(`ALTER TABLE witness_documents ADD COLUMN document_code TEXT`, (err) => {
-        if (err && !err.message.includes('duplicate column')) {
-          console.error('Błąd dodawania kolumny document_code:', err);
-        }
-      });
-      
-      // Dodaj kolumnę file_data jeśli nie istnieje (dla base64 storage)
-      db.run(`ALTER TABLE witness_documents ADD COLUMN file_data TEXT`, (err) => {
-        if (err && !err.message.includes('duplicate column')) {
-          console.error('Błąd dodawania kolumny file_data:', err);
-        }
-      });
-      
-      db.run(`CREATE INDEX IF NOT EXISTS idx_witness_documents_witness ON witness_documents(witness_id)`);
-      db.run(`CREATE INDEX IF NOT EXISTS idx_witness_documents_case ON witness_documents(case_id)`);
       
       // === MODUŁ SCENARIUSZY ===
       
@@ -1163,7 +1028,7 @@ async function initDatabase() {
         }
 
         if (row.count === 0) {
-          console.log('?? Dodawanie przykładowych użytkowników...');
+          console.log('📝 Dodawanie przykładowych użytkowników...');
           
           const bcrypt = require('bcrypt');
           
@@ -1186,7 +1051,7 @@ async function initDatabase() {
                 if (err) {
                   console.error('Błąd dodawania użytkownika:', err);
                 } else {
-                  console.log(`? Dodano: ${user.email} (${user.role})`);
+                  console.log(`✅ Dodano: ${user.email} (${user.role})`);
                 }
               });
             } catch (error) {
@@ -1356,9 +1221,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli case_evidence:', err);
+          console.error('❌ Błąd tworzenia tabeli case_evidence:', err);
         } else {
-          console.log('? Tabela case_evidence utworzona');
+          console.log('✅ Tabela case_evidence utworzona');
         }
       });
       
@@ -1386,9 +1251,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli evidence_history:', err);
+          console.error('❌ Błąd tworzenia tabeli evidence_history:', err);
         } else {
-          console.log('? Tabela evidence_history utworzona');
+          console.log('✅ Tabela evidence_history utworzona');
         }
       });
       
@@ -1413,9 +1278,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli email_logs:', err);
+          console.error('❌ Błąd tworzenia tabeli email_logs:', err);
         } else {
-          console.log('? Tabela email_logs utworzona');
+          console.log('✅ Tabela email_logs utworzona');
         }
       });
       
@@ -1446,9 +1311,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli event_reports:', err);
+          console.error('❌ Błąd tworzenia tabeli event_reports:', err);
         } else {
-          console.log('? Tabela event_reports utworzona');
+          console.log('✅ Tabela event_reports utworzona');
         }
       });
       
@@ -1472,9 +1337,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli case_questionnaires:', err);
+          console.error('❌ Błąd tworzenia tabeli case_questionnaires:', err);
         } else {
-          console.log('? Tabela case_questionnaires utworzona');
+          console.log('✅ Tabela case_questionnaires utworzona');
         }
       });
       
@@ -1520,9 +1385,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli opposing_party:', err);
+          console.error('❌ Błąd tworzenia tabeli opposing_party:', err);
         } else {
-          console.log('? Tabela opposing_party utworzona');
+          console.log('✅ Tabela opposing_party utworzona');
         }
       });
       
@@ -1543,9 +1408,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli opposing_party_cases:', err);
+          console.error('❌ Błąd tworzenia tabeli opposing_party_cases:', err);
         } else {
-          console.log('? Tabela opposing_party_cases utworzona');
+          console.log('✅ Tabela opposing_party_cases utworzona');
         }
       });
       
@@ -1565,9 +1430,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli opposing_party_witnesses:', err);
+          console.error('❌ Błąd tworzenia tabeli opposing_party_witnesses:', err);
         } else {
-          console.log('? Tabela opposing_party_witnesses utworzona');
+          console.log('✅ Tabela opposing_party_witnesses utworzona');
         }
       });
       
@@ -1593,9 +1458,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli opposing_party_evidence:', err);
+          console.error('❌ Błąd tworzenia tabeli opposing_party_evidence:', err);
         } else {
-          console.log('? Tabela opposing_party_evidence utworzona');
+          console.log('✅ Tabela opposing_party_evidence utworzona');
         }
       });
       
@@ -1613,9 +1478,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli opposing_party_checklist:', err);
+          console.error('❌ Błąd tworzenia tabeli opposing_party_checklist:', err);
         } else {
-          console.log('? Tabela opposing_party_checklist utworzona');
+          console.log('✅ Tabela opposing_party_checklist utworzona');
         }
       });
       
@@ -1634,9 +1499,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli opposing_party_social:', err);
+          console.error('❌ Błąd tworzenia tabeli opposing_party_social:', err);
         } else {
-          console.log('? Tabela opposing_party_social utworzona');
+          console.log('✅ Tabela opposing_party_social utworzona');
         }
       });
       
@@ -1690,9 +1555,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli payments:', err);
+          console.error('❌ Błąd tworzenia tabeli payments:', err);
         } else {
-          console.log('? Tabela payments utworzona');
+          console.log('✅ Tabela payments utworzona');
         }
       });
       
@@ -1718,9 +1583,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli payment_history:', err);
+          console.error('❌ Błąd tworzenia tabeli payment_history:', err);
         } else {
-          console.log('? Tabela payment_history utworzona');
+          console.log('✅ Tabela payment_history utworzona');
         }
       });
       
@@ -1737,9 +1602,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli payment_reminders:', err);
+          console.error('❌ Błąd tworzenia tabeli payment_reminders:', err);
         } else {
-          console.log('? Tabela payment_reminders utworzona');
+          console.log('✅ Tabela payment_reminders utworzona');
         }
       });
       
@@ -1780,9 +1645,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli payment_installments:', err);
+          console.error('❌ Błąd tworzenia tabeli payment_installments:', err);
         } else {
-          console.log('? Tabela payment_installments utworzona');
+          console.log('✅ Tabela payment_installments utworzona');
         }
       });
       
@@ -1807,9 +1672,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli client_balance:', err);
+          console.error('❌ Błąd tworzenia tabeli client_balance:', err);
         } else {
-          console.log('? Tabela client_balance utworzona');
+          console.log('✅ Tabela client_balance utworzona');
         }
       });
       
@@ -1832,9 +1697,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli balance_transactions:', err);
+          console.error('❌ Błąd tworzenia tabeli balance_transactions:', err);
         } else {
-          console.log('? Tabela balance_transactions utworzona');
+          console.log('✅ Tabela balance_transactions utworzona');
         }
       });
       
@@ -1859,9 +1724,9 @@ async function initDatabase() {
         )
       `, (err) => {
         if (err) {
-          console.error('? Błąd tworzenia tabeli installment_payments:', err);
+          console.error('❌ Błąd tworzenia tabeli installment_payments:', err);
         } else {
-          console.log('? Tabela installment_payments utworzona');
+          console.log('✅ Tabela installment_payments utworzona');
         }
       });
       
@@ -1902,8 +1767,8 @@ async function initDatabase() {
           FOREIGN KEY (approved_by) REFERENCES users(id)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli company_expenses:', err);
-        else console.log('? Tabela company_expenses utworzona');
+        if (err) console.error('❌ Błąd tworzenia tabeli company_expenses:', err);
+        else console.log('✅ Tabela company_expenses utworzona');
       });
       
       // Tabela pensji pracowników
@@ -1929,8 +1794,8 @@ async function initDatabase() {
           UNIQUE(employee_id, month, year)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli employee_salaries:', err);
-        else console.log('? Tabela employee_salaries utworzona');
+        if (err) console.error('❌ Błąd tworzenia tabeli employee_salaries:', err);
+        else console.log('✅ Tabela employee_salaries utworzona');
       });
       
       // Tabela faktur kosztowych
@@ -1957,8 +1822,8 @@ async function initDatabase() {
           FOREIGN KEY (created_by) REFERENCES users(id)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli company_invoices:', err);
-        else console.log('? Tabela company_invoices utworzona');
+        if (err) console.error('❌ Błąd tworzenia tabeli company_invoices:', err);
+        else console.log('✅ Tabela company_invoices utworzona');
       });
       
       // Indeksy dla wydatków firmy
@@ -2031,8 +1896,8 @@ async function initDatabase() {
           FOREIGN KEY (created_by) REFERENCES users(id)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli sales_invoices:', err);
-        else console.log('? Tabela sales_invoices utworzona');
+        if (err) console.error('❌ Błąd tworzenia tabeli sales_invoices:', err);
+        else console.log('✅ Tabela sales_invoices utworzona');
       });
       
       // Indeksy dla faktur sprzedażowych
@@ -2063,8 +1928,8 @@ async function initDatabase() {
           FOREIGN KEY (recorded_by) REFERENCES users(id)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli witness_testimonies:', err);
-        else console.log('? Tabela witness_testimonies utworzona');
+        if (err) console.error('❌ Błąd tworzenia tabeli witness_testimonies:', err);
+        else console.log('✅ Tabela witness_testimonies utworzona');
       });
       
       // Indeksy dla zeznań
@@ -2094,8 +1959,8 @@ async function initDatabase() {
           FOREIGN KEY (created_by) REFERENCES users(id)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli case_tasks:', err);
-        else console.log('? Tabela case_tasks utworzona');
+        if (err) console.error('❌ Błąd tworzenia tabeli case_tasks:', err);
+        else console.log('✅ Tabela case_tasks utworzona');
       });
       
       // Indeksy dla zadań
@@ -2124,8 +1989,8 @@ async function initDatabase() {
           FOREIGN KEY (user_id) REFERENCES users(id)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli tickets:', err);
-        else console.log('? Tabela tickets utworzona');
+        if (err) console.error('❌ Błąd tworzenia tabeli tickets:', err);
+        else console.log('✅ Tabela tickets utworzona');
       });
       
       // Indeksy dla ticketów
@@ -2149,8 +2014,8 @@ async function initDatabase() {
           FOREIGN KEY (user_id) REFERENCES users(id)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli activity_logs:', err);
-        else console.log('? Tabela activity_logs utworzona');
+        if (err) console.error('❌ Błąd tworzenia tabeli activity_logs:', err);
+        else console.log('✅ Tabela activity_logs utworzona');
       });
       
       // Indeksy dla logów
@@ -2178,8 +2043,8 @@ async function initDatabase() {
           FOREIGN KEY (related_client_id) REFERENCES clients(id)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli employee_activity_logs:', err);
-        else console.log('? Tabela employee_activity_logs utworzona');
+        if (err) console.error('❌ Błąd tworzenia tabeli employee_activity_logs:', err);
+        else console.log('✅ Tabela employee_activity_logs utworzona');
       });
       
       // Dodaj brakujące kolumny do employee_activity_logs
@@ -2187,7 +2052,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny related_task_id:', err);
         } else {
-          console.log('? Dodano kolumnę related_task_id do employee_activity_logs');
+          console.log('✅ Dodano kolumnę related_task_id do employee_activity_logs');
         }
       });
       
@@ -2195,7 +2060,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny related_event_id:', err);
         } else {
-          console.log('? Dodano kolumnę related_event_id do employee_activity_logs');
+          console.log('✅ Dodano kolumnę related_event_id do employee_activity_logs');
         }
       });
       
@@ -2203,7 +2068,7 @@ async function initDatabase() {
         if (err && !err.message.includes('duplicate column')) {
           console.error('Błąd dodawania kolumny related_payment_id:', err);
         } else {
-          console.log('? Dodano kolumnę related_payment_id do employee_activity_logs');
+          console.log('✅ Dodano kolumnę related_payment_id do employee_activity_logs');
         }
       });
       
@@ -2231,8 +2096,8 @@ async function initDatabase() {
           FOREIGN KEY (user_id) REFERENCES users(id)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli case_access_log:', err);
-        else console.log('? Tabela case_access_log utworzona (audit dostępu przez hasło)');
+        if (err) console.error('❌ Błąd tworzenia tabeli case_access_log:', err);
+        else console.log('✅ Tabela case_access_log utworzona (audit dostępu przez hasło)');
       });
       
       // Indeksy dla case_access_log
@@ -2261,8 +2126,8 @@ async function initDatabase() {
           FOREIGN KEY (revoked_by) REFERENCES users(id)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli case_permissions:', err);
-        else console.log('? Tabela case_permissions utworzona (uprawnienia czasowe i stałe)');
+        if (err) console.error('❌ Błąd tworzenia tabeli case_permissions:', err);
+        else console.log('✅ Tabela case_permissions utworzona (uprawnienia czasowe i stałe)');
       });
       
       // Indeksy dla case_permissions
@@ -2288,8 +2153,8 @@ async function initDatabase() {
           FOREIGN KEY (user_id) REFERENCES users(id)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli login_sessions:', err);
-        else console.log('? Tabela login_sessions utworzona');
+        if (err) console.error('❌ Błąd tworzenia tabeli login_sessions:', err);
+        else console.log('✅ Tabela login_sessions utworzona');
       });
       
       // Indeksy dla login_sessions
@@ -2323,8 +2188,8 @@ async function initDatabase() {
           FOREIGN KEY (resolved_by) REFERENCES users(id)
         )
       `, (err) => {
-        if (err) console.error('? Błąd tworzenia tabeli website_inquiries:', err);
-        else console.log('? Tabela website_inquiries utworzona (zapytania ze strony WWW)');
+        if (err) console.error('❌ Błąd tworzenia tabeli website_inquiries:', err);
+        else console.log('✅ Tabela website_inquiries utworzona (zapytania ze strony WWW)');
       });
       
       // Indeksy dla website_inquiries
@@ -2333,7 +2198,7 @@ async function initDatabase() {
       db.run(`CREATE INDEX IF NOT EXISTS idx_inquiries_assigned ON website_inquiries(assigned_to)`);
       db.run(`CREATE INDEX IF NOT EXISTS idx_inquiries_priority ON website_inquiries(priority)`);
       
-      console.log('? Baza danych zainicjalizowana (+ System Finansowy + Faktury + Zadania + Tickety + Logi + HR + Hasła Spraw + Uprawnienia + Zapytania WWW)');
+      console.log('✅ Baza danych zainicjalizowana (+ System Finansowy + Faktury + Zadania + Tickety + Logi + HR + Hasła Spraw + Uprawnienia + Zapytania WWW)');
       resolve(db);
     });
   });
@@ -2344,7 +2209,3 @@ function getDatabase() {
 }
 
 module.exports = { initDatabase, getDatabase };
-
-
-
-

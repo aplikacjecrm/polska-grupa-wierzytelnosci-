@@ -4,14 +4,16 @@ const path = require('path');
 const fs = require('fs');
 const { getDatabase } = require('../database/init');
 const { verifyToken } = require('../middleware/auth');
-const uploadConfig = require('../config/uploads');
 
 const router = express.Router();
 
-// Konfiguracja multer dla załączników (używa centralnej konfiguracji)
+// Konfiguracja multer dla załączników
 const attachmentsStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = uploadConfig.paths.attachments();
+    const uploadDir = path.join(__dirname, '../uploads/attachments');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
@@ -119,19 +121,15 @@ router.post('/upload', verifyToken, uploadAttachment.single('file'), async (req,
     const attachmentCode = `${prefix}${String(nextNumber).padStart(3, '0')}`;
     console.log('📋 Wygenerowany kod załącznika:', attachmentCode);
 
-    // 4. Wczytaj plik jako base64 (dla Railway - pliki na dysku są efemeralne)
-    const fileData = fs.readFileSync(req.file.path, { encoding: 'base64' });
-    console.log('📦 Plik wczytany jako base64:', fileData.length, 'znaków');
-
-    // 5. Zapisz załącznik do bazy (z base64 data)
+    // 4. Zapisz załącznik do bazy
     console.log('💾 Próbuję zapisać załącznik do bazy...');
     
     const attachmentId = await new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO attachments (
           case_id, entity_type, entity_id, attachment_code, title, description,
-          file_name, file_path, file_size, file_type, file_data, category, uploaded_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          file_name, file_path, file_size, file_type, category, uploaded_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           case_id,
           entity_type,
@@ -143,7 +141,6 @@ router.post('/upload', verifyToken, uploadAttachment.single('file'), async (req,
           req.file.path,
           req.file.size,
           req.file.mimetype,
-          fileData,  // Base64 data
           category || 'general',
           userId
         ],
@@ -152,18 +149,12 @@ router.post('/upload', verifyToken, uploadAttachment.single('file'), async (req,
             console.error('❌❌❌ BŁĄD ZAPISU DO BAZY:', err);
             reject(err);
           } else {
-            console.log('✅✅✅ Załącznik dodany do bazy:', attachmentCode, '(ID:', this.lastID + ') z file_data');
+            console.log('✅✅✅ Załącznik dodany do bazy:', attachmentCode, '(ID:', this.lastID + ')');
             resolve(this.lastID);
           }
         }
       );
     });
-    
-    // 6. Usuń plik z dysku po zapisaniu do bazy (opcjonalnie - oszczędność miejsca)
-    if (fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-      console.log('🗑️ Plik usunięty z dysku (zapisany w bazie jako base64)');
-    }
 
     res.json({
       success: true,
@@ -316,23 +307,8 @@ router.get('/:id/download', verifyToken, (req, res) => {
         });
       }
 
-      // PRIORITET 1: Sprawdź czy mamy base64 data w bazie (dla nowych załączników)
-      if (attachment.file_data) {
-        console.log('📦 Używam base64 z bazy dla załącznika:', attachment.file_name);
-        const mimeType = attachment.file_type || attachment.mimetype || 'application/octet-stream';
-        const buffer = Buffer.from(attachment.file_data, 'base64');
-        
-        res.setHeader('Content-Type', mimeType);
-        res.setHeader('Content-Length', buffer.length);
-        if (forceDownload) {
-          res.setHeader('Content-Disposition', `attachment; filename="${attachment.file_name}"`);
-        } else {
-          res.setHeader('Content-Disposition', `inline; filename="${attachment.file_name}"`);
-        }
-        return res.send(buffer);
-      }
-      
-      // PRIORITET 2: Sprawdź różne możliwe lokalizacje pliku na dysku (fallback dla starych załączników)
+      // Sprawdź różne możliwe lokalizacje pliku
+      let filePath = attachment.file_path;
       const possiblePaths = [
         attachment.file_path,
         path.join(__dirname, '..', attachment.file_path),
@@ -348,12 +324,26 @@ router.get('/:id/download', verifyToken, (req, res) => {
         }
       }
       
-      if (!foundPath) {
-        console.error('❌ Plik nie znaleziony ani w bazie ani na dysku. Próbowane ścieżki:', possiblePaths);
-        return res.status(404).json({ error: 'Plik nie został znaleziony na serwerze' });
+      // Jeśli plik nie istnieje na dysku, sprawdź czy mamy base64 data w bazie
+      if (!foundPath && attachment.file_data) {
+        console.log('📎 Plik nie na dysku, używam base64 z bazy:', attachment.file_name);
+        const mimeType = attachment.file_type || attachment.mimetype || 'application/octet-stream';
+        const buffer = Buffer.from(attachment.file_data, 'base64');
+        
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Content-Length', buffer.length);
+        if (forceDownload) {
+          res.setHeader('Content-Disposition', `attachment; filename="${attachment.file_name}"`);
+        } else {
+          res.setHeader('Content-Disposition', `inline; filename="${attachment.file_name}"`);
+        }
+        return res.send(buffer);
       }
       
-      console.log('📁 Używam pliku z dysku:', foundPath);
+      if (!foundPath) {
+        console.error('❌ Plik nie znaleziony i brak base64 data. Próbowane ścieżki:', possiblePaths);
+        return res.status(404).json({ error: 'Plik nie został znaleziony na serwerze' });
+      }
       
       filePath = foundPath;
 
@@ -366,42 +356,16 @@ router.get('/:id/download', verifyToken, (req, res) => {
       );
 
       if (isMedia && !forceDownload) {
-        // Streaming z obsługą Range requests (szybsze ładowanie wideo)
-        const stat = fs.statSync(filePath);
-        const fileSize = stat.size;
-        const range = req.headers.range;
+        // Wysyłaj jako inline do odtwarzania w przeglądarce
+        res.setHeader('Content-Type', attachment.file_type);
+        res.setHeader('Content-Disposition', `inline; filename="${attachment.file_name}"`);
+        res.setHeader('Accept-Ranges', 'bytes');
         
-        if (range) {
-          // Obsługa Range request - streaming częściowy
-          const parts = range.replace(/bytes=/, '').split('-');
-          const start = parseInt(parts[0], 10);
-          const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-          const chunkSize = (end - start) + 1;
-          
-          console.log(`📹 Streaming wideo: ${start}-${end}/${fileSize} (${(chunkSize/1024/1024).toFixed(2)} MB)`);
-          
-          res.writeHead(206, {
-            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-            'Accept-Ranges': 'bytes',
-            'Content-Length': chunkSize,
-            'Content-Type': attachment.file_type,
-            'Content-Disposition': `inline; filename="${attachment.file_name}"`
-          });
-          
-          const readStream = fs.createReadStream(filePath, { start, end });
-          readStream.pipe(res);
-        } else {
-          // Pełny plik (pierwszy request)
-          res.writeHead(200, {
-            'Content-Length': fileSize,
-            'Content-Type': attachment.file_type,
-            'Accept-Ranges': 'bytes',
-            'Content-Disposition': `inline; filename="${attachment.file_name}"`
-          });
-          
-          const readStream = fs.createReadStream(filePath);
-          readStream.pipe(res);
-        }
+        const stat = fs.statSync(filePath);
+        res.setHeader('Content-Length', stat.size);
+        
+        const readStream = fs.createReadStream(filePath);
+        readStream.pipe(res);
       } else {
         // Download dla innych plików
         res.download(filePath, attachment.file_name, (err) => {

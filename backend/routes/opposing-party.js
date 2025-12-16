@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { getDatabase } = require('../database/init');
 const { verifyToken } = require('../middleware/auth');
-const { logEmployeeActivity } = require('../utils/employee-activity');
 
 // === POBIERZ INFORMACJE O STRONIE PRZECIWNEJ ===
 
@@ -142,16 +141,6 @@ router.post('/case/:caseId', verifyToken, async (req, res) => {
         }
         
         console.log('✅ Dodano stronę przeciwną');
-        
-        // 📊 LOGUJ DO HISTORII SPRAWY
-        logEmployeeActivity({
-          userId: userId,
-          actionType: 'opposing_party_added',
-          actionCategory: 'opposing_party',
-          description: `Dodano stronę przeciwną: ${party_name}`,
-          caseId: caseId
-        });
-        
         res.json({ success: true, opposingPartyId: this.lastID });
       }
     );

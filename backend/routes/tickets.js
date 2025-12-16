@@ -1,83 +1,23 @@
 const express = require('express');
 const router = express.Router();
-// Używaj głównej bazy danych z init.js (data/komunikator.db) zamiast db.js (backend/database/kancelaria.db)
+const db = require('../database/db');
 const { getDatabase } = require('../database/init');
-const db = getDatabase();
-
-// =====================================
-// AUTOMATYCZNE TWORZENIE TABELI TICKETS
-// =====================================
-db.serialize(() => {
-    db.run(`
-        CREATE TABLE IF NOT EXISTS tickets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ticket_number VARCHAR(50) UNIQUE NOT NULL,
-            user_id INTEGER NOT NULL,
-            ticket_type VARCHAR(50) NOT NULL,
-            title TEXT NOT NULL,
-            department VARCHAR(100) NOT NULL,
-            details TEXT,
-            priority VARCHAR(20) DEFAULT 'normal',
-            status VARCHAR(50) DEFAULT 'Nowy',
-            admin_note TEXT,
-            hr_approved INTEGER DEFAULT 0,
-            hr_approved_by INTEGER,
-            hr_approved_at DATETIME,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-    `, (err) => {
-        if (err) console.error('❌ Błąd tworzenia tabeli tickets:', err);
-        else console.log('✅ Tabela tickets gotowa');
-    });
-
-    // Indeksy - po utworzeniu tabeli
-    db.run(`CREATE INDEX IF NOT EXISTS idx_tickets_user ON tickets(user_id)`);
-    db.run(`CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status)`);
-    db.run(`CREATE INDEX IF NOT EXISTS idx_tickets_department ON tickets(department)`);
-    
-    // Migracja - dodaj kolumny hr_approved jeśli nie istnieją
-    db.run(`ALTER TABLE tickets ADD COLUMN hr_approved INTEGER DEFAULT 0`, (err) => {
-        if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run(`ALTER TABLE tickets ADD COLUMN hr_approved_by INTEGER`, (err) => {
-        if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run(`ALTER TABLE tickets ADD COLUMN hr_approved_at DATETIME`, (err) => {
-        if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-});
 
 // Pobierz wszystkie tickety
 router.get('/', (req, res) => {
-    // Najpierw sprawdź czy tabela users istnieje
-    db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", [], (err, row) => {
-        let query;
-        if (row) {
-            // Jeśli users istnieje, użyj JOIN
-            query = `
-                SELECT t.*, u.name as requester_name, u.email as requester_email
-                FROM tickets t
-                LEFT JOIN users u ON t.user_id = u.id
-                ORDER BY t.created_at DESC
-            `;
-        } else {
-            // Jeśli users nie istnieje, pobierz tylko tickety
-            query = `
-                SELECT *, 'N/A' as requester_name, 'N/A' as requester_email
-                FROM tickets
-                ORDER BY created_at DESC
-            `;
-        }
+    const query = `
+        SELECT t.*, u.name as requester_name, u.email as requester_email
+        FROM tickets t
+        LEFT JOIN users u ON t.user_id = u.id
+        ORDER BY t.created_at DESC
+    `;
     
-        db.all(query, [], (err, tickets) => {
-            if (err) {
-                console.error('❌ Błąd pobierania ticketów:', err);
-                return res.status(500).json({ error: err.message });
-            }
-            res.json({ tickets });
-        });
+    db.all(query, [], (err, tickets) => {
+        if (err) {
+            console.error('❌ Błąd pobierania ticketów:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json({ tickets });
     });
 });
 
@@ -160,31 +100,6 @@ router.put('/:id/status', (req, res) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
-        res.json({ success: true, changes: this.changes });
-    });
-});
-
-// Zatwierdzenie ticketu przez HR
-router.put('/:id/hr-approve', (req, res) => {
-    const { id } = req.params;
-    const { approved, hr_user_id } = req.body;
-    
-    const query = `
-        UPDATE tickets 
-        SET hr_approved = ?, 
-            hr_approved_by = ?, 
-            hr_approved_at = CURRENT_TIMESTAMP,
-            status = CASE WHEN ? = 1 THEN 'W realizacji' ELSE 'Odrzucony' END,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-    `;
-    
-    db.run(query, [approved ? 1 : 0, hr_user_id, approved ? 1 : 0, id], function(err) {
-        if (err) {
-            console.error('❌ Błąd zatwierdzania przez HR:', err);
-            return res.status(500).json({ error: err.message });
-        }
-        console.log(`✅ Ticket ${id} ${approved ? 'zatwierdzony' : 'odrzucony'} przez HR`);
         res.json({ success: true, changes: this.changes });
     });
 });

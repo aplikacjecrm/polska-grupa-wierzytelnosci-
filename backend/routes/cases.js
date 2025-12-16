@@ -7,7 +7,6 @@ const { verifyToken } = require('../middleware/auth');
 const { canAccessCase, canModifyCase, canViewInternalNotes, ROLES } = require('../middleware/permissions');
 const { logEmployeeActivity } = require('../utils/employee-activity');
 const { generateCasePassword, checkCaseAccess, verifyPassword } = require('../middleware/case-access');
-const uploadConfig = require('../config/uploads');
 
 const router = express.Router();
 
@@ -22,25 +21,21 @@ router.use((req, res, next) => {
   next();
 });
 
-// Konfiguracja multer dla dokumentów spraw (używa centralnej konfiguracji)
+// Konfiguracja multer dla dokumentów spraw
 const caseDocumentsStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = uploadConfig.paths.caseDocuments();
+    const uploadDir = path.join(__dirname, '../uploads/case-documents');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     try {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      // Dekoduj nazwę pliku z UTF-8 (naprawia polskie znaki)
-      let originalName = file.originalname;
-      try {
-        originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
-      } catch (e) {
-        console.log('⚠️ Nie udało się zdekodować nazwy pliku, używam oryginalnej');
-      }
-      // Zapisz oryginalną nazwę do późniejszego użycia
-      file.decodedOriginalname = originalName;
-      const ext = path.extname(originalName);
+      // Sanitize filename - usuń problematyczne znaki
+      const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const ext = path.extname(sanitizedName);
       cb(null, `case-${req.params.id}-${uniqueSuffix}${ext}`);
     } catch (error) {
       console.error('❌ Błąd generowania nazwy pliku:', error);
@@ -678,30 +673,11 @@ router.put('/:id', verifyToken, canModifyCase, (req, res) => {
       
       // 📊 LOGUJ AKTYWNOŚĆ DO HR DASHBOARD - używamy helpera
       const userId = req.user.userId || req.user.id;
-      
-      // Zbierz informacje o tym co zostało zmienione
-      const changedFields = [];
-      if (title) changedFields.push('tytuł');
-      if (description) changedFields.push('opis');
-      if (status) changedFields.push('status');
-      if (priority) changedFields.push('priorytet');
-      if (court_name || court_id) changedFields.push('sąd');
-      if (prosecutor_name || prosecutor_id) changedFields.push('prokuratura');
-      if (judge_name) changedFields.push('sędzia');
-      if (assigned_to) changedFields.push('mecenas');
-      if (case_manager_id) changedFields.push('opiekun');
-      if (opposing_party) changedFields.push('strona przeciwna');
-      if (value_amount) changedFields.push('wartość sprawy');
-      
-      const changesDesc = changedFields.length > 0 
-        ? ` (zmieniono: ${changedFields.join(', ')})`
-        : '';
-      
       logEmployeeActivity({
         userId,
         actionType: 'case_updated',
         actionCategory: 'case',
-        description: `Zaktualizowano szczegóły sprawy: ${title || 'ID ' + id}${changesDesc}`,
+        description: `Zaktualizowano sprawę: ${title || 'ID ' + id}`,
         caseId: id
       });
       
@@ -1001,6 +977,69 @@ router.get('/search-documents', verifyToken, (req, res) => {
   );
 });
 
+// Pobierz dokumenty sprawy (documents + attachments)
+router.get('/:id/documents', verifyToken, (req, res) => {
+  const db = getDatabase();
+  const { id } = req.params;
+  
+  console.log('📄 Pobieranie dokumentów dla sprawy:', id);
+
+  db.all(
+    `SELECT
+        d.id,
+        d.case_id,
+        d.document_number,
+        NULL as attachment_code,
+        d.title,
+        d.description,
+        d.category,
+        d.filename,
+        d.filepath as file_path,
+        d.file_size,
+        d.file_type,
+        d.uploaded_at,
+        d.uploaded_by,
+        u.name as uploaded_by_name,
+        'document' as source_type
+     FROM documents d
+     LEFT JOIN users u ON d.uploaded_by = u.id
+     WHERE d.case_id = ?
+
+     UNION ALL
+
+     SELECT
+        a.id,
+        a.case_id,
+        NULL as document_number,
+        a.attachment_code,
+        a.title,
+        a.description,
+        a.category,
+        a.file_name as filename,
+        a.file_path,
+        a.file_size,
+        a.file_type,
+        a.uploaded_at,
+        a.uploaded_by,
+        u.name as uploaded_by_name,
+        'attachment' as source_type
+     FROM attachments a
+     LEFT JOIN users u ON a.uploaded_by = u.id
+     WHERE a.case_id = ?
+
+     ORDER BY uploaded_at DESC`,
+    [id, id],
+    (err, documents) => {
+      if (err) {
+        console.error('❌ Błąd pobierania dokumentów:', err);
+        return res.status(500).json({ error: 'Błąd pobierania dokumentów' });
+      }
+      console.log(`✅ Znaleziono ${documents.length} dokumentów dla sprawy ${id}`);
+      res.json({ documents });
+    }
+  );
+});
+
 // Pobierz wydarzenia sprawy
 router.get('/:id/events', verifyToken, (req, res) => {
   const db = getDatabase();
@@ -1114,22 +1153,15 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       d.id,
       d.case_id,
       d.document_number,
-      d.document_code,
       NULL as attachment_code,
       d.title,
       d.description,
       d.category,
       d.filename,
       d.filepath as file_path,
-      d.file_size,
-      d.file_type,
-      NULL as file_data,
       d.uploaded_at,
-      d.uploaded_at as upload_date,
-      d.uploaded_at as created_at,
       d.uploaded_by,
       u.name as uploaded_by_name,
-      NULL as is_retracted,
       'document' as source_type
      FROM documents d
      LEFT JOIN users u ON d.uploaded_by = u.id
@@ -1141,85 +1173,22 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
       a.id,
       a.case_id,
       NULL as document_number,
-      NULL as document_code,
       a.attachment_code,
       a.title,
       a.description,
       a.category,
       a.file_name as filename,
       a.file_path,
-      a.file_size,
-      a.file_type,
-      a.file_data,
       a.uploaded_at,
-      a.uploaded_at as upload_date,
-      a.uploaded_at as created_at,
       a.uploaded_by,
       u.name as uploaded_by_name,
-      a.is_retracted,
       'attachment' as source_type
      FROM attachments a
      LEFT JOIN users u ON a.uploaded_by = u.id
      WHERE a.case_id = ?
      
-     UNION ALL
-     
-     SELECT 
-      wd.id,
-      wd.case_id,
-      wd.document_code as document_number,
-      wd.document_code,
-      wd.document_code as attachment_code,
-      wd.title,
-      wd.description,
-      'świadek' as category,
-      wd.file_name as filename,
-      wd.file_path,
-      wd.file_size,
-      wd.file_type,
-      wd.file_data,
-      wd.uploaded_at,
-      wd.uploaded_at as upload_date,
-      wd.uploaded_at as created_at,
-      wd.uploaded_by,
-      u.name as uploaded_by_name,
-      NULL as is_retracted,
-      'witness_document' as source_type
-     FROM witness_documents wd
-     LEFT JOIN users u ON wd.uploaded_by = u.id
-     WHERE wd.case_id = ?
-     
-     UNION ALL
-     
-     SELECT 
-      wt.id,
-      w.case_id,
-      NULL as document_number,
-      NULL as document_code,
-      NULL as attachment_code,
-      'Zeznanie pisemne - ' || w.first_name || ' ' || w.last_name || ' v' || wt.version_number as title,
-      'Zeznanie z dnia ' || DATE(wt.testimony_date) as description,
-      'zeznanie' as category,
-      NULL as filename,
-      NULL as file_path,
-      NULL as file_size,
-      NULL as file_type,
-      NULL as file_data,
-      wt.testimony_date as uploaded_at,
-      wt.testimony_date as upload_date,
-      wt.created_at,
-      wt.recorded_by as uploaded_by,
-      u.name as uploaded_by_name,
-      wt.is_retracted,
-      'witness_testimony' as source_type
-     FROM witness_testimonies wt
-     LEFT JOIN case_witnesses w ON wt.witness_id = w.id
-     LEFT JOIN users u ON wt.recorded_by = u.id
-     WHERE w.case_id = ?
-       AND wt.testimony_type != 'written'
-     
      ORDER BY uploaded_at DESC`,
-    [id, id, id, id],
+    [id, id],
     (err, documents) => {
       if (err) {
         console.error('❌ Błąd pobierania dokumentów:', err);
@@ -1236,14 +1205,6 @@ router.get('/:id/documents', verifyToken, canAccessCase, (req, res) => {
         console.log('  - attachment_code:', documents[0].attachment_code);
         console.log('  - document_number:', documents[0].document_number);
         console.log('  - source_type:', documents[0].source_type);
-        
-        // Pokaż ile każdego typu
-        const byType = documents.reduce((acc, d) => {
-          acc[d.source_type] = (acc[d.source_type] || 0) + 1;
-          return acc;
-        }, {});
-        console.log('📊 DOKUMENTY WEDŁUG TYPU:', byType);
-        console.log('🔍 witness_document count:', byType.witness_document || 0);
       }
       
       res.json({ documents: documents || [] });
@@ -1347,14 +1308,13 @@ router.post('/:id/documents', (req, res, next) => {
     const documentCode = `${prefix}${String(nextNumber).padStart(3, '0')}`;
     console.log('📋 Wygenerowany numer dokumentu:', documentCode);
 
-    // 5. Zapisz dokument - użyj zdekodowanej nazwy pliku (polskie znaki)
-    const decodedFilename = req.file.decodedOriginalname || req.file.originalname;
+    // 5. Zapisz dokument
     console.log('💾 Próbuję zapisać dokument do bazy...', {
       documentCode,
       caseId: id,
       clientId: caseData.client_id,
       title,
-      fileName: decodedFilename,
+      fileName: req.file.originalname,
       filePath: req.file.path,
       fileSize: req.file.size,
       fileType: req.file.mimetype
@@ -1373,7 +1333,7 @@ router.post('/:id/documents', (req, res, next) => {
           caseData.client_id,
           title,
           description || null,
-          decodedFilename,
+          req.file.originalname,
           req.file.path,
           req.file.size,
           req.file.mimetype,
@@ -1474,69 +1434,34 @@ router.get('/:id/witnesses', verifyToken, canAccessCase, async (req, res) => {
   }
 });
 
-// GET /cases/:id/documents/:docId/download - Pobierz dokument (obsługuje documents, attachments, witness_documents)
-router.get('/:id/documents/:docId/download', verifyToken, canAccessCase, async (req, res) => {
+// GET /cases/:id/documents/:docId/download - Pobierz dokument
+router.get('/:id/documents/:docId/download', verifyToken, canAccessCase, (req, res) => {
   const db = getDatabase();
   const { id, docId } = req.params;
-  const isView = req.query.view === 'true';
 
-  try {
-    // Szukaj w documents
-    let document = await new Promise((resolve, reject) => {
-      db.get('SELECT *, "document" as source_type FROM documents WHERE id = ? AND case_id = ?', [docId, id], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-    
-    // Jeśli nie znaleziono, szukaj w attachments
-    if (!document) {
-      document = await new Promise((resolve, reject) => {
-        db.get('SELECT *, "attachment" as source_type FROM attachments WHERE id = ? AND case_id = ?', [docId, id], (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        });
-      });
-    }
-    
-    // Jeśli nie znaleziono, szukaj w witness_documents
-    if (!document) {
-      document = await new Promise((resolve, reject) => {
-        db.get('SELECT *, "witness_document" as source_type FROM witness_documents WHERE id = ? AND case_id = ?', [docId, id], (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        });
-      });
-    }
-    
-    if (!document) {
-      return res.status(404).json({ error: 'Dokument nie znaleziony' });
-    }
+  db.get(
+    'SELECT * FROM documents WHERE id = ? AND case_id = ?',
+    [docId, id],
+    (err, document) => {
+      if (err) {
+        console.error('Error fetching document:', err);
+        return res.status(500).json({ error: 'Błąd pobierania dokumentu' });
+      }
+      if (!document) {
+        return res.status(404).json({ error: 'Dokument nie znaleziony' });
+      }
 
-    const fileName = document.filename || document.file_name;
-    const filePath = document.filepath || document.file_path;
-    const mimeType = document.file_type || document.mimetype || 'application/octet-stream';
-    const disposition = isView ? 'inline' : 'attachment';
-    
-    // PRIORITET 1: Sprawdź czy mamy base64 data w bazie (dla witness_documents i attachments)
-    if (document.file_data) {
-      console.log('📦 Używam base64 z bazy dla dokumentu:', fileName);
-      const buffer = Buffer.from(document.file_data, 'base64');
+      // Sprawdź czy plik istnieje (kolumny w bazie: filepath, filename)
+      const filePath = document.filepath || document.file_path;
+      const fileName = document.filename || document.file_name;
       
-      res.setHeader('Content-Type', mimeType);
-      res.setHeader('Content-Length', buffer.length);
-      res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(fileName)}"`);
-      
-      return res.send(buffer);
-    }
-    
-    // PRIORITET 2: Sprawdź czy plik istnieje na dysku (fallback dla starych dokumentów)
-    if (filePath && fs.existsSync(filePath)) {
-      console.log('📁 Używam pliku z dysku:', filePath);
-      res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(fileName)}"`);
-      res.setHeader('Content-Type', mimeType);
-      
-      return res.sendFile(filePath, (err) => {
+      if (!filePath || !fs.existsSync(filePath)) {
+        console.error('File not found:', filePath);
+        return res.status(404).json({ error: 'Plik nie znaleziony na serwerze' });
+      }
+
+      // Wyślij plik
+      res.download(filePath, fileName, (err) => {
         if (err) {
           console.error('Error sending file:', err);
           if (!res.headersSent) {
@@ -1545,15 +1470,7 @@ router.get('/:id/documents/:docId/download', verifyToken, canAccessCase, async (
         }
       });
     }
-    
-    // Brak pliku zarówno w bazie jak i na dysku
-    console.error('❌ Plik nie znaleziony ani w bazie ani na dysku:', fileName);
-    return res.status(404).json({ error: 'Plik nie znaleziony na serwerze' });
-    
-  } catch (error) {
-    console.error('Error fetching document:', error);
-    res.status(500).json({ error: 'Błąd pobierania dokumentu' });
-  }
+  );
 });
 
 // GET /cases/staff/list - Pobierz listę personelu (mecenasów i opiekunów)

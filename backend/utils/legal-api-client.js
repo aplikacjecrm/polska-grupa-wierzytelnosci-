@@ -1,6 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-// const puppeteer = require('puppeteer'); // DISABLED for cloud deployment
+const puppeteer = require('puppeteer');
 
 /**
  * 🔥 HYBRYDOWY SYSTEM POBIERANIA PRZEPISÓW Z PUPPETEER
@@ -86,7 +86,7 @@ class LegalAPIClient {
     /**
      * 🤖 POZIOM 2: Puppeteer - headless Chrome dla JS stron
      */
-    async scrapeWithPuppeteer(code, articleNumber) { console.log(" Puppeteer disabled in cloud mode"); return null; } /*
+    async scrapeWithPuppeteer(code, articleNumber) {
         const docInfo = this.isapDocuments[code];
         if (!docInfo) {
             console.log(`⚠️ Nieznany kod: ${code}`);
@@ -182,7 +182,8 @@ class LegalAPIClient {
     
     /**
      * 🧹 Zamknij browser (call on shutdown)
-     */ async close() {
+     */
+    async close() {
         if (this.browser) {
             console.log('🛑 Zamykam Puppeteer browser...');
             await this.browser.close();
@@ -342,8 +343,3 @@ module.exports = {
     LegalAPIClient,
     client
 };
-
-
-
-
-

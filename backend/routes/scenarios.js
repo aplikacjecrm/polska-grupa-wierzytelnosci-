@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { getDatabase } = require('../database/init');
 const { verifyToken } = require('../middleware/auth');
-const { logEmployeeActivity } = require('../utils/employee-activity');
 
 // === POBIERZ SCENARIUSZE SPRAWY ===
 
@@ -156,19 +155,8 @@ router.post('/', verifyToken, (req, res) => {
         return res.status(500).json({ error: 'Błąd dodawania scenariusza' });
       }
       
-      const scenarioId = this.lastID;
-      console.log('✅ Dodano scenariusz:', scenarioId);
-      
-      // 📊 LOGUJ DO HISTORII SPRAWY
-      logEmployeeActivity({
-        userId: userId,
-        actionType: 'scenario_created',
-        actionCategory: 'scenario',
-        description: `Utworzono scenariusz: ${scenario_name}`,
-        caseId: case_id
-      });
-      
-      res.json({ success: true, scenarioId: scenarioId });
+      console.log('✅ Dodano scenariusz:', this.lastID);
+      res.json({ success: true, scenarioId: this.lastID });
     }
   );
 });

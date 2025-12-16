@@ -5,14 +5,8 @@ const fs = require('fs');
 const { getDatabase } = require('../database/init');
 const { verifyToken } = require('../middleware/auth');
 const { logEmployeeActivity } = require('../utils/employee-activity');
-const uploadConfig = require('../config/uploads');
-const { documentsStorage, getFileUrl, deleteFile: deleteCloudinaryFile } = require('../config/cloudinary');
 
 const router = express.Router();
-
-// Wybierz storage: Cloudinary (produkcja) lub lokalny (dev)
-const USE_CLOUDINARY = process.env.USE_CLOUDINARY !== 'false'; // Domyślnie używa Cloudinary
-console.log('☁️ Documents storage:', USE_CLOUDINARY ? 'CLOUDINARY' : 'LOCAL');
 
 // DEBUG: Log wszystkich requestów do /api/documents
 router.use((req, res, next) => {
@@ -61,10 +55,15 @@ router.get('/', verifyToken, (req, res) => {
 });
 
 // Konfiguracja multer dla uploadu plików
-// Używa Cloudinary (cloud) lub lokalny storage
-const localStorage = multer.diskStorage({
+const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadDir = uploadConfig.paths.documents();
+        const uploadDir = path.join(__dirname, '../../uploads/documents');
+        
+        // Utwórz folder jeśli nie istnieje
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        
         cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
@@ -75,7 +74,7 @@ const localStorage = multer.diskStorage({
 });
 
 const upload = multer({
-    storage: USE_CLOUDINARY ? documentsStorage : localStorage,
+    storage: storage,
     limits: {
         fileSize: 50 * 1024 * 1024 // 50MB max
     },
@@ -248,7 +247,6 @@ router.post('/upload', verifyToken, upload.single('file'), async (req, res) => {
     
     console.log(`📎 Upload dokumentu: case_id=${finalCaseId}, client_id=${finalClientId}, category=${category}`);
     
-    // Dla Cloudinary: req.file.path to URL, dla local to ścieżka
     const fileData = {
         case_id: finalCaseId,
         client_id: finalClientId,
@@ -256,15 +254,12 @@ router.post('/upload', verifyToken, upload.single('file'), async (req, res) => {
         title: title || req.file.originalname,
         description: description || '',
         file_name: req.file.originalname,
-        file_path: USE_CLOUDINARY ? req.file.path : req.file.path, // Cloudinary = URL, Local = path
+        file_path: req.file.path,
         file_size: req.file.size,
         file_type: req.file.mimetype,
         category: category || 'general',
-        uploaded_by: userId,
-        cloudinary_id: USE_CLOUDINARY ? req.file.filename : null // ID w Cloudinary do usuwania
+        uploaded_by: userId
     };
-    
-    console.log(`☁️ Uploaded to ${USE_CLOUDINARY ? 'CLOUDINARY' : 'LOCAL'}:`, fileData.file_path);
     
     db.run(
         `INSERT INTO documents (case_id, client_id, document_code, title, description, file_name, file_path, file_size, file_type, category, uploaded_by)
@@ -323,9 +318,11 @@ router.post('/from-base64', verifyToken, async (req, res) => {
             if (caseData) client_id = caseData.client_id;
         }
         
-        // Utwórz folder uploads/documents jeśli nie istnieje (używa centralnej konfiguracji)
-        const uploadDir = uploadConfig.paths.documents();
-        console.log('📁 Base64 upload dir:', uploadDir);
+        // Utwórz folder uploads/documents jeśli nie istnieje
+        const uploadDir = path.join(__dirname, '../../uploads/documents');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
         
         // Generuj unikalną nazwę pliku
         const uniqueName = Date.now() + '_' + file_name;
@@ -440,271 +437,77 @@ router.get('/case/:caseId', verifyToken, (req, res) => {
     );
 });
 
-// TEST endpoint - bez auth, tylko logging
-router.get('/test-download/:id', (req, res) => {
-    console.log('🧪 TEST DOWNLOAD ENDPOINT HIT! ID:', req.params.id);
-    res.json({ 
-        success: true, 
-        message: 'Test endpoint działa!', 
-        id: req.params.id,
-        timestamp: new Date().toISOString()
-    });
-});
-
 // Pobierz/wyświetl dokument (download endpoint)
 router.get('/download/:id', verifyToken, (req, res) => {
-    try {
-        console.log('🔥 DOWNLOAD ENDPOINT HIT! ID:', req.params.id);
-        console.log('🔥 User from token:', req.user);
-        console.log('🔥 Query params:', req.query);
-        
-        const db = getDatabase();
-        const { id } = req.params;
-        const userId = req.user.userId;
-        const userRole = req.user.role;
-        
-        console.log('📥 Pobieranie dokumentu ID:', id, 'przez użytkownika:', userId);
-        
-        db.get('SELECT * FROM documents WHERE id = ?', [id], (err, document) => {
-            try {
-                if (err) {
-                    console.error('❌ Błąd pobierania dokumentu z DB:', err);
-                    return res.status(500).json({ error: 'Błąd pobierania dokumentu' });
-                }
-                
-                if (!document) {
-                    console.error('❌ Dokument nie znaleziony ID:', id);
-                    return res.status(404).json({ error: 'Dokument nie znaleziony' });
-                }
-                
-                console.log('✅ Dokument znaleziony, sprawdzam uprawnienia...');
-                
-                // Sprawdź uprawnienia
-                if (userRole === 'client') {
-                    // Klient może pobrać tylko swoje dokumenty
-                    db.get('SELECT id FROM clients WHERE user_id = ?', [userId], (clientErr, client) => {
-                        if (clientErr || !client || document.client_id !== client.id) {
-                            console.error('❌ Brak uprawnień dla klienta');
-                            return res.status(403).json({ error: 'Brak uprawnień' });
-                        }
-                        console.log('✅ Uprawnienia OK, wysyłam plik...');
-                        sendFile(document, req, res);
-                    });
-                } else {
-                    // Admin/Lawyer może pobrać wszystkie
-                    console.log('✅ Admin/Lawyer, wysyłam plik...');
-                    sendFile(document, req, res);
-                }
-            } catch (innerErr) {
-                console.error('💥 CRASH w db.get callback:', innerErr);
-                if (!res.headersSent) {
-                    res.status(500).json({ error: 'Internal error', details: innerErr.message });
-                }
-            }
-        });
-    } catch (outerErr) {
-        console.error('💥 CRASH w download endpoint:', outerErr);
-        if (!res.headersSent) {
-            res.status(500).json({ error: 'Internal error', details: outerErr.message });
+    const db = getDatabase();
+    const { id } = req.params;
+    const userId = req.user.userId;
+    const userRole = req.user.role;
+    
+    console.log('📥 Pobieranie dokumentu ID:', id, 'przez użytkownika:', userId);
+    
+    db.get('SELECT * FROM documents WHERE id = ?', [id], (err, document) => {
+        if (err) {
+            console.error('❌ Błąd pobierania dokumentu z DB:', err);
+            return res.status(500).json({ error: 'Błąd pobierania dokumentu' });
         }
-    }
+        
+        if (!document) {
+            console.error('❌ Dokument nie znaleziony ID:', id);
+            return res.status(404).json({ error: 'Dokument nie znaleziony' });
+        }
+        
+        // Sprawdź uprawnienia
+        if (userRole === 'client') {
+            // Klient może pobrać tylko swoje dokumenty
+            db.get('SELECT id FROM clients WHERE user_id = ?', [userId], (clientErr, client) => {
+                if (clientErr || !client || document.client_id !== client.id) {
+                    console.error('❌ Brak uprawnień dla klienta');
+                    return res.status(403).json({ error: 'Brak uprawnień' });
+                }
+                sendFile(document, res);
+            });
+        } else {
+            // Admin/Lawyer może pobrać wszystkie
+            sendFile(document, res);
+        }
+    });
 });
 
-function sendFile(document, req, res) {
-    try {
-        const filePath = document.filepath || document.file_path;
+function sendFile(document, res) {
+    const filePath = document.filepath || document.file_path;
     
-    console.log('📄 SEND FILE START - Path:', filePath);
-    console.log('📄 Document:', {
-        id: document.id,
-        filename: document.filename || document.file_name,
-        file_type: document.file_type,
-        has_base64: !!document.file_data
-    });
-    
-    // CLOUDINARY: Jeśli file_path to URL (zaczyna się od http), przekieruj
-    if (filePath && (filePath.startsWith('http://') || filePath.startsWith('https://'))) {
-        console.log('☁️ Cloudinary URL - przekierowuję:', filePath);
-        return res.redirect(filePath);
-    }
-    
-    // Sprawdź istnienie pliku
-    const fileExists = filePath && fs.existsSync(filePath);
-    console.log('📄 File exists?', fileExists);
+    console.log('📄 Wysyłam plik:', filePath);
     
     // Jeśli plik nie istnieje na dysku, użyj base64 z bazy
-    if (!fileExists) {
+    if (!filePath || !fs.existsSync(filePath)) {
         if (document.file_data) {
             console.log('📎 Plik nie na dysku, używam base64 z bazy');
             const buffer = Buffer.from(document.file_data, 'base64');
-            const fileName = document.filename || document.file_name;
-            const encodedFileName = encodeURIComponent(fileName);
-            const safeFileName = fileName.replace(/[^\x00-\x7F]/g, '_');
-            
             res.setHeader('Content-Type', document.file_type || 'application/octet-stream');
             res.setHeader('Content-Length', buffer.length);
-            res.setHeader('Content-Disposition', `inline; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`);
+            res.setHeader('Content-Disposition', `inline; filename="${document.filename || document.file_name}"`);
             return res.send(buffer);
         }
         console.error('❌ Plik nie istnieje i brak base64:', filePath);
         return res.status(404).json({ error: 'Plik nie znaleziony' });
     }
     
-    // Sprawdź czy to media (audio/wideo) - użyj streamingu z Range requests
-    const isMedia = document.file_type && (
-        document.file_type.startsWith('audio/') || 
-        document.file_type.startsWith('video/')
-    );
+    // Ustaw odpowiednie nagłówki
+    res.setHeader('Content-Type', document.file_type || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${document.filename || document.file_name}"`);
     
-    if (isMedia) {
-        // Streaming z obsługą Range requests (szybsze ładowanie wideo)
-        const stat = fs.statSync(filePath);
-        const fileSize = stat.size;
-        const range = req.headers.range;
-        
-        const fileName = document.filename || document.file_name;
-        const encodedFileName = encodeURIComponent(fileName);
-        // Bezpieczna nazwa ASCII dla starych przeglądarek (bez polskich znaków)
-        const safeFileName = fileName.replace(/[^\x00-\x7F]/g, '_');
-        
-        if (range) {
-            // Obsługa Range request - streaming częściowy
-            const parts = range.replace(/bytes=/, '').split('-');
-            const start = parseInt(parts[0], 10);
-            const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-            const chunkSize = (end - start) + 1;
-            
-            console.log(`📹 Streaming wideo: ${start}-${end}/${fileSize} (${(chunkSize/1024/1024).toFixed(2)} MB)`);
-            
-            res.writeHead(206, {
-                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-                'Accept-Ranges': 'bytes',
-                'Content-Length': chunkSize,
-                'Content-Type': document.file_type,
-                'Content-Disposition': `inline; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`
-            });
-            
-            const readStream = fs.createReadStream(filePath, { start, end });
-            readStream.pipe(res);
-        } else {
-            // Pełny plik (pierwszy request)
-            res.writeHead(200, {
-                'Content-Length': fileSize,
-                'Content-Type': document.file_type,
-                'Accept-Ranges': 'bytes',
-                'Content-Disposition': `inline; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`
-            });
-            
-            const readStream = fs.createReadStream(filePath);
-            readStream.pipe(res);
-        }
-        console.log('✅ Media streaming:', document.filename || document.file_name);
-    } else {
-        // Dla innych plików - standardowe wysyłanie
-        const fileName = document.filename || document.file_name;
-        const encodedFileName = encodeURIComponent(fileName);
-        // Bezpieczna nazwa ASCII dla starych przeglądarek (bez polskich znaków)
-        const safeFileName = fileName.replace(/[^\x00-\x7F]/g, '_');
-        
-        res.setHeader('Content-Type', document.file_type || 'application/octet-stream');
-        res.setHeader('Content-Disposition', `inline; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`);
-        
-        const fileStream = fs.createReadStream(filePath);
-        fileStream.pipe(res);
-        
-        fileStream.on('error', (err) => {
-            console.error('❌ Błąd odczytu pliku:', err);
-            res.status(500).json({ error: 'Błąd odczytu pliku' });
-        });
-        
-        console.log('✅ Plik wysłany:', document.filename || document.file_name);
-    }
-    } catch (err) {
-        console.error('💥 CRASH w sendFile:', err);
-        if (!res.headersSent) {
-            res.status(500).json({ error: 'Internal error in sendFile', details: err.message });
-        }
-    }
-}
-
-// 🧹 ENDPOINT DO CZYSZCZENIA PUSTYCH WPISÓW DOKUMENTÓW (bez fizycznych plików)
-// MUSI BYĆ PRZED /:id ABY NIE BYŁ ZŁAPANY PRZEZ PARAMETR!
-// TYLKO DLA ADMINA
-router.delete('/cleanup-empty', verifyToken, (req, res) => {
-    const db = getDatabase();
+    // Wyślij plik
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
     
-    // TYLKO ADMIN
-    if (req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Tylko admin może czyścić puste wpisy' });
-    }
-    
-    console.log(`🧹 CLEANUP: Admin ${req.user.email} czyści puste wpisy dokumentów`);
-    
-    // Pobierz wszystkie dokumenty
-    db.all('SELECT * FROM documents ORDER BY case_id, uploaded_at', [], (err, docs) => {
-        if (err) {
-            console.error('❌ Błąd odczytu dokumentów:', err);
-            return res.status(500).json({ error: err.message });
-        }
-        
-        console.log(`📄 Znaleziono ${docs.length} dokumentów w bazie`);
-        
-        const toDelete = [];
-        const existing = [];
-        
-        docs.forEach(doc => {
-            const filePath = doc.file_path || doc.filepath;
-            const fileExists = filePath && fs.existsSync(filePath);
-            
-            if (!fileExists) {
-                toDelete.push(doc);
-                console.log(`❌ Plik nie istnieje: ID ${doc.id} - "${doc.title || doc.file_name}"`);
-            } else {
-                existing.push(doc);
-                console.log(`✅ Plik istnieje: ID ${doc.id} - "${doc.title || doc.file_name}"`);
-            }
-        });
-        
-        if (toDelete.length === 0) {
-            console.log('✅ Brak pustych wpisów!');
-            return res.json({ 
-                message: 'Brak pustych wpisów do usunięcia',
-                total: docs.length,
-                deleted: 0,
-                remaining: existing.length
-            });
-        }
-        
-        // Usuń puste wpisy
-        let deleted = 0;
-        const deletedIds = [];
-        
-        toDelete.forEach((doc, index) => {
-            db.run('DELETE FROM documents WHERE id = ?', [doc.id], (err) => {
-                if (err) {
-                    console.error(`❌ Błąd usuwania ID ${doc.id}:`, err);
-                } else {
-                    console.log(`✅ Usunięto ID ${doc.id}: "${doc.title || doc.file_name}"`);
-                    deleted++;
-                    deletedIds.push(doc.id);
-                }
-                
-                // Odpowiedź po ostatnim
-                if (index === toDelete.length - 1) {
-                    setTimeout(() => {
-                        res.json({
-                            message: `Usunięto ${deleted} pustych wpisów`,
-                            total: docs.length,
-                            deleted: deleted,
-                            deletedIds: deletedIds,
-                            remaining: existing.length
-                        });
-                    }, 500);
-                }
-            });
-        });
+    fileStream.on('error', (err) => {
+        console.error('❌ Błąd odczytu pliku:', err);
+        res.status(500).json({ error: 'Błąd odczytu pliku' });
     });
-});
+    
+    console.log('✅ Plik wysłany:', document.filename || document.file_name);
+}
 
 // Usuń dokument
 router.delete('/:id', verifyToken, (req, res) => {
@@ -739,86 +542,6 @@ router.delete('/:id', verifyToken, (req, res) => {
             }
             
             res.json({ success: true });
-        });
-    });
-});
-
-// 🗑️ TYMCZASOWY ENDPOINT - Usuwa problematyczny dokument (polskie znaki w nazwie)
-// TYLKO DLA ADMINA - do usunięcia crashującego pliku na Railway
-router.delete('/emergency-cleanup/:id', verifyToken, (req, res) => {
-    const db = getDatabase();
-    const { id } = req.params;
-    
-    // TYLKO ADMIN
-    if (req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Tylko admin może usuwać dokumenty przez cleanup' });
-    }
-    
-    console.log(`🗑️ EMERGENCY CLEANUP: Usuwam dokument ID: ${id} przez użytkownika: ${req.user.email}`);
-    
-    // Pobierz info o dokumencie
-    db.get('SELECT * FROM documents WHERE id = ?', [id], (err, doc) => {
-        if (err) {
-            console.error('❌ Błąd odczytu:', err);
-            return res.status(500).json({ error: err.message });
-        }
-        
-        if (!doc) {
-            return res.json({ message: `Dokument ${id} już nie istnieje`, deleted: false });
-        }
-        
-        console.log('📄 Dokument do usunięcia:', {
-            id: doc.id,
-            filename: doc.filename || doc.file_name,
-            filepath: doc.file_path || doc.filepath
-        });
-        
-        // Usuń plik fizyczny jeśli istnieje
-        const filePath = doc.file_path || doc.filepath;
-        if (filePath && fs.existsSync(filePath)) {
-            try {
-                fs.unlinkSync(filePath);
-                console.log('✅ Plik fizyczny usunięty:', filePath);
-            } catch (e) {
-                console.log('⚠️ Nie można usunąć pliku fizycznego:', e.message);
-            }
-        }
-        
-        // Usuń z bazy
-        db.run('DELETE FROM documents WHERE id = ?', [id], (err) => {
-            if (err) {
-                console.error('❌ Błąd usuwania z bazy:', err);
-                return res.status(500).json({ error: err.message });
-            }
-            
-            console.log(`✅ Dokument ${id} usunięty z bazy przez ${req.user.email}`);
-            
-            // DODAJ WPIS DO HISTORII SPRAWY
-            if (doc.case_id) {
-                const historyEntry = `🗑️ Administrator usunął dokument: "${doc.filename || doc.file_name || doc.title || 'Dokument'}" (ID: ${doc.id})`;
-                
-                db.run(
-                    `INSERT INTO case_history (case_id, action_type, description, performed_by, created_at) 
-                     VALUES (?, ?, ?, ?, datetime('now'))`,
-                    [doc.case_id, 'document_deleted', historyEntry, req.user.userId],
-                    (histErr) => {
-                        if (histErr) {
-                            console.error('⚠️ Nie można dodać wpisu do historii:', histErr);
-                        } else {
-                            console.log(`✅ Dodano wpis do historii sprawy ${doc.case_id}`);
-                        }
-                    }
-                );
-            }
-            
-            res.json({
-                message: `Dokument ${id} (${doc.filename || doc.file_name}) został usunięty`,
-                deleted: true,
-                document: {
-                    id: doc.id,
-                    filename: doc.filename || doc.file_name
-                }
-            });
         });
     });
 });

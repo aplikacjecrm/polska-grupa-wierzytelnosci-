@@ -21,15 +21,10 @@ console.log('🔑 ANTHROPIC_API_KEY loaded:', process.env.ANTHROPIC_API_KEY ? 'Y
 console.log('🔑 GEMINI_API_KEY loaded:', process.env.GEMINI_API_KEY ? 'YES ✅' : 'NO ❌');
 console.log('🔑 GOOGLE_CLOUD_VISION_API_KEY loaded:', process.env.GOOGLE_CLOUD_VISION_API_KEY ? 'YES ✅' : 'NO ❌');
 
-// Log konfiguracji uploadu plików
-const uploadConfig = require('./config/uploads');
-uploadConfig.logConfig();
-
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const authRoutes = require('./routes/auth');
-const setupAdminRoutes = require('./routes/setup-admin'); // TYMCZASOWY - usuń po użyciu!
 const mailRoutes = require('./routes/mail');
 const emailsRoutes = require('./routes/emails');
 const chatRoutes = require('./routes/chat');
@@ -58,7 +53,6 @@ const courtDecisionsRoutes = require('./routes/court-decisions');
 const courtsRoutes = require('./routes/courts');
 const prosecutorsRoutes = require('./routes/prosecutors');
 const policeRoutes = require('./routes/police-routes');
-const adminCleanupRoutes = require('./routes/admin-cleanup');
 const reportsRoutes = require('./routes/reports');
 const questionnairesRoutes = require('./routes/questionnaires');
 const companyLookupRoutes = require('./routes/company-lookup');
@@ -80,11 +74,9 @@ const employeeFinancesRoutes = require('./routes/employee-finances'); // Finanse
 const commissionsRoutes = require('./routes/commissions'); // System prowizji
 const hrCompensationRoutes = require('./routes/hr-compensation'); // HR - Prowizje i Wynagrodzenia
 const adminRoutes = require('./routes/admin'); // Admin - Statystyki finansowe
-const workScheduleRoutes = require('./routes/work-schedule'); // Grafik pracy
-const officeBookingRoutes = require('./routes/office-booking'); // Rezerwacja biura
 
 // Ładowanie nowych routes z error handlingiem
-let ticketsRoutes, activityLogsRoutes, websiteInquiriesRoutes;
+let ticketsRoutes, activityLogsRoutes, websiteInquiriesRoutes, gmailRoutes;
 try {
     ticketsRoutes = require('./routes/tickets');
     console.log('✅ tickets.js załadowany!');
@@ -107,6 +99,14 @@ try {
 } catch (err) {
     console.error('❌ Błąd ładowania activity-logs.js:', err.message);
     activityLogsRoutes = null;
+}
+
+try {
+    gmailRoutes = require('./routes/gmail');
+    console.log('✅ gmail.js załadowany!');
+} catch (err) {
+    console.error('❌ Błąd ładowania gmail.js:', err.message);
+    gmailRoutes = null;
 }
 
 // WAŻNE: Wymuszam wczytanie Apify Service aby załadować grupy FB z config
@@ -173,8 +173,6 @@ async function startBackendServer() {
 
   // Routes
   app.use('/api/auth', authRoutes);
-  app.use('/api/setup', setupAdminRoutes); // TYMCZASOWY - usuń po utworzeniu admina!
-  console.log('⚠️  SETUP ENDPOINT ACTIVE: POST /api/setup/create-admin');
   app.use('/api/mail', mailRoutes);
   app.use('/api/emails', emailsRoutes);
   app.use('/api/chat', chatRoutes);
@@ -208,8 +206,6 @@ async function startBackendServer() {
   console.log('✅ prosecutors.js router loaded');
   app.use('/api/police', policeRoutes);
   console.log('✅ police-routes.js router loaded');
-  app.use('/api/admin', adminCleanupRoutes);
-  console.log('✅ admin-cleanup.js router loaded - Emergency cleanup endpoint');
   app.use('/api/reports', reportsRoutes);
   console.log('✅ reports.js router loaded');
   app.use('/api', questionnairesRoutes);
@@ -405,6 +401,27 @@ async function startBackendServer() {
     console.log('⚠️ website-inquiries.js NIE ZAŁADOWANY - routes niedostępne!');
   }
 
+  if (gmailRoutes) {
+    app.use('/api/gmail', gmailRoutes);
+    console.log('✅ gmail.js router loaded - Gmail API Integration ready! 📧');
+    console.log('🔍 [DEBUG] Router zarejestrowany: /api/gmail');
+    console.log('   - GET /api/gmail/auth-url (URL autoryzacji OAuth)');
+    console.log('   - GET /api/gmail/callback (Callback OAuth)');
+    console.log('   - GET /api/gmail/status (Status autoryzacji)');
+    console.log('   - GET /api/gmail/profile (Profil Gmail)');
+    console.log('   - GET /api/gmail/messages (Lista wiadomości)');
+    console.log('   - GET /api/gmail/messages/:id (Szczegóły wiadomości)');
+    console.log('   - POST /api/gmail/send (Wyślij wiadomość)');
+    console.log('   - POST /api/gmail/reply/:id (Odpowiedz na wiadomość)');
+    console.log('   - GET /api/gmail/attachment/:messageId/:attachmentId (Pobierz załącznik)');
+    console.log('   - POST /api/gmail/mark-read/:id (Oznacz jako przeczytane)');
+    console.log('📧 Obsługiwane konta:');
+    console.log('   ✉️  info@polska-grupa-wierzytelnosci.pl');
+    console.log('   ✉️  info@kancelaria-pro-meritum.pl (alias)');
+  } else {
+    console.log('⚠️ gmail.js NIE ZAŁADOWANY - routes niedostępne!');
+  }
+
   app.use('/api/commissions', commissionsRoutes);
   console.log('✅ commissions.js router loaded - System Prowizji ready! 💰💼');
   console.log('🔍 [DEBUG] Router zarejestrowany: /api/commissions');
@@ -496,25 +513,6 @@ async function startBackendServer() {
   console.log('   - GET /api/hr-salaries/:userId/history (Historia wynagrodzeń)');
   console.log('   - POST /api/hr-salaries/:userId/change (Zmiana wynagrodzenia - HR)');
   console.log('   - GET /api/hr-salaries/reviews-due (Nadchodzące podwyżki - HR)');
-
-  app.use('/api/work-schedule', workScheduleRoutes);
-  console.log('✅ work-schedule.js router loaded - Grafik pracy! 📅');
-  console.log('   - GET /api/work-schedule/month/:year/:month (Grafik miesiąca)');
-  console.log('   - GET /api/work-schedule/day/:date (Grafik dnia)');
-  console.log('   - PUT /api/work-schedule/entry (Aktualizuj wpis)');
-
-  app.use('/api/office-booking', officeBookingRoutes);
-  console.log('✅ office-booking.js router loaded - Rezerwacja biura! 🏢');
-  console.log('🔍 [DEBUG] Router zarejestrowany: /api/office-booking');
-  console.log('   📍 Lokalizacja: Gwiazdzista 6/5, Wrocław');
-  console.log('   🪑 Zasoby: 3 biurka + 1 sala konferencyjna (6 osób)');
-  console.log('   - GET /api/office-booking/resources (Lista zasobów)');
-  console.log('   - GET /api/office-booking/bookings/:date (Rezerwacje na dzień)');
-  console.log('   - GET /api/office-booking/my-bookings/:userId (Moje rezerwacje)');
-  console.log('   - GET /api/office-booking/availability/:resourceId/:date (Dostępność)');
-  console.log('   - POST /api/office-booking/book (Zarezerwuj)');
-  console.log('   - DELETE /api/office-booking/cancel/:bookingId (Anuluj)');
-  console.log('   - GET /api/office-booking/summary/:date (Podsumowanie dnia)');
 
   console.log('\n🎉 SYSTEM HR ZAŁADOWANY! Wszystkie moduły gotowe!\n');
 

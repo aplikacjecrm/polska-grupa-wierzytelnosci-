@@ -2,7 +2,6 @@ const express = require('express');
 const { getDatabase } = require('../database/init');
 const { verifyToken } = require('../middleware/auth');
 const { generateEventCode } = require('../utils/code-generator');
-const { logEmployeeActivity } = require('../utils/employee-activity');
 
 const router = express.Router();
 
@@ -503,79 +502,38 @@ router.put('/:id', verifyToken, (req, res) => {
     console.log('🔄 UPDATE - Konwersja end_date:', end_date, '→', endDateUTC);
   }
 
-  // Najpierw pobierz dane wydarzenia do logowania
-  db.get('SELECT case_id, title as old_title FROM events WHERE id = ?', [id], (err, event) => {
-    if (err || !event) {
-      return res.status(404).json({ error: 'Wydarzenie nie znalezione' });
-    }
-    
-    db.run(
-      `UPDATE events SET
-        title = ?, description = ?, event_type = ?, location = ?, start_date = ?,
-        end_date = ?, reminder_minutes = ?, is_all_day = ?, status = ?, extra_fields = ?
-      WHERE id = ?`,
-      [title, description, event_type, location, startDateUTC, endDateUTC,
-       reminder_minutes, is_all_day, status, extraFieldsJson, id],
-      function(err) {
-        if (err) {
-          return res.status(500).json({ error: 'Błąd aktualizacji wydarzenia' });
-        }
-        if (this.changes === 0) {
-          return res.status(404).json({ error: 'Wydarzenie nie znalezione' });
-        }
-        
-        // 📊 LOGUJ EDYCJĘ DO HISTORII SPRAWY
-        const userId = req.user.userId;
-        if (event.case_id) {
-          logEmployeeActivity({
-            userId: userId,
-            actionType: 'event_updated',
-            actionCategory: 'event',
-            description: `Zaktualizowano wydarzenie: ${title || event.old_title}`,
-            caseId: event.case_id,
-            eventId: parseInt(id)
-          });
-        }
-        
-        res.json({ success: true });
+  db.run(
+    `UPDATE events SET
+      title = ?, description = ?, event_type = ?, location = ?, start_date = ?,
+      end_date = ?, reminder_minutes = ?, is_all_day = ?, status = ?, extra_fields = ?
+    WHERE id = ?`,
+    [title, description, event_type, location, startDateUTC, endDateUTC,
+     reminder_minutes, is_all_day, status, extraFieldsJson, id],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Błąd aktualizacji wydarzenia' });
       }
-    );
-  });
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Wydarzenie nie znalezione' });
+      }
+      res.json({ success: true });
+    }
+  );
 });
 
 // Usuń wydarzenie
 router.delete('/:id', verifyToken, (req, res) => {
   const db = getDatabase();
   const { id } = req.params;
-  const userId = req.user.userId;
-  
-  // Najpierw pobierz dane wydarzenia do logowania
-  db.get('SELECT case_id, title FROM events WHERE id = ?', [id], (err, event) => {
-    if (err || !event) {
+
+  db.run('DELETE FROM events WHERE id = ?', [id], function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Błąd usuwania wydarzenia' });
+    }
+    if (this.changes === 0) {
       return res.status(404).json({ error: 'Wydarzenie nie znalezione' });
     }
-    
-    db.run('DELETE FROM events WHERE id = ?', [id], function(err) {
-      if (err) {
-        return res.status(500).json({ error: 'Błąd usuwania wydarzenia' });
-      }
-      if (this.changes === 0) {
-        return res.status(404).json({ error: 'Wydarzenie nie znalezione' });
-      }
-      
-      // 📊 LOGUJ USUNIĘCIE DO HISTORII SPRAWY
-      if (event.case_id) {
-        logEmployeeActivity({
-          userId: userId,
-          actionType: 'event_deleted',
-          actionCategory: 'event',
-          description: `Usunięto wydarzenie: ${event.title}`,
-          caseId: event.case_id
-        });
-      }
-      
-      res.json({ success: true });
-    });
+    res.json({ success: true });
   });
 });
 

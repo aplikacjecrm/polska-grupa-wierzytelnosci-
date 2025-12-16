@@ -5,15 +5,19 @@ const { verifyToken } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
-const uploadConfig = require('../config/uploads');
 
 console.log('✅ client-files.js router loaded');
 
-// Konfiguracja multer dla uploadu plików (używa centralnej konfiguracji)
+// Konfiguracja multer dla uploadu plików
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = uploadConfig.paths.clientFiles();
-        cb(null, uploadDir);
+    destination: async (req, file, cb) => {
+        const uploadDir = path.join(__dirname, '../uploads/client-files');
+        try {
+            await fs.mkdir(uploadDir, { recursive: true });
+            cb(null, uploadDir);
+        } catch (error) {
+            cb(error);
+        }
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
