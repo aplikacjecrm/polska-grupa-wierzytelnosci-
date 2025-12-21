@@ -1,6 +1,12 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const puppeteer = require('puppeteer');
+
+let puppeteer = null;
+try {
+    puppeteer = require('puppeteer');
+} catch (err) {
+    console.warn('⚠️ Puppeteer not installed - some legal scraping features will be limited');
+}
 
 /**
  * 🔥 HYBRYDOWY SYSTEM POBIERANIA PRZEPISÓW Z PUPPETEER
@@ -87,6 +93,12 @@ class LegalAPIClient {
      * 🤖 POZIOM 2: Puppeteer - headless Chrome dla JS stron
      */
     async scrapeWithPuppeteer(code, articleNumber) {
+        // Jeśli puppeteer nie jest dostępny, pomiń
+        if (!puppeteer) {
+            console.log('⚠️ Puppeteer not available, skipping...');
+            return null;
+        }
+        
         const docInfo = this.isapDocuments[code];
         if (!docInfo) {
             console.log(`⚠️ Nieznany kod: ${code}`);
