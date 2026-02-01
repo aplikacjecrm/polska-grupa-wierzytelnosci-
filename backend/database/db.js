@@ -1,19 +1,24 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+/**
+ * Database connection using Knex.js
+ * Supports SQLite (development) and PostgreSQL (production/Supabase)
+ */
+const knex = require('knex');
+const knexConfig = require('../../knexfile');
 
-// Ścieżka do bazy danych
-const dbPath = path.join(__dirname, 'kancelaria.db');
+// Determine environment
+const environment = process.env.NODE_ENV || 'development';
+console.log(`🗄️ Database environment: ${environment}`);
 
-// Utwórz połączenie z bazą danych
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('❌ Błąd połączenia z bazą danych:', err.message);
-    } else {
-        console.log('✅ Połączono z bazą danych SQLite:', dbPath);
-    }
-});
+// Initialize Knex with appropriate config
+const db = knex(knexConfig[environment]);
 
-// Włącz klucze obce
-db.run('PRAGMA foreign_keys = ON');
+// Test connection
+db.raw('SELECT 1')
+  .then(() => {
+    console.log(`✅ Database connected (${environment === 'production' ? 'PostgreSQL/Supabase' : 'SQLite'})`);
+  })
+  .catch(err => {
+    console.error('❌ Database connection error:', err.message);
+  });
 
 module.exports = db;

@@ -1,31 +1,60 @@
-﻿const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+﻿const path = require('path');
 const fs = require('fs');
 
-// GŁÓWNA BAZA DANYCH - ZAWSZE używamy bazy w głównym katalogu data/ (NIE backend/data/)
-// Ścieżka: komunikator-app/data/komunikator.db
-const DB_PATH = path.resolve(__dirname, '..', '..', 'data', 'komunikator.db');
-console.log('📍 Database path:', DB_PATH);
+// Check environment - use Knex for production (PostgreSQL), SQLite for development
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Sprawdź czy to prawidłowa baza (powinna mieć > 5MB)
-if (fs.existsSync(DB_PATH)) {
-  const stats = fs.statSync(DB_PATH);
-  const sizeMB = stats.size / (1024 * 1024);
-  console.log(`📊 Database size: ${sizeMB.toFixed(2)} MB`);
-  if (sizeMB < 1) {
-    console.warn('⚠️ UWAGA: Baza danych jest mała! Może to być zła baza.');
+let db;
+
+if (isProduction) {
+  // Production: Use Knex wrapper (PostgreSQL/Supabase)
+  console.log('🚀 Production mode - using PostgreSQL via Knex');
+  db = require('./knex-wrapper');
+} else {
+  // Development: Use SQLite directly for speed
+  const sqlite3 = require('sqlite3').verbose();
+  
+  // GŁÓWNA BAZA DANYCH - ZAWSZE używamy bazy w głównym katalogu data/ (NIE backend/data/)
+  const DB_PATH = path.resolve(__dirname, '..', '..', 'data', 'komunikator.db');
+  console.log('📍 Database path:', DB_PATH);
+
+  // Sprawdź czy to prawidłowa baza (powinna mieć > 5MB)
+  if (fs.existsSync(DB_PATH)) {
+    const stats = fs.statSync(DB_PATH);
+    const sizeMB = stats.size / (1024 * 1024);
+    console.log(`📊 Database size: ${sizeMB.toFixed(2)} MB`);
+    if (sizeMB < 1) {
+      console.warn('⚠️ UWAGA: Baza danych jest mała! Może to być zła baza.');
+    }
   }
-}
 
-// Upewnij się że katalog data istnieje
-const dataDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
+  // Upewnij się że katalog data istnieje
+  const dataDir = path.dirname(DB_PATH);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
 
-const db = new sqlite3.Database(DB_PATH);
+  db = new sqlite3.Database(DB_PATH);
+}
 
 async function initDatabase() {
+  // Production: Use Knex migrations
+  if (isProduction) {
+    console.log('🔄 Running Knex migrations for PostgreSQL...');
+    try {
+      const knex = db.getKnex();
+      await knex.migrate.latest({
+        directory: path.join(__dirname, 'migrations')
+      });
+      console.log('✅ PostgreSQL migrations completed');
+      return db;
+    } catch (err) {
+      console.error('❌ Migration error:', err);
+      throw err;
+    }
+  }
+
+  // Development: Use SQLite raw SQL
   return new Promise((resolve, reject) => {
     db.serialize(() => {
       // Tabela użytkowników
