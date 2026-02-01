@@ -305,7 +305,7 @@ router.delete('/:id', verifyToken, (req, res) => {
     }
 
     // Sprawdź hasło administratora
-    if (adminPassword !== 'Proadmin') {
+    if (!process.env.ADMIN_DELETE_SECRET || adminPassword !== process.env.ADMIN_DELETE_SECRET) {
       console.log('Invalid admin password - rejecting request');
       return res.status(401).json({ error: 'Nieprawidłowe hasło administratora' });
     }

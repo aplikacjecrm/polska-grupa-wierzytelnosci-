@@ -1,6 +1,10 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'zmien-to-na-bezpieczny-klucz';
+// SECURITY: JWT_SECRET MUST be set in .env - no fallback allowed!
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET is not defined in .env!');
+}
 
 function verifyToken(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];

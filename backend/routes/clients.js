@@ -374,9 +374,7 @@ router.delete('/:id', verifyToken, (req, res) => {
   console.log('DELETE /clients/:id called');
   console.log('Client ID:', id);
   console.log('User role:', req.user.role);
-  console.log('Admin password provided:', adminPassword);
-  console.log('Expected password: Proadmin');
-  console.log('Password match:', adminPassword === 'Proadmin');
+  // SECURITY: Password logging removed
 
   // Sprawdź czy użytkownik to admin
   if (req.user.role !== 'admin') {
@@ -385,7 +383,7 @@ router.delete('/:id', verifyToken, (req, res) => {
   }
 
   // Sprawdź hasło administratora
-  if (adminPassword !== 'Proadmin') {
+  if (!process.env.ADMIN_DELETE_SECRET || adminPassword !== process.env.ADMIN_DELETE_SECRET) {
     console.log('Invalid admin password - rejecting request');
     return res.status(401).json({ error: 'Nieprawidłowe hasło administratora' });
   }
@@ -437,9 +435,7 @@ router.delete('/purge/deleted', verifyToken, (req, res) => {
 
   console.log('PURGE /clients/purge/deleted called');
   console.log('User role:', req.user.role);
-  console.log('Admin password provided:', adminPassword);
-  console.log('Expected password: Proadmin');
-  console.log('Password match:', adminPassword === 'Proadmin');
+  // SECURITY: Password logging removed
 
   // Sprawdź czy użytkownik to admin
   if (req.user.role !== 'admin') {
@@ -448,7 +444,7 @@ router.delete('/purge/deleted', verifyToken, (req, res) => {
   }
 
   // Sprawdź hasło administratora
-  if (adminPassword !== 'Proadmin') {
+  if (!process.env.ADMIN_DELETE_SECRET || adminPassword !== process.env.ADMIN_DELETE_SECRET) {
     console.log('Invalid admin password - rejecting request');
     return res.status(401).json({ error: 'Nieprawidłowe hasło administratora' });
   }

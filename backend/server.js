@@ -6,7 +6,7 @@ const cron = require('node-cron');
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // SECURITY CHECK
-const requiredEnvVars = ['JWT_SECRET'];
+const requiredEnvVars = ['JWT_SECRET', 'ADMIN_DELETE_SECRET'];
 const missingEnvVars = requiredEnvVars.filter(key => !process.env[key]);
 
 if (missingEnvVars.length > 0) {
@@ -22,6 +22,8 @@ console.log('🔑 GEMINI_API_KEY loaded:', process.env.GEMINI_API_KEY ? 'YES ✅
 console.log('🔑 GOOGLE_CLOUD_VISION_API_KEY loaded:', process.env.GOOGLE_CLOUD_VISION_API_KEY ? 'YES ✅' : 'NO ❌');
 
 const express = require('express');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const http = require('http');
 const socketIO = require('socket.io');
 const authRoutes = require('./routes/auth');
@@ -128,7 +130,21 @@ async function startBackendServer() {
     }
   });
 
-  // Middleware
+  // SECURITY: Helmet.js for security headers
+  app.use(helmet({
+    contentSecurityPolicy: false, // Wyłączone dla Electron
+    crossOriginEmbedderPolicy: false
+  }));
+
+  // SECURITY: Rate limiting - max 100 requests per 15 min per IP
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minut
+    max: 100, // max 100 requestów
+    message: { error: 'Zbyt wiele zapytań - spróbuj ponownie za 15 minut' }
+  });
+  app.use('/api/auth', limiter); // Rate limit tylko na auth
+
+  // Middleware CORS
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');

@@ -434,7 +434,7 @@ router.delete('/:id', verifyToken, (req, res) => {
   console.log('DELETE /cases/:id called');
   console.log('Case ID:', id);
   console.log('User role:', req.user.role);
-  console.log('Admin password provided:', adminPassword);
+  // SECURITY: Password logging removed
 
   // Sprawdź czy użytkownik to admin
   if (req.user.role !== 'admin') {
@@ -443,7 +443,7 @@ router.delete('/:id', verifyToken, (req, res) => {
   }
 
   // Sprawdź hasło administratora
-  if (adminPassword !== 'Proadmin') {
+  if (!process.env.ADMIN_DELETE_SECRET || adminPassword !== process.env.ADMIN_DELETE_SECRET) {
     console.log('Invalid admin password - rejecting request');
     return res.status(401).json({ error: 'Nieprawidłowe hasło administratora' });
   }
@@ -699,7 +699,7 @@ router.delete('/:id', verifyToken, (req, res) => {
   }
 
   // Sprawdź hasło administratora
-  if (adminPassword !== 'Proadmin') {
+  if (!process.env.ADMIN_DELETE_SECRET || adminPassword !== process.env.ADMIN_DELETE_SECRET) {
     return res.status(403).json({ error: 'Nieprawidłowe hasło administratora' });
   }
 

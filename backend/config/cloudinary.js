@@ -7,15 +7,20 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 // Konfiguracja Cloudinary
+// SECURITY: Removed hardcoded fallback keys - MUST be set in .env!
+if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    console.warn('⚠️ CLOUDINARY: Missing credentials in .env - file uploads will not work!');
+}
+
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dnn1s4f30',
-    api_key: process.env.CLOUDINARY_API_KEY || '695843691868791',
-    api_secret: process.env.CLOUDINARY_API_SECRET || 'gHde-cH8NDphM1z9iYH8FHobPIg'
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 console.log('☁️ Cloudinary config:', {
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dnn1s4f30',
-    api_key_present: !!(process.env.CLOUDINARY_API_KEY || '695843691868791')
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'NOT SET',
+    api_key_present: !!process.env.CLOUDINARY_API_KEY
 });
 
 // Storage dla dokumentów
