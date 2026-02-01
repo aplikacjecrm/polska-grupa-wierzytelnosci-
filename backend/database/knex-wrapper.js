@@ -7,6 +7,10 @@ const knex = require('knex');
 const knexConfig = require('../../knexfile');
 
 const environment = process.env.NODE_ENV || 'development';
+console.log(`🔌 DATABASE_URL set: ${process.env.DATABASE_URL ? 'YES' : 'NO'}`);
+if (process.env.DATABASE_URL) {
+  console.log(`🔌 DATABASE_URL starts with: ${process.env.DATABASE_URL.substring(0, 30)}...`);
+}
 const knexInstance = knex(knexConfig[environment]);
 
 /**
