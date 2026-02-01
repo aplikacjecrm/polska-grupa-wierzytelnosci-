@@ -1752,7 +1752,7 @@ window.opposingAnalysisModule.searchKRS = async function() {
     resultsDiv.innerHTML = '<div style="padding: 15px; text-align: center; color: #3B82F6;">⏳ Pobieranie danych z KRS...</div>';
     
     try {
-        const response = await fetch('https://web-production-ef868.up.railway.app/api/company/krs/full', {
+        const response = await fetch('http://localhost:3500/api/company/krs/full', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ krs: krsNumber })
@@ -1813,7 +1813,7 @@ window.opposingAnalysisModule.searchCEIDG = async function() {
     resultsDiv.innerHTML = '<div style="padding: 15px; text-align: center; color: #3B82F6;">⏳ Pobieranie danych z CEIDG...</div>';
     
     try {
-        const response = await fetch('https://web-production-ef868.up.railway.app/api/company/ceidg/nip', {
+        const response = await fetch('http://localhost:3500/api/company/ceidg/nip', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nip: nip })
@@ -1886,4 +1886,3 @@ window.opposingAnalysisModule.autoFillFromCEIDG = async function(nip) {
 };
 
 console.log('✅ Unified Opposing Party Module loaded');
-

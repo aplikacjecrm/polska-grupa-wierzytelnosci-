@@ -531,7 +531,7 @@ window.generateEventReport = async function(eventId) {
                 
                 <!-- STOPKA -->
                 <div class="footer">
-                    <p><strong>Raport wygenerowany przez system Pro Meritum</strong></p>
+                    <p><strong>Raport wygenerowany przez system E-PGW</strong></p>
                     <p>Data wygenerowania: ${new Date().toLocaleString('pl-PL')}</p>
                     <p style="font-size: 0.85rem; margin-top: 10px;">
                         Ten raport zawiera informacje poufne. Należy go przechowywać w sposób bezpieczny.

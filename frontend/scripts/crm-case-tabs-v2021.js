@@ -1317,213 +1317,6 @@ window.assignCaseToMe = async function(caseId) {
 // Przełączanie zakładek
 window.crmManager = window.crmManager || {};
 
-// Podgląd dokumentu w modalu (obsługuje różne source_type)
-window.crmManager.viewDocument = async function(docId, caseId, sourceType) {
-    console.log(`👁️ viewDocument: docId=${docId}, caseId=${caseId}, sourceType=${sourceType}`);
-    
-    try {
-        const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-        const token = localStorage.getItem('token');
-        
-        let docUrl, docData;
-        
-        // Różne endpointy w zależności od typu dokumentu
-        if (sourceType === 'witness_document') {
-            // Dla dokumentów świadków - pobierz dane i użyj endpointu świadków
-            const docsResponse = await window.api.request(`/cases/${window.crmManager.currentCaseId}/documents`);
-            const docs = docsResponse.documents || [];
-            docData = docs.find(d => d.id === docId && d.source_type === 'witness_document');
-            
-            if (!docData) {
-                alert('❌ Dokument nie znaleziony');
-                return;
-            }
-            
-            // Wyciągnij witness_id z bazy lub użyj wzorca URL świadków
-            // Dla uproszczenia - otwórz bezpośrednio przez case documents endpoint
-            docUrl = `${apiUrl}/cases/${window.crmManager.currentCaseId}/documents/${docId}/download?view=true&token=${token}`;
-            docData = { ...docData, file_name: docData.filename };
-        } else if (sourceType === 'attachment') {
-            docUrl = `${apiUrl}/attachments/${docId}/download?view=true&token=${token}`;
-            const docsResponse = await window.api.request(`/cases/${caseId || window.crmManager.currentCaseId}/documents`);
-            const docs = docsResponse.documents || [];
-            docData = docs.find(d => d.id === docId);
-        } else {
-            // document
-            docUrl = `${apiUrl}/cases/${caseId || window.crmManager.currentCaseId}/documents/${docId}/download?view=true&token=${token}`;
-            const docsResponse = await window.api.request(`/cases/${caseId || window.crmManager.currentCaseId}/documents`);
-            const docs = docsResponse.documents || [];
-            docData = docs.find(d => d.id === docId);
-        }
-        
-        if (!docData) {
-            alert('❌ Nie można pobrać danych dokumentu');
-            return;
-        }
-        
-        // Stwórz modal z podglądem
-        const modal = document.createElement('div');
-        modal.id = 'docViewModal';
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 9999999; display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
-        `;
-        
-        const fileExt = docData.filename.split('.').pop().toLowerCase();
-        const isPDF = fileExt === 'pdf';
-        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt);
-        const isTXT = fileExt === 'txt';
-        const isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(fileExt);
-        const isAudio = ['mp3', 'wav', 'ogg', 'm4a', 'aac'].includes(fileExt);
-        
-        let content = '';
-        if (isPDF) {
-            content = `<iframe src="${docUrl}" style="width: 90vw; height: 85vh; border: none; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);"></iframe>`;
-        } else if (isImage) {
-            content = `<img src="${docUrl}" style="max-width: 90vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">`;
-        } else if (isTXT) {
-            // Pobierz treść TXT i wyświetl w pięknym boxie
-            try {
-                const txtResponse = await fetch(docUrl);
-                const txtContent = await txtResponse.text();
-                content = `<div style="
-                    background: white;
-                    border: 4px solid #9333ea;
-                    border-radius: 16px;
-                    padding: 30px;
-                    max-width: 90vw;
-                    max-height: 80vh;
-                    overflow-y: auto;
-                    box-shadow: 0 8px 32px rgba(147,51,234,0.3);
-                ">
-                    <div style="
-                        background: linear-gradient(135deg, #9333ea, #7c3aed);
-                        color: white;
-                        padding: 15px 20px;
-                        border-radius: 10px;
-                        margin-bottom: 20px;
-                        font-weight: 700;
-                        font-size: 1.1rem;
-                        text-align: center;
-                        box-shadow: 0 4px 12px rgba(147,51,234,0.4);
-                    ">
-                        📄 ${docData.attachment_code || docData.document_number || docData.filename}
-                    </div>
-                    <pre style="
-                        white-space: pre-wrap;
-                        word-wrap: break-word;
-                        font-family: 'Segoe UI', Arial, sans-serif;
-                        font-size: 1rem;
-                        line-height: 1.6;
-                        color: #1a2332;
-                        margin: 0;
-                    ">${txtContent}</pre>
-                </div>`;
-            } catch (error) {
-                console.error('❌ Błąd wczytywania TXT:', error);
-                content = `<div style="background: white; padding: 40px; border-radius: 12px; text-align: center;">
-                    <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
-                    <p style="color: #333; font-size: 1.1rem; margin-bottom: 20px;">Nie udało się wczytać pliku tekstowego</p>
-<p style="color: #666; font-size: 0.9rem;">Użyj przycisku "Pobierz" w poprzednim ekranie</p>
-                </div>`;
-            }
-        } else if (isVideo) {
-            // Podgląd wideo
-            content = `<div style="background: white; border-radius: 16px; padding: 20px; max-width: 90vw; max-height: 85vh; overflow: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
-                <div style="text-align: center; margin-bottom: 15px;">
-                    <span style="font-size: 2rem;">🎬</span>
-                    <h3 style="margin: 10px 0; color: #1a2332;">Podgląd nagrania wideo</h3>
-                </div>
-                <video controls style="width: 100%; max-height: 70vh; border-radius: 8px; background: #000;">
-                    <source src="${docUrl}" type="video/${fileExt}">
-                    Twoja przeglądarka nie obsługuje odtwarzania wideo.
-                </video>
-            </div>`;
-        } else if (isAudio) {
-            // Podgląd audio
-            content = `<div style="background: white; border-radius: 16px; padding: 40px; max-width: 600px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
-                <div style="text-align: center; margin-bottom: 25px;">
-                    <span style="font-size: 4rem;">🎵</span>
-                    <h3 style="margin: 15px 0; color: #1a2332;">Podgląd nagrania audio</h3>
-                </div>
-                <audio controls style="width: 100%; margin-bottom: 20px;">
-                    <source src="${docUrl}" type="audio/${fileExt}">
-                    Twoja przeglądarka nie obsługuje odtwarzania audio.
-                </audio>
-            </div>`;
-        } else {
-            content = `<div style="background: white; padding: 40px; border-radius: 12px; text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
-                <p style="color: #333; font-size: 1.1rem; margin-bottom: 20px;">Podgląd niedostępny dla tego typu pliku</p>
-                <p style="color: #666; font-size: 0.9rem;">Użyj przycisku "Pobierz" w poprzednim ekranie</p>
-            </div>`;
-        }
-        
-        modal.innerHTML = `
-            <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 12px 24px; border-radius: 12px; color: white; font-weight: 600; z-index: 1;">
-                📋 ${docData.attachment_code || docData.document_number || docData.filename}
-            </div>
-            
-            <button onclick="document.getElementById('docViewModal').remove()" style="
-                position: absolute; top: 20px; right: 20px; z-index: 2;
-                background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
-                border: 2px solid white; color: white;
-                width: 48px; height: 48px; border-radius: 50%;
-                cursor: pointer; font-size: 1.8rem; font-weight: 700;
-                transition: all 0.3s;
-            " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">×</button>
-            
-            ${content}
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Zamknij po kliknięciu w tło
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.remove();
-            }
-        });
-        
-    } catch (error) {
-        console.error('❌ Błąd podglądu:', error);
-        alert('❌ Błąd: ' + error.message);
-    }
-};
-
-// Pobierz dokument (obsługuje różne source_type)
-window.crmManager.downloadDocument = async function(docId, filename, sourceType, caseId) {
-    console.log(`📥 downloadDocument: docId=${docId}, filename=${filename}, sourceType=${sourceType}, caseId=${caseId}`);
-    
-    try {
-        const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-        const token = localStorage.getItem('token');
-        
-        let downloadUrl;
-        
-        if (sourceType === 'witness_document') {
-            downloadUrl = `${apiUrl}/cases/${caseId || window.crmManager.currentCaseId}/documents/${docId}/download?token=${token}`;
-        } else if (sourceType === 'attachment') {
-            downloadUrl = `${apiUrl}/attachments/${docId}/download?token=${token}`;
-        } else {
-            downloadUrl = `${apiUrl}/cases/${caseId || window.crmManager.currentCaseId}/documents/${docId}/download?token=${token}`;
-        }
-        
-        // Pobierz plik używając download attribute
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = filename || 'download';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-    } catch (error) {
-        console.error('❌ Błąd pobierania:', error);
-        alert('❌ Błąd: ' + error.message);
-    }
-};
-
 window.crmManager.switchCaseTab = function(caseId, tabName) {
     // Odznacz wszystkie zakładki
     document.querySelectorAll('.case-tab').forEach(tab => {
@@ -1547,44 +1340,6 @@ window.crmManager.switchCaseTab = function(caseId, tabName) {
         
         // Pobierz zawartość asynchronicznie
         window.crmManager.loadCaseTabContent(caseId, tabName);
-    }
-    
-    // Zapisz aktualną zakładkę i caseId do późniejszego odświeżania
-    window.crmManager.currentCaseId = caseId;
-    window.crmManager.currentTabName = tabName;
-};
-
-// 🔄 ODŚWIEŻANIE AKTUALNEJ ZAKŁADKI - wywołaj po każdej akcji!
-window.crmManager.refreshCurrentTab = function() {
-    const caseId = window.crmManager.currentCaseId;
-    const tabName = window.crmManager.currentTabName;
-    
-    if (caseId && tabName) {
-        console.log(`🔄 Odświeżam zakładkę: ${tabName} dla sprawy: ${caseId}`);
-        window.crmManager.loadCaseTabContent(caseId, tabName);
-        
-        // Odśwież też zakładkę Historia jeśli istnieje
-        if (tabName !== 'history') {
-            // Zaktualizuj liczniki w zakładkach (np. dokumenty)
-            window.crmManager.updateTabCounters(caseId);
-        }
-    } else {
-        console.warn('⚠️ Brak aktywnej sprawy do odświeżenia');
-    }
-};
-
-// Aktualizacja liczników w zakładkach
-window.crmManager.updateTabCounters = async function(caseId) {
-    try {
-        // Pobierz liczbę dokumentów
-        const docsResponse = await window.api.request(`/cases/${caseId}/documents`);
-        const docsCount = (docsResponse.documents || []).length;
-        const docsTab = document.getElementById('caseTab_documents');
-        if (docsTab) {
-            docsTab.innerHTML = `📎 Dokumenty (${docsCount})`;
-        }
-    } catch (error) {
-        console.warn('⚠️ Błąd aktualizacji liczników:', error);
     }
 };
 
@@ -3475,9 +3230,19 @@ window.crmManager.loadCaseDashboard = async function(caseId) {
 
 // Renderowanie zakładki Dokumenty
 window.crmManager.renderCaseDocumentsTab = async function(caseId) {
-    try {
-        const response = await window.api.request(`/cases/${caseId}/documents`);
-        const documents = response.documents || [];
+    console.log('%c✅ V2027 - ALL DOCS !IMPORTANT! ✅', 'background: red; color: yellow; font-size: 18px; font-weight: bold; padding: 5px;');
+    const response = await window.api.request(`/cases/${caseId}/documents`);
+    const documents = response.documents || [];
+    
+    // DEBUG: Sprawdź co backend zwraca
+    console.log('🔍 DEBUG DOKUMENTY - Zwrócono:', documents.length);
+    if (documents.length > 0) {
+        console.log('🔍 Pierwszy dokument:', documents[0]);
+        console.log('🔍 attachment_code:', documents[0].attachment_code);
+        console.log('🔍 document_number:', documents[0].document_number);
+        console.log('🔍 description:', documents[0].description);
+        console.log('🔍 CZY MA OPIS?', documents[0].description ? 'TAK' : 'NIE');
+    }
     
     const addButtonHtml = `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15)); border-radius: 12px; margin-bottom: 20px; border: 2px solid #d4af37;">
@@ -3495,232 +3260,11 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
         return addButtonHtml + '<p style="text-align: center; color: #999; padding: 20px;">Brak dokumentów w sprawie</p>';
     }
     
-    // Grupuj dokumenty po kategorii
-    const grouped = {};
-    documents.forEach(doc => {
-        const category = doc.category || 'INN';
-        if (!grouped[category]) {
-            grouped[category] = [];
-        }
-        grouped[category].push(doc);
-    });
-    
-    // Sortuj dokumenty w każdej kategorii - najnowsze na górze
-    Object.keys(grouped).forEach(category => {
-        grouped[category].sort((a, b) => {
-            const dateA = new Date(a.uploaded_at);
-            const dateB = new Date(b.uploaded_at);
-            return dateB - dateA; // DESC - najnowsze na górze
-        });
-    });
-    
-    // Mapowanie kategorii na nazwy
-    const categoryNames = {
-        'POZ': '📄 Pozwy',
-        'ODP': '📝 Odpowiedzi na pozew',
-        'WNI': '📑 Wnioski',
-        'ZAL': '📎 Załączniki',
-        'ODW': '🔄 Odwołania',
-        'ZAZ': '⚡ Zażalenia',
-        'WYR': '⚖️ Wyroki',
-        'POS': '📋 Postanowienia',
-        'NAK': '📜 Nakazy zapłaty',
-        'UZA': '✅ Uzasadnienia',
-        'UMO': '💼 Umowy',
-        'FAK': '💰 Faktury',
-        'RAC': '🧾 Rachunki',
-        'PRZ': '📤 Przelewy',
-        'KOR': '📧 Korespondencja',
-        'POC': '📨 Poczta',
-        'ZAW': '📬 Zawiadomienia',
-        'WEZ': '📞 Wezwania',
-        'ZDJ': '📸 Zdjęcia',
-        'NAG': '🎥 Nagrania',
-        'EKS': '🔬 Ekspertyzy',
-        'NOT': '📝 Notatki',
-        'zeznanie': '👤 Zeznania świadków',
-        'świadek': '👥 Dokumenty świadków',
-        'INN': '📂 Inne dokumenty'
-    };
-    
-    // Sortuj kategorie według priorytetu
-    const categoryPriority = {
-        'POZ': 1, 'ODP': 2, 'WNI': 3, 'zeznanie': 4, 'świadek': 5,
-        'ZAL': 6, 'WYR': 7, 'POS': 8, 'NAK': 9, 'UZA': 10,
-        'ODW': 11, 'ZAZ': 12, 'UMO': 13, 'FAK': 14, 'RAC': 15,
-        'PRZ': 16, 'KOR': 17, 'POC': 18, 'ZAW': 19, 'WEZ': 20,
-        'ZDJ': 21, 'NAG': 22, 'EKS': 23, 'NOT': 24, 'INN': 999
-    };
-    const sortedCategories = Object.keys(grouped).sort((a, b) => {
-        return (categoryPriority[a] || 999) - (categoryPriority[b] || 999);
-    });
-    
-    // Generuj bezpieczne ID dla kategorii
-    const safeCategoryId = (cat) => {
-        return 'cat_' + cat.replace(/[^a-zA-Z0-9]/g, '_');
-    };
-    
-    // Funkcja przełączania zakładek - dodajemy PRZED renderowaniem
-    if (!window.crmManager.switchDocCategory) {
-        window.crmManager.switchDocCategory = function(categoryId) {
-            console.log('🔄 Przełączam na kategorię:', categoryId);
-            
-            // Ukryj wszystkie content areas
-            document.querySelectorAll('.doc-category-content').forEach(el => {
-                el.style.display = 'none';
-            });
-            
-            // Usuń active ze wszystkich tabów
-            document.querySelectorAll('.doc-category-tab').forEach(tab => {
-                tab.classList.remove('active');
-                tab.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))';
-                tab.style.border = '2px solid #000000';
-                tab.style.borderBottom = 'none';
-                tab.style.borderLeft = 'transparent';
-                tab.style.color = '#1a2332';
-            });
-            
-            // Pokaż wybrany content
-            const content = document.getElementById(categoryId);
-            if (content) {
-                content.style.display = 'block';
-                console.log('✅ Pokazano content:', categoryId);
-            } else {
-                console.error('❌ Nie znaleziono content:', categoryId);
-            }
-            
-            // Dodaj active do wybranego taba
-            const tab = document.getElementById('tab_' + categoryId);
-            if (tab) {
-                tab.classList.add('active');
-                tab.style.background = 'linear-gradient(135deg, #FFD700, #d4af37)';
-                tab.style.border = '2px solid #1a2332';
-                tab.style.borderBottom = 'none';
-                tab.style.borderLeft = '4px solid #d4af37';
-                console.log('✅ Podświetlono tab:', categoryId);
-            } else {
-                console.error('❌ Nie znaleziono tab:', categoryId);
-            }
-        };
-    }
-    
     return `
-        <style>
-            @keyframes pulseRetracted {
-                0%, 100% { 
-                    transform: scale(1);
-                    box-shadow: 0 3px 10px rgba(220,53,69,0.5);
-                }
-                50% { 
-                    transform: scale(1.05);
-                    box-shadow: 0 5px 15px rgba(220,53,69,0.7);
-                }
-            }
-            
-            /* Ukryj scrollbar ale zachowaj funkcjonalność przewijania */
-            .doc-tabs-container::-webkit-scrollbar {
-                height: 6px;
-            }
-            .doc-tabs-container::-webkit-scrollbar-track {
-                background: transparent;
-            }
-            .doc-tabs-container::-webkit-scrollbar-thumb {
-                background: rgba(0,0,0,0.2);
-                border-radius: 3px;
-            }
-            .doc-tabs-container::-webkit-scrollbar-thumb:hover {
-                background: rgba(0,0,0,0.4);
-            }
-            
-            /* Dla Firefox */
-            .doc-tabs-container {
-                scrollbar-width: thin;
-                scrollbar-color: rgba(0,0,0,0.2) transparent;
-            }
-            
-            /* RESPONSYWNOŚĆ - MAŁE EKRANY */
-            @media (max-width: 768px) {
-                .doc-category-tab {
-                    padding: 8px 12px !important;
-                    font-size: 0.8rem !important;
-                    gap: 4px !important;
-                }
-                .doc-category-tab span:first-child {
-                    font-size: 0.8rem !important;
-                }
-                .doc-category-tab span:last-child {
-                    padding: 2px 6px !important;
-                    font-size: 0.65rem !important;
-                }
-                .doc-tabs-container {
-                    gap: 4px !important;
-                    padding: 8px 0 !important;
-                }
-            }
-            
-            @media (max-width: 480px) {
-                .doc-category-tab {
-                    padding: 6px 10px !important;
-                    font-size: 0.75rem !important;
-                }
-                .doc-category-tab span:first-child {
-                    font-size: 0.75rem !important;
-                }
-                .doc-category-tab span:last-child {
-                    padding: 2px 5px !important;
-                    font-size: 0.6rem !important;
-                }
-            }
-        </style>
-        <div style="padding: 20px;">
-            
-            <!-- NAGŁÓWEK + ZAKŁADKI W JEDNYM STICKY KONTENERZE BEZ ODSTĘPÓW -->
-            <div style="position: -webkit-sticky; position: sticky; top: 0; left: 0; right: 0; background: white; z-index: 1000; margin: 0 -20px 20px -20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                
-                <!-- Nagłówek z przyciskiem -->
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15)); border-bottom: 2px solid #d4af37;">
-                    <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #1a2332 !important;">📋 Dokumenty w sprawie</h3>
-                    <button onclick="crmManager.showAddCaseDocument(${caseId})" style="padding: 10px 20px; background: linear-gradient(135deg, #1a2332, #2c3e50); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.95rem; box-shadow: 0 2px 8px rgba(26,35,50,0.3); transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px;"
-                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(26,35,50,0.5)'"
-                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(26,35,50,0.3)'">
-                        <span style="font-size: 1.1rem;">➕</span>
-                        <span>Dodaj</span>
-                    </button>
-                </div>
-                
-                <!-- Zakładki kategorii BEZPOŚREDNIO pod nagłówkiem -->
-                <div class="doc-tabs-container" style="display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 10px 20px; background: white; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; scrollbar-width: thin; border-bottom: 3px solid #d4af37;">
-                    ${sortedCategories.map((category, index) => `
-                        <button 
-                            onclick="window.crmManager.switchDocCategory('${safeCategoryId(category)}')"
-                            id="tab_${safeCategoryId(category)}"
-                            class="doc-category-tab ${index === 0 ? 'active' : ''}"
-                            aria-label="${categoryNames[category] || category}"
-                            style="padding: 10px 20px; background: ${index === 0 ? 'linear-gradient(135deg, #FFD700, #d4af37)' : 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'}; border: 2px solid ${index === 0 ? '#1a2332' : '#000000'}; border-bottom: none; border-left: 4px solid ${index === 0 ? '#d4af37' : 'transparent'}; border-radius: 10px 10px 0 0; cursor: pointer; font-size: 0.95rem; font-weight: 800; color: ${index === 0 ? '#000000' : '#1a2332 !important'}; text-shadow: ${index === 0 ? '0 1px 2px rgba(255,255,255,0.8)' : 'none'}; transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; position: relative; top: 3px;"
-                            onmouseover="if(!this.classList.contains('active')) this.style.background='linear-gradient(135deg, rgba(255,215,0,0.3), rgba(212,175,55,0.3))'"
-                            onmouseout="if(!this.classList.contains('active')) this.style.background='linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,215,0,0.15))'">
-                            <span>${categoryNames[category] || category}</span>
-                            <span style="background: #1a2332; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
-                                ${grouped[category].length}
-                            </span>
-                        </button>
-                    `).join('')}
-                </div>
-            </div>
-            
-            <!-- CONTENT AREAS - Po jednej dla każdej kategorii -->
-            ${sortedCategories.map((category, index) => `
-                <div id="${safeCategoryId(category)}" class="doc-category-content" style="display: ${index === 0 ? 'block' : 'none'};">
-                    <div style="display: flex; flex-direction: column; gap: 15px;">
-                        ${grouped[category].map(doc => {
-                const isRetracted = doc.is_retracted === 1 || doc.is_retracted === true;
-                return `
-                <div data-document-id="${doc.id}" style="background: ${isRetracted ? 'linear-gradient(135deg, #ffebee, #ffcdd2)' : 'white'}; padding: 20px; border-radius: 10px; border-left: 5px solid ${isRetracted ? '#dc3545' : '#d4af37'}; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; position: relative;" onmouseover="this.style.boxShadow='0 5px 20px rgba(${isRetracted ? '220, 53, 69' : '212, 175, 55'}, 0.3)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.boxShadow='0 3px 10px rgba(0, 0, 0, 0.1)'; this.style.transform='translateY(0)';">
-                    ${isRetracted ? `
-                        <div style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; padding: 8px 14px; border-radius: 8px; font-weight: 800; font-size: 0.9rem; box-shadow: 0 3px 10px rgba(220,53,69,0.5); animation: pulseRetracted 2s infinite; z-index: 10;">
-                            🚫 WYCOFANE
-                        </div>
-                    ` : ''}
+        <div style="display: flex; flex-direction: column; gap: 20px; padding: 20px;">
+            ${addButtonHtml}
+            ${documents.map(doc => `
+                <div data-document-id="${doc.id}" style="background: white; padding: 20px; border-radius: 10px; border-left: 5px solid #d4af37; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 5px 20px rgba(212, 175, 55, 0.3)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.boxShadow='0 3px 10px rgba(0, 0, 0, 0.1)'; this.style.transform='translateY(0)';">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
                         <div style="flex: 1;">
                             <div style="display: flex; gap: 10px; margin-bottom: 8px;">
@@ -3737,21 +3281,19 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                                 `}
                                 ${doc.category ? `<span style="background: linear-gradient(135deg, #e0e0e0, #d0d0d0); padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: #1a2332;">${window.crmManager.escapeHtml(doc.category)}</span>` : ''}
                             </div>
-                            <h4 style="margin: 0 0 12px 0; font-size: 1.3rem; font-weight: 800; color: ${isRetracted ? '#c0392b' : '#1a2332'} !important; display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 1.5rem;">${isRetracted ? '🚫' : '📄'}</span>
-                                <span>${window.crmManager.escapeHtml(doc.title || doc.filename || 'Bez tytułu')}</span>
+                            <h4 style="margin: 0 0 12px 0; font-size: 1.3rem; font-weight: 800; color: #1a2332 !important; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.5rem;">📄</span>
+                                <span>${window.crmManager.escapeHtml(doc.title)}</span>
                             </h4>
                             <div style="font-size: 1rem; color: #1a2332 !important; font-weight: 600; line-height: 1.8; display: flex; flex-wrap: wrap; gap: 12px;">
                                 <span style="display: inline-flex; align-items: center; gap: 6px;">
                                     <span style="font-size: 1.2rem;">📅</span>
                                     <span>${new Date(doc.uploaded_at + 'Z').toLocaleString('pl-PL')}</span>
                                 </span>
-                                ${doc.filename ? `
                                 <span style="display: inline-flex; align-items: center; gap: 6px;">
                                     <span style="font-size: 1.2rem;">📄</span>
                                     <span style="font-weight: 800; color: #d4af37 !important;">${window.crmManager.escapeHtml(doc.filename)}</span>
                                 </span>
-                                ` : '<span style="display: inline-flex; align-items: center; gap: 6px; color: #999;"><span style="font-size: 1.2rem;">📝</span><span>Zeznanie tekstowe</span></span>'}
                                 ${doc.uploaded_by_name ? `
                                     <span style="display: inline-flex; align-items: center; gap: 6px;">
                                         <span style="font-size: 1.2rem;">👤</span>
@@ -3766,16 +3308,15 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                                 </div>
                             ` : ''}
                         </div>
-                        ${doc.filename ? `
                         <div style="display: flex; gap: 12px; flex-direction: column;">
-                            <button onclick="crmManager.viewDocument(${doc.id}, ${caseId}, '${doc.source_type || 'document'}')" 
+                            <button onclick="crmManager.viewDocument(${doc.id})" 
                                 style="padding: 12px 20px; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 3px 10px rgba(212,175,55,0.3); transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; justify-content: center;"
                                 onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(212,175,55,0.5)'"
                                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 10px rgba(212,175,55,0.3)'">
                                 <span style="font-size: 1.2rem;">👁️</span>
                                 <span>Pokaż</span>
                             </button>
-                            <button onclick="crmManager.downloadDocument(${doc.id}, ${JSON.stringify(window.crmManager.escapeHtml(doc.filename))}, '${doc.source_type || 'document'}', ${caseId})" 
+                            <button onclick="crmManager.downloadDocument(${doc.id}, '${window.crmManager.escapeHtml(doc.filename)}')" 
                                 style="padding: 12px 20px; background: linear-gradient(135deg, #1a2332, #2c3e50); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 3px 10px rgba(26,35,50,0.3); transition: all 0.3s; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; justify-content: center;"
                                 onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(26,35,50,0.5)'"
                                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 10px rgba(26,35,50,0.3)'">
@@ -3783,47 +3324,11 @@ window.crmManager.renderCaseDocumentsTab = async function(caseId) {
                                 <span>Pobierz</span>
                             </button>
                         </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-            }).join('')}
                     </div>
                 </div>
             `).join('')}
-            
-            <!-- SCROLL TO TOP BUTTON -->
-            <button 
-                onclick="window.scrollTo({top: 0, behavior: 'smooth'})" 
-                style="position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; border: none; box-shadow: 0 4px 15px rgba(212,175,55,0.4); cursor: pointer; font-size: 1.5rem; transition: all 0.3s; z-index: 1000; display: flex; align-items: center; justify-content: center;"
-                onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(212,175,55,0.6)'"
-                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(212,175,55,0.4)'"
-                aria-label="Przewiń do góry"
-                title="Przewiń do góry">
-                ⬆️
-            </button>
         </div>
     `;
-    } catch (error) {
-        console.error('❌ Błąd ładowania dokumentów:', error);
-        return `
-            <div style="padding: 60px 20px; text-align: center; background: linear-gradient(135deg, #fff5f5, #ffebee); border-radius: 12px; border: 2px solid #dc3545;">
-                <div style="font-size: 4rem; margin-bottom: 20px; opacity: 0.5;">⚠️</div>
-                <h3 style="color: #dc3545; margin: 0 0 15px 0; font-size: 1.5rem; font-weight: 800;">Błąd ładowania dokumentów</h3>
-                <p style="color: #666; margin: 0 0 25px 0; font-size: 1rem;">Nie udało się pobrać dokumentów z serwera</p>
-                <button 
-                    onclick="window.crmManager.switchCaseTab(${caseId}, 'documents')" 
-                    style="padding: 12px 24px; background: linear-gradient(135deg, #dc3545, #c0392b); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 3px 10px rgba(220,53,69,0.3); transition: all 0.3s;"
-                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(220,53,69,0.5)'"
-                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 10px rgba(220,53,69,0.3)'">
-                    🔄 Spróbuj ponownie
-                </button>
-                <div style="margin-top: 15px; padding: 12px; background: white; border-radius: 6px; font-size: 0.85rem; color: #999; font-family: monospace;">
-                    ${error.message || 'Nieznany błąd'}
-                </div>
-            </div>
-        `;
-    }
 };
 
 // === NOWY PROSTY MODAL WYDARZEŃ ===
@@ -3853,7 +3358,7 @@ window.showEnhancedEventForm = function(caseId) {
     
     const modal = document.createElement('div');
     modal.id = 'enhancedEventModal';
-    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0,0,0,0); z-index: 10001; display: flex; justify-content: center; align-items: center; padding: 20px; transition: background 0.4s ease;';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0,0,0,0.8); z-index: 10001; display: flex; justify-content: center; align-items: center; padding: 20px;';
     
     modal.innerHTML = `
         <div style="background: white; border-radius: 16px; width: 90vw; max-width: 1600px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
@@ -3982,20 +3487,6 @@ window.showEnhancedEventForm = function(caseId) {
     console.log('📌 Dodaję modal do body...');
     document.body.appendChild(modal);
     console.log('✅✅✅ MODAL DODANY DO DOM!');
-    
-    // Płynne pojawienie się modala
-    const modalContent = modal.querySelector('div');
-    if (modalContent) {
-        modalContent.style.opacity = '0';
-        modalContent.style.transform = 'scale(0.95)';
-        modalContent.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-        
-        requestAnimationFrame(() => {
-            modal.style.background = 'rgba(0,0,0,0.8)';
-            modalContent.style.opacity = '1';
-            modalContent.style.transform = 'scale(1)';
-        });
-    }
     
     // Sprawdź czy modal jest widoczny
     const addedModal = document.getElementById('enhancedEventModal');
@@ -5531,7 +5022,7 @@ window.crmManager.renderCaseCommentsTab = async function(caseId) {
             </div>
             <div style="background: linear-gradient(135deg, #1a2332, #2c3e50); padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(212,175,55,0.3);">
                 <h3 style="margin: 0 0 15px 0; color: white;">💬 Dodaj komentarz</h3>
-                <textarea id="newCommentText" placeholder="Wpisz komentarz... (użyj przycisku 'Odpowiedz' przy innych komentarzach aby rozpocząć dyskusję)" style="width: 100%; padding: 15px; border: 3px solid #d4af37; border-radius: 6px; min-height: 120px; resize: vertical; font-size: 1.05rem; font-family: inherit; background: white !important; color: #1a2332 !important; font-weight: 600;"></textarea>
+                <textarea id="newCommentText" placeholder="Wpisz komentarz... (użyj przycisku 'Odpowiedz' przy innych komentarzach aby rozpocząć dyskusję)" style="width: 100%; padding: 15px; border: 2px solid white; border-radius: 6px; min-height: 120px; resize: vertical; font-size: 1rem; font-family: inherit;"></textarea>
                 
                 <div style="margin-top: 10px;">
                     <label style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 6px; color: white; cursor: pointer;">
@@ -5670,12 +5161,12 @@ window.crmManager.renderCaseCommentsTab = async function(caseId) {
                                                     ${fileSize}
                                                 </div>
                                             </div>
-                                            <button onclick="crmManager.viewDocument(${att.id}, null, 'attachment')" 
+                                            <button onclick="crmManager.viewDocument(${att.id})" 
                                                 style="padding: 6px 12px; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;"
                                                 title="Wyświetl plik">
                                                 👁️ Pokaż
                                             </button>
-                                            <button onclick="crmManager.downloadDocument(${att.id}, '${window.crmManager.escapeHtml(att.filename)}', 'attachment')" 
+                                            <button onclick="crmManager.downloadDocument(${att.id}, '${window.crmManager.escapeHtml(att.filename)}')" 
                                                 style="padding: 6px 12px; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;"
                                                 title="Pobierz plik">
                                                 ⬇️ Pobierz
@@ -7224,11 +6715,7 @@ if (!window.crmManager.currentCaseData) {
 window.downloadDocument = async function(caseId, docId) {
     try {
         const token = localStorage.getItem('token');
-        // Dynamiczny URL - localhost lub produkcja
-        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:3500/api'
-            : 'https://web-production-ef868.up.railway.app/api';
-        window.open(`${API_BASE}/cases/${caseId}/documents/${docId}/download`, '_blank');
+        window.open(`http://localhost:3500/api/cases/${caseId}/documents/${docId}/download`, '_blank');
     } catch (error) {
         console.error('❌ Błąd pobierania dokumentu:', error);
         alert('Błąd pobierania dokumentu: ' + error.message);
@@ -7348,11 +6835,7 @@ window.showUploadDocumentModal = function(caseId) {
         
         try {
             const token = localStorage.getItem('token');
-            // Dynamiczny URL - localhost lub produkcja
-            const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'http://localhost:3500/api'
-                : 'https://web-production-ef868.up.railway.app/api';
-            const response = await fetch(`${API_BASE}/cases/${caseId}/documents`, {
+            const response = await fetch(`http://localhost:3500/api/cases/${caseId}/documents`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -8149,48 +7632,4 @@ window.previewDocument = function(filename, displayName, fileExt) {
     console.log('✅ Modal podglądu otwarty');
 };
 
-// Pobierz załącznik (używane w witnesses-module.js)
-window.downloadAttachment = async function(attachmentId) {
-    console.log(`📥 Pobieranie załącznika: ${attachmentId}`);
-    
-    try {
-        const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-        const token = localStorage.getItem('token');
-        
-        // Pobierz blob
-        const response = await fetch(`${apiUrl}/attachments/${attachmentId}/download`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (!response.ok) throw new Error('Błąd pobierania pliku');
-        
-        // Pobierz nazwę pliku z headera Content-Disposition lub użyj domyślnej
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = 'attachment';
-        if (contentDisposition) {
-            const match = contentDisposition.match(/filename="?([^"]+)"?/);
-            if (match) filename = match[1];
-        }
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        
-        // Pobierz plik
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        
-        console.log('✅ Plik pobrany:', filename);
-        
-    } catch (error) {
-        console.error('❌ Błąd pobierania załącznika:', error);
-        alert('❌ Błąd: ' + error.message);
-    }
-};
-
 // ✅ KONIEC PLIKU - NOWA PROSTA WERSJA viewEventDetails + MAPA
-

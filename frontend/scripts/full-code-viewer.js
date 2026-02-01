@@ -287,7 +287,7 @@ async function loadFullCode(code, currentArticle) {
 
 // Pobierz pojedynczy artykuł
 async function fetchArticle(code, articleNumber) {
-    const API_URL = 'https://web-production-ef868.up.railway.app';
+    const API_URL = 'http://localhost:3500';
     const response = await fetch(`${API_URL}/api/ai/legal-acts/article`, {
         method: 'POST',
         headers: {
@@ -867,4 +867,3 @@ console.log('✅ [v13] window.showFullCode:', typeof window.showFullCode);
 console.log('✅ [v13] Z-INDEX: 10000000 - WYŻSZY NIŻ GŁÓWNY MODAL!');
 console.log('✅ [v13] 🎯 NOWE przyciski: inline onclick = PROSTO I DZIAŁA!');
 console.log('✅ [v13] Przyciski: "← Poprzedni" / "Następny →" z prostym onclick!');
-

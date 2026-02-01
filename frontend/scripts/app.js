@@ -57,17 +57,17 @@ class App {
         document.body.setAttribute('data-user-role', userRole);
         
         // Ukryj wszystkie elementy specyficzne dla ról
-        document.querySelectorAll('.admin-only, .lawyer-only, .client-only, .hr-only, .finance-only, .payroll-only, .inquiries-only').forEach(item => {
+        document.querySelectorAll('.admin-only, .lawyer-only, .client-only, .hr-only, .finance-only, .payroll-only').forEach(item => {
             item.style.display = 'none';
         });
         
         // Pokaż odpowiednie elementy według roli
         const roleVisibility = {
-            admin: ['.admin-only', '.lawyer-only', '.hr-only', '.finance-only', '.payroll-only', '.inquiries-only'],  // Admin widzi WSZYSTKO
+            admin: ['.admin-only', '.lawyer-only', '.hr-only', '.finance-only', '.payroll-only'],  // Admin widzi WSZYSTKO
             lawyer: ['.lawyer-only'],
             client_manager: ['.lawyer-only'],  // Opiekun klienta widzi te same opcje co mecenas
             case_manager: ['.lawyer-only'],    // Opiekun sprawy widzi te same opcje co mecenas
-            reception: ['.lawyer-only', '.finance-only', '.inquiries-only'],  // Recepcja widzi sprawy + finanse + zapytania WWW
+            reception: ['.lawyer-only', '.finance-only'],  // Recepcja widzi sprawy + finanse (odczyt)
             hr: ['.hr-only'],                  // HR - tylko swoje menu
             finance: ['.finance-only'],        // Finance - tylko swoje menu
             payroll: ['.payroll-only', '.hr-only', '.finance-only'],  // Payroll - HR + Finance + własne
@@ -82,8 +82,7 @@ class App {
                                 !item.classList.contains('client-only') &&
                                 !item.classList.contains('hr-only') &&
                                 !item.classList.contains('finance-only') &&
-                                !item.classList.contains('payroll-only') &&
-                                !item.classList.contains('inquiries-only'));
+                                !item.classList.contains('payroll-only'));
             item.style.display = shouldShow ? 'flex' : 'none';
         });
         
@@ -249,15 +248,22 @@ class App {
             lawyerView.innerHTML = '';
             console.log('✅ Styles ustawione, innerHTML wyczyszczony');
             
-            // Kontener dla Universal Dashboard (zawiera już embedded Employee Dashboard)
+            // 1. GÓRA: Dodaj kontener dla Universal Dashboard
             const universalContainer = document.createElement('div');
             universalContainer.id = 'universalDashboardContainer';
-            universalContainer.style.cssText = 'width: 100%;';
+            universalContainer.style.cssText = 'width: 100%; padding: 20px; background: white;';
             lawyerView.appendChild(universalContainer);
             
-            // Załaduj Universal Dashboard (zawiera formularze HR + embedded Employee Dashboard)
+            // 2. DÓŁ: Dodaj kontener dla Employee Dashboard HR
+            const employeeContainer = document.createElement('div');
+            employeeContainer.id = 'employeeDashboardHRContainer';
+            employeeContainer.style.cssText = 'width: 100%; min-height: 600px; background: #f5f5f5; margin-top: 20px;';
+            employeeContainer.innerHTML = '<div style="padding: 40px; text-align: center; color: #3B82F6;">⏳ Ładowanie Employee Dashboard HR...</div>';
+            lawyerView.appendChild(employeeContainer);
+            
+            // Załaduj Universal Dashboard (stare karty)
             if (window.universalDashboard) {
-                console.log('✅ Ładuję Universal Dashboard z embedded Employee Dashboard...');
+                console.log('✅ Ładuję Universal Dashboard (karty)...');
                 setTimeout(() => {
                     window.universalDashboard.init('universalDashboardContainer');
                 }, 50);
@@ -268,6 +274,28 @@ class App {
                         window.universalDashboard.init('universalDashboardContainer');
                     }
                 }, 200);
+            }
+            
+            // Załaduj Employee Dashboard HR (zakładki HR)
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const userId = currentUser.id || currentUser.userId;
+            
+            if (userId && window.EmployeeDashboard) {
+                console.log('✅ Ładuję Employee Dashboard HR (zakładki)...');
+                setTimeout(async () => {
+                    try {
+                        const dashboard = new window.EmployeeDashboard(userId);
+                        await dashboard.loadData();
+                        await dashboard.render('employeeDashboardHRContainer');
+                        window.employeeDashboard = dashboard;
+                        console.log('✅ Oba dashboardy załadowane!');
+                    } catch (error) {
+                        console.error('❌ BŁĄD Employee Dashboard:', error);
+                        employeeContainer.innerHTML = `<div style="padding: 40px; text-align: center; color: red;">❌ Błąd ładowania Employee Dashboard: ${error.message}</div>`;
+                    }
+                }, 300);
+            } else {
+                employeeContainer.innerHTML = '<div style="padding: 40px; text-align: center; color: #95a5a6;">⚠️ Employee Dashboard niedostępny</div>';
             }
         }
         if (viewName === 'case-manager-dashboard') {
@@ -463,7 +491,7 @@ class App {
         });
 
                 ipcRenderer.on('show-about', () => {
-                    alert(`Pro Meritum Komunikator\nWersja: 1.0.0\n\n© 2025 Pro Meritum - Kancelaria Radców Prawnych`);
+                    alert(`E-PGW\nWersja: 1.0.0\n\n© 2025 Polska Grupa Wierzytelności\nwww.e-pgw.pl`);
                 });
             } catch (e) {
                 // W przeglądarce - IPC nie działa

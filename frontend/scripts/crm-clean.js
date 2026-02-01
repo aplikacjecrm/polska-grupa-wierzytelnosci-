@@ -1,10 +1,3 @@
-// Globalna funkcja do dynamicznego URL API
-window.getApiBaseUrl = function() {
-    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:3500/api'
-        : 'https://web-production-ef868.up.railway.app/api';
-};
-
 class CRMManager {
     constructor() {
         this.clients = [];
@@ -18,67 +11,6 @@ class CRMManager {
         
         // Nasłuchuj eventów
         this.setupEventListeners();
-    }
-    
-    // Metoda pomocnicza do pobierania API URL
-    getApiUrl() {
-        return window.getApiBaseUrl();
-    }
-    
-    // Metoda do bezpiecznego renderowania HTML opisu (usuwa tagi HTML i zwraca czysty tekst)
-    stripHtmlTags(html) {
-        if (!html) return '';
-        // Utwórz tymczasowy element do parsowania HTML
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
-        // Zwróć tylko tekst bez tagów
-        return temp.textContent || temp.innerText || '';
-    }
-    
-    // Metoda do skracania opisu z zachowaniem czystego tekstu
-    getDescriptionPreview(description, maxLength = 150) {
-        if (!description) return '';
-        const cleanText = this.stripHtmlTags(description);
-        if (cleanText.length <= maxLength) return cleanText;
-        return cleanText.substring(0, maxLength) + '...';
-    }
-    
-    // 🚀 Szybki loading overlay
-    showQuickLoading(message = 'Ładowanie...') {
-        // Usuń poprzedni loading jeśli istnieje
-        this.hideQuickLoading();
-        
-        const loader = document.createElement('div');
-        loader.id = 'quickLoadingOverlay';
-        loader.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: rgba(26, 35, 50, 0.85);
-            z-index: 99999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: fadeIn 0.1s ease;
-        `;
-        loader.innerHTML = `
-            <div style="text-align: center; color: white;">
-                <div style="width: 50px; height: 50px; border: 4px solid rgba(255,215,0,0.3); border-top: 4px solid #FFD700; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px;"></div>
-                <div style="font-size: 1.1rem; font-weight: 600;">${message}</div>
-            </div>
-            <style>
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-            </style>
-        `;
-        document.body.appendChild(loader);
-    }
-    
-    hideQuickLoading() {
-        const loader = document.getElementById('quickLoadingOverlay');
-        if (loader) loader.remove();
     }
     
     setupEventListeners() {
@@ -729,7 +661,7 @@ class CRMManager {
                             <td>${this.escapeHtml(client.phone || '-')}</td>
                             <td>
                                 <button class="btn-small" style="background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; font-weight: 600; border: 2px solid #d4af37;" onclick="crmManager.showClientDetails(${client.id})">👁️ Szczegóły</button>
-                                ${isAdmin ? `<button class="btn-small" onclick="crmManager.editClient(${client.id})">Edytuj</button>` : ''}
+                                <button class="btn-small" onclick="crmManager.editClient(${client.id})">Edytuj</button>
                                 <button class="btn-small" onclick="crmManager.viewClientCases(${client.id})">Sprawy</button>
                                 ${isAdmin ? `<button class="btn-small" style="background: #e74c3c; color: white;" onclick="crmManager.deleteClient(${client.id})">🗑️ Usuń</button>` : ''}
                             </td>
@@ -1302,9 +1234,6 @@ class CRMManager {
                 return;
             }
             
-            // 🚀 SZYBKIE ŁADOWANIE: Pokaż loading od razu
-            this.showQuickLoading('Ładowanie sprawy...');
-            
             // Pobierz dane sprawy
             const response = await window.api.request(`/cases/${caseId}`);
             const caseData = response.case;
@@ -1319,22 +1248,16 @@ class CRMManager {
                 window.eventBus.emit('case:opened', { caseId, caseData });
             }
             
-            // 🚀 Pobierz dokumenty w tle (nie blokuj UI)
+            // Pobierz dokumenty sprawy
             let caseDocuments = [];
-            const docsPromise = window.api.request(`/cases/${caseId}/documents`).then(docsResponse => {
+            try {
+                const docsResponse = await window.api.request(`/cases/${caseId}/documents`);
                 caseDocuments = Array.isArray(docsResponse.documents) ? docsResponse.documents : [];
                 console.log('📎 Dokumenty sprawy:', caseDocuments.length);
-                // Zaktualizuj licznik dokumentów w zakładce
-                const docsTab = document.getElementById('caseTab_documents');
-                if (docsTab) {
-                    docsTab.innerHTML = `📎 Dokumenty (${caseDocuments.length})`;
-                }
-            }).catch(error => {
+            } catch (error) {
                 console.error('❌ Error loading case documents:', error);
-            });
-            
-            // Ukryj loading
-            this.hideQuickLoading();
+                caseDocuments = [];
+            }
             
             // Mapowanie statusów
             const statusConfig = {
@@ -1369,7 +1292,7 @@ class CRMManager {
                         </button>
                     ` : ''}
                     <button onclick="window.crmManager.switchCaseTab(${caseId}, 'documents')" id="caseTab_documents" class="case-tab" style="flex: 1; padding: 12px; background: transparent; border: none; cursor: pointer; font-weight: 600; color: #666;">
-                        📎 Dokumenty (...)
+                        📎 Dokumenty (${caseDocuments.length})
                     </button>
                     <button onclick="window.crmManager.switchCaseTab(${caseId}, 'events')" id="caseTab_events" class="case-tab" style="flex: 1; padding: 12px; background: transparent; border: none; cursor: pointer; font-weight: 600; color: #666;">
                         📅 Wydarzenia
@@ -1602,10 +1525,10 @@ class CRMManager {
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 5px;">
-                                    <button onclick="crmManager.viewDocument(${doc.id}, ${doc.case_id || caseId})" style="padding: 6px 12px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-right: 5px;">
+                                    <button onclick="crmManager.viewDocument(${doc.id})" style="padding: 6px 12px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-right: 5px;">
                                         👁️ Pokaż
                                     </button>
-                                    <button onclick="crmManager.downloadDocument(${doc.id}, '${this.escapeHtml(doc.filename)}', ${doc.case_id || caseId})" style="padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
+                                    <button onclick="crmManager.downloadDocument(${doc.id}, '${this.escapeHtml(doc.filename)}')" style="padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
                                         📥 Pobierz
                                     </button>
                                 </div>
@@ -1905,7 +1828,7 @@ class CRMManager {
                         fileFormData.append('file', file);
                         fileFormData.append('category', 'identity'); // Domyślna kategoria
                         
-                        await fetch(`https://web-production-ef868.up.railway.app/api/clients/${clientId}/files`, {
+                        await fetch(`http://localhost:3500/api/clients/${clientId}/files`, {
                             method: 'POST',
                             headers: {
                                 'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -2266,7 +2189,7 @@ class CRMManager {
                         fileFormData.append('title', file.name);
                         fileFormData.append('category', 'case_document');
                         
-                        await fetch(`${window.getApiBaseUrl()}/cases/${response.caseId}/documents`, {
+                        await fetch(`http://localhost:3500/api/cases/${response.caseId}/documents`, {
                             method: 'POST',
                             headers: {
                                 'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -2398,7 +2321,7 @@ class CRMManager {
                         fileFormData.append('category', 'initial_document');
                         
                         const token = localStorage.getItem('token');
-                        const uploadResponse = await fetch(`${window.getApiBaseUrl()}/cases/${caseId}/documents`, {
+                        const uploadResponse = await fetch(`http://localhost:3500/api/cases/${caseId}/documents`, {
                             method: 'POST',
                             headers: {
                                 'Authorization': `Bearer ${token}`
@@ -2646,19 +2569,10 @@ class CRMManager {
             const formData = new FormData(form);
             const docTitle = formData.get('title');
             const docDescription = formData.get('description');
-            const docCategory = formData.get('category');
-            const docFile = formData.get('file');
             
             console.log('📎 Dodawanie dokumentu do sprawy:', caseId);
-            console.log('   - Tytuł:', docTitle);
-            console.log('   - Kategoria:', docCategory);
-            console.log('   - Plik:', docFile ? docFile.name : 'BRAK');
-            console.log('   - Token:', localStorage.getItem('token') ? 'OK' : 'BRAK');
             
-            const apiUrl = window.api?.baseURL || 'https://web-production-ef868.up.railway.app/api';
-            console.log('   - API URL:', apiUrl);
-            
-            const response = await fetch(`${apiUrl}/cases/${caseId}/documents`, {
+            const response = await fetch(`http://localhost:3500/api/cases/${caseId}/documents`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -2666,13 +2580,10 @@ class CRMManager {
                 body: formData
             });
             
-            console.log('   - Response status:', response.status);
-            
             const data = await response.json();
-            console.log('   - Response data:', data);
             
             if (!response.ok) {
-                throw new Error(data.error || data.message || 'Błąd dodawania dokumentu');
+                throw new Error(data.message || 'Błąd dodawania dokumentu');
             }
             
             // Pokaż krótką informację w formularzu (bez alertu)
@@ -2714,7 +2625,7 @@ class CRMManager {
             
             console.log('📥 Pobieranie dokumentu:', documentId);
             
-            const response = await fetch(`${window.getApiBaseUrl()}/cases/${caseId}/documents/${documentId}/download`, {
+            const response = await fetch(`http://localhost:3500/api/cases/${caseId}/documents/${documentId}/download`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -3043,10 +2954,10 @@ class CRMManager {
             }
             
             console.log('💾 Token:', token ? 'EXISTS' : 'MISSING');
-            console.log('💾 Sending POST to:', `${window.getApiBaseUrl()}/clients/${clientId}/files`);
+            console.log('💾 Sending POST to:', `http://localhost:3500/api/clients/${clientId}/files`);
             
             // Wysyłka do backendu
-            const response = await fetch(`${window.getApiBaseUrl()}/clients/${clientId}/files`, {
+            const response = await fetch(`http://localhost:3500/api/clients/${clientId}/files`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -3281,7 +3192,7 @@ class CRMManager {
             
             console.log('⬇️ Pobieranie pliku:', fileId, 'dla klienta:', clientId);
             
-            const response = await fetch(`${window.getApiBaseUrl()}/clients/${clientId}/files/${fileId}/download`, {
+            const response = await fetch(`http://localhost:3500/api/clients/${clientId}/files/${fileId}/download`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -3426,7 +3337,7 @@ class CRMManager {
             
             console.log('👁️ Podgląd pliku:', fileId);
             
-            const response = await fetch(`${window.getApiBaseUrl()}/clients/${clientId}/files/${fileId}/download`, {
+            const response = await fetch(`http://localhost:3500/api/clients/${clientId}/files/${fileId}/download`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -3512,7 +3423,7 @@ class CRMManager {
             
             console.log('🗑️ Usuwanie pliku:', fileId);
             
-            const response = await fetch(`${window.getApiBaseUrl()}/clients/${clientId}/files/${fileId}`, {
+            const response = await fetch(`http://localhost:3500/api/clients/${clientId}/files/${fileId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -3767,7 +3678,7 @@ class CRMManager {
                 
                 const token = localStorage.getItem('token');
                 
-                const fileResponse = await fetch('https://web-production-ef868.up.railway.app/api/comments/upload', {
+                const fileResponse = await fetch('http://localhost:3500/api/comments/upload', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -3931,7 +3842,7 @@ class CRMManager {
                                                     ${att.document_number} • ${fileSize}
                                                 </div>
                                             </div>
-                                            <button onclick="crmManager.viewDocument(${att.id}, ${caseId})" 
+                                            <button onclick="crmManager.viewDocument(${att.id})" 
                                                 style="padding: 6px 12px; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;"
                                                 title="Wyświetl plik">
                                                 👁️ Pokaż
@@ -3983,311 +3894,35 @@ class CRMManager {
         }
     }
 
-    // Usuń komentarz (z hasłem i pięknym modalem)
+    // Usuń komentarz (z potwierdzeniem hasła)
     async deleteComment(caseId, commentId) {
-        console.log('🗑️ Usuwanie komentarza:', commentId);
+        // Pierwsze potwierdzenie
+        const confirmed = await this.customConfirm('Czy na pewno chcesz usunąć ten komentarz? Ta operacja jest nieodwracalna!');
+        if (!confirmed) return;
         
-        // Pobierz informacje o komentarzu
+        // Zapytaj o hasło administratora
+        const password = await this.customPrompt('Wprowadź hasło administratora:', 'password');
+        if (!password) {
+            await this.customAlert('Usuwanie anulowane', 'info');
+            return;
+        }
+        
         try {
-            const commentsResponse = await window.api.request(`/comments/case/${caseId}`);
-            const comment = commentsResponse.comments?.find(c => c.id === commentId);
+            console.log('🗑️ Usuwanie komentarza:', commentId);
             
-            if (!comment) {
-                await this.customAlert('Nie znaleziono komentarza', 'error');
-                return;
-            }
-            
-            const commentAuthor = comment.author_name || comment.user_name || 'Nieznany użytkownik';
-            const commentPreview = comment.comment.substring(0, 100) + (comment.comment.length > 100 ? '...' : '');
-            const hasAttachments = comment.attachments && comment.attachments.length > 0;
-            const attachmentsCount = hasAttachments ? comment.attachments.length : 0;
-            
-            // Modal z polem hasła
-            const modal = document.createElement('div');
-            modal.id = 'deleteCommentModal';
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100vh;
-                background: rgba(0,0,0,0.85);
-                z-index: 10003;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                animation: fadeIn 0.3s;
-            `;
-            
-            modal.innerHTML = `
-                <style>
-                    @keyframes shake-animation {
-                        0%, 100% { transform: translateX(0); }
-                        10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-                        20%, 40%, 60%, 80% { transform: translateX(10px); }
-                    }
-                    .shake-animation {
-                        animation: shake-animation 0.5s;
-                    }
-                    @keyframes fadeIn {
-                        from { opacity: 0; }
-                        to { opacity: 1; }
-                    }
-                    @keyframes slideIn {
-                        from { transform: translateY(-50px); opacity: 0; }
-                        to { transform: translateY(0); opacity: 1; }
-                    }
-                </style>
-                <div style="
-                    background: white;
-                    border-radius: 20px;
-                    padding: 0;
-                    max-width: 550px;
-                    width: 90%;
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-                    animation: slideIn 0.4s ease-out;
-                ">
-                    <!-- Header -->
-                    <div style="
-                        background: linear-gradient(135deg, #dc3545, #b02a37);
-                        padding: 25px;
-                        border-radius: 20px 20px 0 0;
-                        color: white;
-                        text-align: center;
-                        position: relative;
-                    ">
-                        <div style="font-size: 3.5rem; margin-bottom: 15px; animation: pulse 2s infinite;">⚠️</div>
-                        <h3 style="margin: 0 0 10px 0; font-size: 1.5rem; font-weight: 800;">USUWANIE KOMENTARZA</h3>
-                        <p style="margin: 0; opacity: 0.95; font-size: 0.95rem;">To działanie jest NIEODWRACALNE!</p>
-                    </div>
-                    
-                    <!-- Body -->
-                    <div style="padding: 30px;">
-                        <!-- Info o komentarzu -->
-                        <div style="
-                            padding: 20px;
-                            background: linear-gradient(135deg, rgba(220,53,69,0.1), rgba(176,42,55,0.1));
-                            border-left: 5px solid #dc3545;
-                            border-radius: 12px;
-                            margin-bottom: 25px;
-                        ">
-                            <div style="font-size: 0.85rem; color: #999; margin-bottom: 8px; font-weight: 600; text-transform: uppercase;">Usuwasz komentarz od:</div>
-                            <div style="font-size: 1.2rem; color: #1a2332; font-weight: 700; margin-bottom: 12px;">👤 ${this.escapeHtml(commentAuthor)}</div>
-                            <div style="font-size: 0.9rem; color: #666; background: white; padding: 12px; border-radius: 8px; font-style: italic; line-height: 1.6;">"${this.escapeHtml(commentPreview)}"</div>
-                        </div>
-                        
-                        <!-- Ostrzeżenie -->
-                        <div style="
-                            padding: 18px;
-                            background: #fff3cd;
-                            border: 2px solid #ffc107;
-                            border-radius: 12px;
-                            margin-bottom: 25px;
-                            display: flex;
-                            align-items: center;
-                            gap: 15px;
-                        ">
-                            <div style="font-size: 2.5rem; flex-shrink: 0;">🔥</div>
-                            <div>
-                                <div style="color: #856404; font-weight: 700; margin-bottom: 5px; font-size: 0.95rem;">Zostaną usunięte:</div>
-                                <div style="color: #856404; font-size: 0.85rem; line-height: 1.6;">
-                                    • Treść komentarza<br>
-                                    ${hasAttachments ? `• ${attachmentsCount} załącznik(ów)<br>` : ''}
-                                    • Wszystkie odpowiedzi<br>
-                                    • Historia i logi
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Pole hasła -->
-                        <div style="margin-bottom: 25px;">
-                            <label style="
-                                display: block;
-                                color: #1a2332;
-                                font-weight: 700;
-                                margin-bottom: 10px;
-                                font-size: 1rem;
-                            ">🔐 Wpisz swoje hasło aby potwierdzić:</label>
-                            <input 
-                                type="password" 
-                                id="commentDeletePassword" 
-                                placeholder="Twoje hasło..." 
-                                autocomplete="current-password"
-                                style="
-                                    width: 100%;
-                                    padding: 15px;
-                                    border: 3px solid #e0e0e0;
-                                    border-radius: 12px;
-                                    font-size: 1.05rem;
-                                    transition: all 0.3s;
-                                    box-sizing: border-box;
-                                "
-                                onkeypress="if(event.key==='Enter') document.getElementById('confirmDeleteCommentBtn').click()"
-                                onfocus="this.style.borderColor='#dc3545'; this.style.boxShadow='0 0 0 4px rgba(220,53,69,0.1)'"
-                                onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'"
-                            />
-                        </div>
-                        
-                        <!-- Błąd -->
-                        <div id="commentPasswordError" style="
-                            display: none;
-                            padding: 12px;
-                            background: #f8d7da;
-                            border: 2px solid #dc3545;
-                            border-radius: 8px;
-                            color: #721c24;
-                            font-weight: 600;
-                            margin-bottom: 20px;
-                            text-align: center;
-                        "></div>
-                        
-                        <!-- Przyciski -->
-                        <div style="display: flex; gap: 12px; margin-top: 30px;">
-                            <button 
-                                onclick="document.getElementById('deleteCommentModal').remove()" 
-                                style="
-                                    flex: 1;
-                                    padding: 16px;
-                                    background: #6c757d;
-                                    color: white;
-                                    border: none;
-                                    border-radius: 12px;
-                                    cursor: pointer;
-                                    font-weight: 700;
-                                    font-size: 1rem;
-                                    transition: all 0.3s;
-                                "
-                                onmouseover="this.style.background='#5a6268'"
-                                onmouseout="this.style.background='#6c757d'"
-                            >
-                                ❌ Anuluj
-                            </button>
-                            <button 
-                                id="confirmDeleteCommentBtn"
-                                style="
-                                    flex: 2;
-                                    padding: 16px;
-                                    background: linear-gradient(135deg, #dc3545, #b02a37);
-                                    color: white;
-                                    border: none;
-                                    border-radius: 12px;
-                                    cursor: pointer;
-                                    font-weight: 800;
-                                    font-size: 1.05rem;
-                                    box-shadow: 0 4px 15px rgba(220,53,69,0.4);
-                                    transition: all 0.3s;
-                                "
-                                onmouseover="if(!this.disabled) { this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(220,53,69,0.6)'; }"
-                                onmouseout="if(!this.disabled) { this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(220,53,69,0.4)'; }"
-                            >
-                                🗑️ USUŃ TRWALE
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Focus na pole hasła
-            setTimeout(() => {
-                document.getElementById('commentDeletePassword')?.focus();
-            }, 100);
-            
-            // Handler usuwania
-            document.getElementById('confirmDeleteCommentBtn').onclick = async () => {
-                const passwordInput = document.getElementById('commentDeletePassword');
-                const errorDiv = document.getElementById('commentPasswordError');
-                const password = passwordInput.value.trim();
-                
-                // Walidacja
-                if (!password) {
-                    passwordInput.classList.add('shake-animation');
-                    passwordInput.style.borderColor = '#dc3545';
-                    errorDiv.textContent = '❌ Wpisz hasło!';
-                    errorDiv.style.display = 'block';
-                    setTimeout(() => passwordInput.classList.remove('shake-animation'), 500);
-                    return;
-                }
-                
-                // Disable przycisku
-                const btn = document.getElementById('confirmDeleteCommentBtn');
-                btn.disabled = true;
-                btn.style.opacity = '0.6';
-                btn.innerHTML = '⏳ Weryfikacja...';
-                
-                try {
-                    // Usuń komentarz z weryfikacją hasła
-                    const response = await window.api.request(`/comments/${commentId}`, {
-                        method: 'DELETE',
-                        body: {
-                            password: password,
-                            comment_author: commentAuthor,
-                            comment_preview: commentPreview
-                        }
-                    });
-                    
-                    // Zamknij modal
-                    modal.remove();
-                    
-                    // Powiadomienie z szczegółami
-                    const repliesCount = response.deleted_comment?.replies_deleted || 0;
-                    const attachmentsDeleted = response.deleted_comment?.attachments_deleted || 0;
-                    const details = repliesCount > 0 || attachmentsDeleted > 0
-                        ? ` (+ ${repliesCount} odpowiedzi, ${attachmentsDeleted} załączników)`
-                        : '';
-                    
-                    if (window.showNotification) {
-                        window.showNotification(`✅ Komentarz usunięty i zapisany w historii${details}`, 'success');
-                    } else {
-                        await this.customAlert(`✅ Komentarz usunięty${details}`, 'success');
-                    }
-                    
-                    // Przeładuj listę komentarzy
-                    await this.reloadCommentsList(caseId);
-                    
-                    // Event bus
-                    if (window.eventBus) {
-                        window.eventBus.emit('comment:deleted', {
-                            commentId,
-                            commentAuthor,
-                            repliesDeleted: repliesCount,
-                            attachmentsDeleted: attachmentsDeleted
-                        });
-                    }
-                    
-                } catch (error) {
-                    console.error('❌ Błąd usuwania:', error);
-                    
-                    // Sprawdź czy to błąd hasła
-                    if (error.message && error.message.includes('hasł')) {
-                        passwordInput.classList.add('shake-animation');
-                        passwordInput.style.borderColor = '#dc3545';
-                        passwordInput.value = '';
-                        errorDiv.textContent = '❌ Nieprawidłowe hasło! Spróbuj ponownie.';
-                        errorDiv.style.display = 'block';
-                        setTimeout(() => passwordInput.classList.remove('shake-animation'), 500);
-                        
-                        // Re-enable przycisk
-                        btn.disabled = false;
-                        btn.style.opacity = '1';
-                        btn.innerHTML = '🗑️ USUŃ TRWALE';
-                        
-                        // Focus z powrotem na pole
-                        passwordInput.focus();
-                    } else {
-                        modal.remove();
-                        await this.customAlert('❌ Błąd: ' + error.message, 'error');
-                    }
-                }
-            };
-            
-            // Zamknij modal klikając w tło
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.remove();
+            const response = await window.api.request(`/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-Admin-Password': password
                 }
             });
+            
+            if (!response.success) {
+                throw new Error(response.error || response.message || 'Błąd usuwania komentarza');
+            }
+            
+            // Przeładuj tylko listę komentarzy
+            await this.reloadCommentsList(caseId);
             
         } catch (error) {
             console.error('❌ Błąd usuwania komentarza:', error);
@@ -4339,126 +3974,44 @@ class CRMManager {
     }
 
     // Wyświetl dokument/załącznik w pop-upie
-    async viewDocument(documentId, caseId = null, sourceType = null) {
-        // Pokaż okienko ładowania
-        const loadingModal = document.createElement('div');
-        loadingModal.id = 'documentLoadingModal';
-        loadingModal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000000;
-            animation: fadeIn 0.2s;
-        `;
-        loadingModal.innerHTML = `
-            <div style="text-align: center; color: white;">
-                <div style="font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">📄</div>
-                <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 15px;">Ładowanie dokumentu...</div>
-                <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; margin: 0 auto;">
-                    <div style="width: 30%; height: 100%; background: linear-gradient(90deg, #FFD700, #d4af37); border-radius: 3px; animation: loadingBar 1.5s ease-in-out infinite;"></div>
-                </div>
-                <div style="margin-top: 15px; font-size: 0.9rem; opacity: 0.7;">Proszę czekać...</div>
-            </div>
-            <style>
-                @keyframes pulse {
-                    0%, 100% { transform: scale(1); opacity: 1; }
-                    50% { transform: scale(1.1); opacity: 0.8; }
-                }
-                @keyframes loadingBar {
-                    0% { width: 0%; margin-left: 0%; }
-                    50% { width: 60%; margin-left: 20%; }
-                    100% { width: 0%; margin-left: 100%; }
-                }
-            </style>
-        `;
-        document.body.appendChild(loadingModal);
-        
+    async viewDocument(documentId) {
         try {
-            console.log('👁️ Wyświetlam dokument ID:', documentId, 'Case ID:', caseId, 'Source:', sourceType);
+            console.log('👁️ Wyświetlam dokument ID:', documentId);
             
-            // Użyj dynamicznego API_URL
-            const apiBaseUrl = window.getApiBaseUrl();
-            const token = localStorage.getItem('token');
-            
-            console.log('🔗 API URL:', apiBaseUrl, 'Token:', token ? 'OK' : 'BRAK');
-            
-            // Ustal URL do pliku
-            let fileUrl;
-            if (sourceType === 'attachment') {
-                fileUrl = `${apiBaseUrl}/attachments/${documentId}/download`;
-            } else if (sourceType === 'document') {
-                fileUrl = `${apiBaseUrl}/documents/download/${documentId}`;
-            } else {
-                // Domyślnie próbuj documents
-                fileUrl = `${apiBaseUrl}/documents/download/${documentId}`;
-            }
-            
-            // Pobierz plik bezpośrednio (bez HEAD request) z retry
-            console.log('📥 Pobieranie pliku z:', fileUrl);
-            
-            let response = null;
-            let lastError = null;
-            
-            // Retry 3 razy z opóźnieniem
-            for (let attempt = 1; attempt <= 3; attempt++) {
-                try {
-                    console.log(`📥 Próba ${attempt}/3...`);
-                    response = await fetch(fileUrl, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    
-                    if (response.ok) break;
-                    
-                    // Jeśli nie zadziałało dla documents, spróbuj attachments
-                    if (!response.ok && sourceType !== 'attachment' && attempt === 1) {
-                        console.log('⚠️ Documents nie zadziałał, próbuję attachments...');
-                        fileUrl = `${apiBaseUrl}/attachments/${documentId}/download`;
-                        continue;
-                    }
-                } catch (fetchError) {
-                    console.error(`❌ Próba ${attempt} nieudana:`, fetchError.message);
-                    lastError = fetchError;
-                    if (attempt < 3) {
-                        await new Promise(r => setTimeout(r, 500 * attempt)); // Czekaj 500ms, 1s, 1.5s
-                    }
+            // Najpierw spróbuj z tabeli documents
+            let response = await fetch(`http://localhost:3500/api/documents/download/${documentId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
+            });
+            
+            // Jeśli nie znaleziono w documents, spróbuj w attachments
+            if (!response.ok) {
+                console.log('📎 Próbuję z tabeli attachments...');
+                response = await fetch(`http://localhost:3500/api/attachments/${documentId}/download`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             }
             
-            if (!response || !response.ok) {
-                throw lastError || new Error(`Błąd pobierania dokumentu: ${response?.status || 'brak odpowiedzi'}`);
+            if (!response.ok) {
+                throw new Error('Błąd pobierania dokumentu');
             }
             
             const blob = await response.blob();
-            const contentType = blob.type || response.headers.get('Content-Type') || 'application/octet-stream';
-            const contentDisposition = response.headers.get('Content-Disposition') || '';
-            
-            // Pobierz nazwę pliku
-            let fileName = 'dokument';
-            const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
-            if (matches != null && matches[1]) {
-                fileName = matches[1].replace(/['"]/g, '');
-            }
-            
-            // Zapisz URL do pobierania
-            const downloadUrl = fileUrl;
-            
-            // Dla wideo/audio - użyj blob URL (działa lepiej niż streaming z tokenem)
-            const isVideo = contentType.includes('video');
-            const isAudio = contentType.includes('audio');
-            
             const url = window.URL.createObjectURL(blob);
-            const fileType = contentType;
+            const fileType = blob.type;
             
-            console.log('✅ Plik pobrany:', fileName, 'Typ:', fileType, 'Rozmiar:', blob.size);
-            
-            // Usuń okienko ładowania
-            loadingModal.remove();
+            // Pobierz nazwę pliku z headera
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let fileName = 'dokument';
+            if (contentDisposition) {
+                const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+                if (matches != null && matches[1]) {
+                    fileName = matches[1].replace(/['"]/g, '');
+                }
+            }
             
             // Stwórz modal z podglądem
             const modal = document.createElement('div');
@@ -4468,62 +4021,19 @@ class CRMManager {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0,0,0,0.95);
+                background: rgba(0,0,0,0.8);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                z-index: 999999;
+                z-index: 10000;
                 animation: fadeIn 0.3s;
             `;
             
             let previewContent = '';
             if (fileType.includes('pdf')) {
                 previewContent = `<iframe src="${url}" style="width: 100%; height: 100%; border: none;"></iframe>`;
-            } else if (fileType.includes('video')) {
-                // Wideo - użyj natywnego odtwarzacza z streamingiem
-                previewContent = `
-                    <video controls autoplay style="max-width: 100%; max-height: 100%; background: #000;">
-                        <source src="${url}" type="${fileType}">
-                        Twoja przeglądarka nie obsługuje odtwarzania wideo.
-                    </video>
-                `;
-            } else if (fileType.includes('audio')) {
-                // Audio - użyj natywnego odtwarzacza
-                previewContent = `
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
-                        <div style="font-size: 5rem; margin-bottom: 30px;">🎵</div>
-                        <audio controls autoplay style="width: 100%; max-width: 500px;">
-                            <source src="${url}" type="${fileType}">
-                            Twoja przeglądarka nie obsługuje odtwarzania audio.
-                        </audio>
-                    </div>
-                `;
             } else if (fileType.includes('image')) {
                 previewContent = `<img src="${url}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
-            } else if (fileType.includes('text') || fileName.endsWith('.txt') || fileName.endsWith('.md') || fileName.endsWith('.json') || fileName.endsWith('.xml') || fileName.endsWith('.csv') || fileName.endsWith('.log')) {
-                // Pliki tekstowe - odczytaj i wyświetl zawartość
-                try {
-                    const textContent = await blob.text();
-                    const escapedContent = textContent
-                        .replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/"/g, '&quot;')
-                        .replace(/'/g, '&#039;');
-                    previewContent = `
-                        <div style="width: 100%; height: 100%; overflow: auto; background: #1e1e1e; padding: 20px;">
-                            <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 14px; line-height: 1.6; color: #d4d4d4;">${escapedContent}</pre>
-                        </div>
-                    `;
-                } catch (e) {
-                    console.error('Błąd odczytu pliku tekstowego:', e);
-                    previewContent = `
-                        <div style="text-align: center; color: white; padding: 40px;">
-                            <div style="font-size: 4rem; margin-bottom: 20px;">📄</div>
-                            <div style="font-size: 1.2rem; margin-bottom: 20px;">Błąd odczytu pliku tekstowego</div>
-                        </div>
-                    `;
-                }
             } else {
                 previewContent = `
                     <div style="text-align: center; color: white; padding: 40px;">
@@ -4548,7 +4058,7 @@ class CRMManager {
                             </div>
                         </div>
                         <div style="display: flex; gap: 10px;">
-                            <button onclick="crmManager.downloadMediaFile('${downloadUrl}', '${this.escapeHtml(fileName)}')" 
+                            <button onclick="crmManager.downloadDocumentDirect('${url}', '${this.escapeHtml(fileName)}')" 
                                 style="padding: 10px 20px; background: rgba(255,255,255,0.2); color: white; border: 2px solid white; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s;"
                                 onmouseover="this.style.background='rgba(255,255,255,0.3)'"
                                 onmouseout="this.style.background='rgba(255,255,255,0.2)'">
@@ -4589,23 +4099,8 @@ class CRMManager {
             document.body.appendChild(modal);
             
         } catch (error) {
-            // Usuń okienko ładowania w przypadku błędu
-            loadingModal.remove();
             console.error('❌ Błąd wyświetlania dokumentu:', error);
-            
-            // Automatycznie otwórz w nowej karcie gdy fetch nie działa
-            console.log('🔄 Otwieram dokument w nowej karcie...');
-            const apiBaseUrl = window.getApiBaseUrl();
-            const token = localStorage.getItem('token');
-            
-            // Otwórz w nowej karcie z tokenem w URL (fallback)
-            let newTabUrl;
-            if (sourceType === 'attachment') {
-                newTabUrl = `${apiBaseUrl}/attachments/${documentId}/download?token=${token}`;
-            } else {
-                newTabUrl = `${apiBaseUrl}/documents/download/${documentId}?token=${token}`;
-            }
-            window.open(newTabUrl, '_blank');
+            await this.customAlert('Błąd wyświetlania dokumentu: ' + error.message, 'error');
         }
     }
     
@@ -4619,63 +4114,16 @@ class CRMManager {
         document.body.removeChild(a);
     }
     
-    // Pobierz plik multimedialny z autoryzacją
-    async downloadMediaFile(fileUrl, filename) {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(fileUrl, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            if (!response.ok) {
-                throw new Error('Błąd pobierania pliku');
-            }
-            
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            // Zwolnij pamięć
-            setTimeout(() => window.URL.revokeObjectURL(url), 100);
-        } catch (error) {
-            console.error('❌ Błąd pobierania pliku:', error);
-            alert('Błąd pobierania pliku: ' + error.message);
-        }
-    }
-    
     // Pobierz dokument/załącznik
-    async downloadDocument(documentId, filename, sourceType = null) {
+    async downloadDocument(documentId, filename) {
         try {
-            console.log('⬇️ Pobieram dokument ID:', documentId, 'Source:', sourceType);
+            console.log('⬇️ Pobieram dokument ID:', documentId);
             
-            const apiBaseUrl = window.getApiBaseUrl();
-            const token = localStorage.getItem('token');
-            let response;
-            
-            if (sourceType === 'attachment') {
-                // Pobierz z attachments
-                response = await fetch(`${apiBaseUrl}/attachments/${documentId}/download?download=true`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-            } else {
-                // Próbuj z documents
-                response = await fetch(`${apiBaseUrl}/documents/download/${documentId}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                // Jeśli nie znaleziono, spróbuj z attachments
-                if (!response.ok) {
-                    response = await fetch(`${apiBaseUrl}/attachments/${documentId}/download?download=true`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+            const response = await fetch(`http://localhost:3500/api/documents/download/${documentId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
-            }
+            });
             
             if (!response.ok) {
                 throw new Error('Błąd pobierania dokumentu');
@@ -6142,7 +5590,7 @@ CRMManager.prototype.viewClientCases = async function(clientId) {
                                 <div style="background: white; padding: 20px; border-radius: 8px; border-left: 5px solid #1a2332; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s; cursor: pointer;"
                                      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(212,175,55,0.3)'"
                                      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'"
-                                     onclick="crmManager.closeModal(); crmManager.viewCase(${c.id})">
+                                     onclick="crmManager.closeModal(); setTimeout(() => crmManager.viewCase(${c.id}), 100)">
                                     
                                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                                         <div style="flex: 1;">
@@ -6158,7 +5606,7 @@ CRMManager.prototype.viewClientCases = async function(clientId) {
                                             <h4 style="margin: 0 0 10px 0; color: #1a2332; font-size: 1.1rem;">${this.escapeHtml(c.title)}</h4>
                                             ${c.description ? `
                                                 <p style="margin: 0 0 10px 0; color: #666; font-size: 0.9rem; line-height: 1.5;">
-                                                    ${this.getDescriptionPreview(c.description, 150)}
+                                                    ${this.escapeHtml(c.description.substring(0, 150))}${c.description.length > 150 ? '...' : ''}
                                                 </p>
                                             ` : ''}
                                         </div>
@@ -6194,7 +5642,7 @@ CRMManager.prototype.viewClientCases = async function(clientId) {
                                     </div>
                                     
                                     <div style="margin-top: 15px; display: flex; gap: 8px;">
-                                        <button onclick="event.stopPropagation(); crmManager.closeModal(); crmManager.viewCase(${c.id})" 
+                                        <button onclick="event.stopPropagation(); crmManager.closeModal(); setTimeout(() => crmManager.viewCase(${c.id}), 100)" 
                                                 style="padding: 8px 16px; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; border: 2px solid #d4af37; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.9rem; box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);">
                                             👁️ Otwórz sprawę
                                         </button>
@@ -6599,4 +6047,3 @@ window.crmManager = window.crmManager || new CRMManager();
 document.addEventListener('DOMContentLoaded', () => {
     window.crmManager.init();
 });
-

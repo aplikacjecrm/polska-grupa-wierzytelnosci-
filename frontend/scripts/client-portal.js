@@ -378,7 +378,7 @@ class InvestmentProjects {
 
     downloadDocument(docId) {
         const token = localStorage.getItem('token');
-        window.open(`https://web-production-ef868.up.railway.app/api/documents/download/${docId}?token=${token}`, '_blank');
+        window.open(`http://localhost:3500/api/documents/download/${docId}?token=${token}`, '_blank');
     }
 
     viewCase(caseId) {
@@ -400,4 +400,3 @@ const clientPortal = new ClientPortal();
 const investmentProjects = new InvestmentProjects();
 window.clientPortal = clientPortal;
 window.investmentProjects = investmentProjects;
-

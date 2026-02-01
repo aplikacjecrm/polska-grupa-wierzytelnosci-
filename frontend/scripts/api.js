@@ -1,7 +1,4 @@
-// Automatyczne wykrywanie środowiska - localhost lub produkcja
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3500/api'
-    : 'https://web-production-ef868.up.railway.app/api';
+const API_URL = 'http://localhost:3500/api';
 
 class API {
     constructor() {
@@ -338,4 +335,3 @@ const api = new API();
 
 // Globalny dostęp
 window.api = api;
-

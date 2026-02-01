@@ -24,7 +24,7 @@ function initCommercialQuestionnaire() {
         id: 'commercial',
         title: '💼 Ankieta Gospodarcza',
         description: 'Kompleksowe prowadzenie spraw gospodarczych B2B - spory, umowy, windykacja biznesowa',
-        color: '#d4af37', // Złoty - Pro Meritum brand color
+        color: '#d4af37', // Złoty - E-PGW brand color
         
         // Wszystkie sekcje (1-9)
         sections: allSections,

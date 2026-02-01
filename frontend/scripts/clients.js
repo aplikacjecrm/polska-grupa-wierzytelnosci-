@@ -5,22 +5,6 @@ class ClientsModule {
         this.currentClient = null;
         this.init();
     }
-    
-    // Usuń tagi HTML z tekstu
-    stripHtml(html) {
-        if (!html) return '';
-        const tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || '';
-    }
-    
-    // Skróć tekst do określonej długości
-    truncateText(text, maxLength = 100) {
-        if (!text) return '';
-        const clean = this.stripHtml(text);
-        if (clean.length <= maxLength) return clean;
-        return clean.substring(0, maxLength) + '...';
-    }
 
     init() {
         console.log('👥 ClientsModule inicjalizacja...');
@@ -195,7 +179,7 @@ class ClientsModule {
                 ${cases.map(c => `
                     <div style="background: white; border: 2px solid #ecf0f1; border-radius: 12px; padding: 15px;">
                         <h4 style="margin: 0 0 10px 0; color: #1a2332;">${c.title}</h4>
-                        <p style="color: #7f8c8d; margin: 0 0 10px 0;">${this.truncateText(c.description, 150) || 'Brak opisu'}</p>
+                        <p style="color: #7f8c8d; margin: 0 0 10px 0;">${c.description || 'Brak opisu'}</p>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="font-size: 0.85rem; color: #7f8c8d;">📋 ${c.case_number}</div>
                             <button onclick="router.navigate({ type: 'case', id: ${c.id} })" 

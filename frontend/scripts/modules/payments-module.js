@@ -37,31 +37,13 @@ class PaymentsModule {
     // =====================================
     async renderPaymentsTab(caseId) {
         this.currentCaseId = caseId;
+        await this.loadPayments(caseId);
         
-        // Pokaż okienko ładowania w kontenerze
-        let container = document.getElementById('caseTabContent') ||
+        // WAŻNE: Szukaj kontenera sprawy!
+        const container = document.getElementById('caseTabContent') ||  // ← GŁÓWNY KONTENER SPRAWY
                          document.getElementById('caseTabContentArea') ||
                          document.querySelector('[id*="Tab"][id*="Content"]');
         
-        if (container) {
-            container.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; padding: 60px; flex-direction: column;">
-                    <div style="font-size: 3rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">💰</div>
-                    <div style="font-size: 1.2rem; font-weight: 600; color: #1a2332; margin-bottom: 15px;">Ładowanie płatności...</div>
-                    <div style="width: 200px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
-                        <div style="width: 30%; height: 100%; background: linear-gradient(90deg, #FFD700, #d4af37); border-radius: 3px; animation: loadingBar 1.5s ease-in-out infinite;"></div>
-                    </div>
-                    <style>
-                        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-                        @keyframes loadingBar { 0% { width: 0%; margin-left: 0%; } 50% { width: 60%; margin-left: 20%; } 100% { width: 0%; margin-left: 100%; } }
-                    </style>
-                </div>
-            `;
-        }
-        
-        await this.loadPayments(caseId);
-        
-        // Kontener już znaleziony wcześniej
         if (!container) {
             console.error('❌ Kontener zakładek nie znaleziony');
             console.log('🔍 Sprawdzono: #caseTabContent, #caseTabContentArea');
@@ -250,28 +232,8 @@ class PaymentsModule {
             return;
         }
 
-        // Pokaż okienko ładowania
-        const loadingModal = document.createElement('div');
-        loadingModal.id = 'addPaymentLoadingModal';
-        loadingModal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: flex; align-items: center;
-            justify-content: center; z-index: 10000; animation: fadeIn 0.2s;
-        `;
-        loadingModal.innerHTML = `
-            <div style="text-align: center; color: white;">
-                <div style="font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">➕</div>
-                <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 15px;">Przygotowuję formularz...</div>
-                <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; margin: 0 auto;">
-                    <div style="width: 30%; height: 100%; background: linear-gradient(90deg, #FFD700, #d4af37); border-radius: 3px; animation: loadingBar 1.5s ease-in-out infinite;"></div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(loadingModal);
-
-        try {
-            // Generuj kod płatności
-            const response = await api.request('/payments/generate-code', {
+        // Generuj kod płatności
+        const response = await api.request('/payments/generate-code', {
             method: 'POST',
             body: JSON.stringify({ caseId: this.currentCaseId })
         });
@@ -483,33 +445,8 @@ class PaymentsModule {
             </div>
         `);
 
-        // Płynne przejście z ładowania do formularza
-        const loadingEl = document.getElementById('addPaymentLoadingModal');
-        if (loadingEl) {
-            // Fade out okienka ładowania
-            loadingEl.style.transition = 'opacity 0.3s ease';
-            loadingEl.style.opacity = '0';
-            setTimeout(() => loadingEl.remove(), 300);
-        }
-
         document.body.appendChild(modal);
-        
-        // Płynne pojawienie się formularza (fade in + scale)
-        modal.style.opacity = '0';
-        modal.style.transition = 'opacity 0.4s ease';
         modal.classList.add('active');
-        
-        requestAnimationFrame(() => {
-            modal.style.opacity = '1';
-        });
-        } catch (error) {
-            // Usuń okienko ładowania w przypadku błędu
-            const loadingEl = document.getElementById('addPaymentLoadingModal');
-            if (loadingEl) loadingEl.remove();
-            
-            console.error('Błąd otwierania formularza płatności:', error);
-            alert('❌ Błąd: ' + error.message);
-        }
     }
 
     togglePaymentMethodFields() {
@@ -664,37 +601,11 @@ class PaymentsModule {
     // SZCZEGÓŁY PŁATNOŚCI
     // =====================================
     async viewPaymentDetails(paymentId) {
-        // Pokaż okienko ładowania
-        const loadingModal = document.createElement('div');
-        loadingModal.id = 'paymentLoadingModal';
-        loadingModal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: flex; align-items: center;
-            justify-content: center; z-index: 10000; animation: fadeIn 0.2s;
-        `;
-        loadingModal.innerHTML = `
-            <div style="text-align: center; color: white;">
-                <div style="font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">💰</div>
-                <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 15px;">Ładowanie płatności...</div>
-                <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; margin: 0 auto;">
-                    <div style="width: 30%; height: 100%; background: linear-gradient(90deg, #FFD700, #d4af37); border-radius: 3px; animation: loadingBar 1.5s ease-in-out infinite;"></div>
-                </div>
-                <style>
-                    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-                    @keyframes loadingBar { 0% { width: 0%; margin-left: 0%; } 50% { width: 60%; margin-left: 20%; } 100% { width: 0%; margin-left: 100%; } }
-                    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                </style>
-            </div>
-        `;
-        document.body.appendChild(loadingModal);
-        
         try {
             const payments = await api.request(`/payments/case/${this.currentCaseId}`);
             const payment = payments.payments.find(p => p.id === paymentId);
             
             if (!payment) {
-                const loadingEl = document.getElementById('paymentLoadingModal');
-                if (loadingEl) loadingEl.remove();
                 alert('❌ Płatność nie znaleziona');
                 return;
             }
@@ -714,14 +625,6 @@ class PaymentsModule {
                 'completed': '#3B82F6',
                 'failed': '#3B82F6'
             };
-
-            // Płynne przejście z ładowania do modala
-            const loadingEl = document.getElementById('paymentLoadingModal');
-            if (loadingEl) {
-                loadingEl.style.transition = 'opacity 0.3s ease';
-                loadingEl.style.opacity = '0';
-                setTimeout(() => loadingEl.remove(), 300);
-            }
 
             const modal = this.createModal('paymentDetailsModal', `
                 <div style="max-width: 700px; margin: 0 auto;">
@@ -906,20 +809,8 @@ class PaymentsModule {
             `);
 
             document.body.appendChild(modal);
-            
-            // Płynne pojawienie się modala
-            modal.style.opacity = '0';
-            modal.style.transition = 'opacity 0.4s ease';
             modal.classList.add('active');
-            
-            requestAnimationFrame(() => {
-                modal.style.opacity = '1';
-            });
         } catch (error) {
-            // Usuń okienko ładowania w przypadku błędu
-            const loadingEl = document.getElementById('paymentLoadingModal');
-            if (loadingEl) loadingEl.remove();
-            
             console.error('Błąd pobierania szczegółów płatności:', error);
             alert('❌ Błąd: ' + error.message);
         }
@@ -1425,10 +1316,32 @@ class PaymentsModule {
         try {
             console.log('💰 Ładuję płatności dla sprawy:', caseId);
             
-            // Użyj tylko normalnego endpointu z autoryzacją
-            const response = await window.api.request(`/payments/case/${caseId}`);
-            this.payments = response.payments || [];
-            console.log('✅ Pobrano płatności:', this.payments.length);
+            // TEMPORARY: Użyj testowego endpointu BEZ autoryzacji
+            const testResponse = await fetch(`http://localhost:3500/api/payments/case/${caseId}/test`)
+                .then(r => r.json())
+                .catch(() => null);
+            
+            if (testResponse) {
+                console.log('🧪 Test endpoint odpowiedź:', testResponse);
+                
+                if (testResponse.error) {
+                    console.warn('⚠️ Test endpoint zwrócił błąd:', testResponse.error);
+                    if (testResponse.hint) {
+                        console.warn('💡 Wskazówka:', testResponse.hint);
+                    }
+                }
+            }
+            
+            // Próbuj normalny endpoint z autoryzacją
+            try {
+                const response = await window.api.request(`/payments/case/${caseId}`);
+                this.payments = response.payments || [];
+                console.log('✅ Pobrano płatności (normalny endpoint):', this.payments.length);
+            } catch (authError) {
+                console.warn('⚠️ Normalny endpoint nie działa, używam testowego');
+                this.payments = testResponse?.payments || [];
+                console.log('✅ Pobrano płatności (test endpoint):', this.payments.length);
+            }
         } catch (error) {
             console.error('❌ Błąd ładowania płatności:', error);
             this.payments = [];
@@ -1504,22 +1417,11 @@ class PaymentsModule {
         const modal = document.createElement('div');
         modal.id = id;
         modal.className = 'modal';
-        modal.style.cssText = 'animation: none !important;'; // Wyłącz domyślną animację
         modal.innerHTML = `
-            <div class="modal-content" style="max-height: 90vh; overflow-y: auto; opacity: 0; transform: scale(0.95); transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
+            <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
                 ${content}
             </div>
         `;
-        
-        // Płynne pojawienie się po dodaniu do DOM
-        requestAnimationFrame(() => {
-            const modalContent = modal.querySelector('.modal-content');
-            if (modalContent) {
-                modalContent.style.opacity = '1';
-                modalContent.style.transform = 'scale(1)';
-            }
-        });
-        
         return modal;
     }
 
@@ -1567,4 +1469,3 @@ const paymentsModule = new PaymentsModule();
 window.paymentsModule = paymentsModule;
 
 console.log('✅ Payments Module v1.0 załadowany - PayPal Integration ready! 💰');
-

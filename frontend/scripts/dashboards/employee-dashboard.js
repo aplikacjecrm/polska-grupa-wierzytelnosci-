@@ -159,7 +159,6 @@ class EmployeeDashboard {
 
     const html = `
       <div class="employee-dashboard">
-        ${this.isAdminOrHR ? `
         <div style="position: sticky; top: 0; background: white; z-index: 1000; padding: 10px 20px; border-bottom: 2px solid #e0e0e0; display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
           <button onclick="window.employeeDashboard.exportToCSV()" style="padding: 10px 20px; background: #10B981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
             📥 CSV
@@ -168,11 +167,10 @@ class EmployeeDashboard {
             📄 PDF
           </button>
         </div>
-        ` : ''}
         <div class="employee-header">
           ${this.renderProfileHeader()}
         </div>
-        ${this.isAdminOrHR ? `<div class="employee-stats-grid">${this.renderStatsCards()}</div>` : ''}
+        <div class="employee-stats-grid">${this.renderStatsCards()}</div>
         <div class="employee-tabs">
           <div class="tabs-navigation">
             ${this.isAdminOrHR ? `
@@ -186,8 +184,6 @@ class EmployeeDashboard {
             <button class="tab-btn" data-tab="financial" onclick="employeeDashboard.switchTab('financial')">💰 Finanse</button>
             <button class="tab-btn" data-tab="vacations" onclick="employeeDashboard.switchTab('vacations')">🏖️ Urlopy</button>
             <button class="tab-btn" data-tab="training" onclick="employeeDashboard.switchTab('training')">🎓 Szkolenia</button>
-            <button class="tab-btn" data-tab="certificates" onclick="employeeDashboard.switchTab('certificates')">📜 Zaświadczenia</button>
-            <button class="tab-btn" data-tab="schedule" onclick="employeeDashboard.switchTab('schedule')">📅 Mój grafik</button>
             <button class="tab-btn" data-tab="benefits" onclick="employeeDashboard.switchTab('benefits')">🎁 Benefity</button>
             <button class="tab-btn" data-tab="documents" onclick="employeeDashboard.switchTab('documents')">📄 Dokumenty</button>
             ${this.isAdminOrHR ? `<button class="tab-btn" data-tab="statistics" onclick="employeeDashboard.switchTab('statistics')">📊 Statystyki</button>` : ''}
@@ -204,8 +200,6 @@ class EmployeeDashboard {
             <div class="tab-content" id="tab-financial">${this.renderFinancialTab()}</div>
             <div class="tab-content" id="tab-vacations"><div class="loading">Ładowanie...</div></div>
             <div class="tab-content" id="tab-training"><div class="loading">Ładowanie...</div></div>
-            <div class="tab-content" id="tab-certificates"><div class="loading">Ładowanie...</div></div>
-            <div class="tab-content" id="tab-schedule"><div class="loading">Ładowanie grafiku...</div></div>
             <div class="tab-content" id="tab-benefits"><div class="loading">Ładowanie...</div></div>
             <div class="tab-content" id="tab-documents"><div class="loading">Ładowanie...</div></div>
             ${this.isAdminOrHR ? `<div class="tab-content" id="tab-statistics">${this.renderStatisticsTab()}</div>` : ''}
@@ -914,15 +908,15 @@ class EmployeeDashboard {
         ${this.tickets.length > 0 ? `
           <div class="tickets-list">
             ${this.tickets.map(t => `
-              <div class="ticket-card status-${(t.status || 'nowy').toLowerCase().replace(/\s+/g, '-')}">
+              <div class="ticket-card status-${t.status.toLowerCase().replace(/\s+/g, '-')}">
                 <div class="ticket-header">
                   <span class="ticket-number">${t.ticket_number}</span>
-                  <span class="ticket-status badge-${this.getTicketStatusClass(t.status || 'Nowy')}">${t.status || 'Nowy'}</span>
+                  <span class="ticket-status badge-${this.getTicketStatusClass(t.status)}">${t.status}</span>
                 </div>
-                <h4>${t.title || 'Bez tytułu'}</h4>
+                <h4>${t.title}</h4>
                 <div class="ticket-meta">
-                  <span>📂 ${t.ticket_type || 'Inne'}</span>
-                  <span>🏢 ${t.department || 'N/A'}</span>
+                  <span>📂 ${t.ticket_type}</span>
+                  <span>🏢 ${t.department}</span>
                   <span>⚡ ${t.priority || 'normal'}</span>
                 </div>
                 <div class="ticket-date">
@@ -2376,251 +2370,98 @@ class EmployeeDashboard {
     }
   }
 
-  // Modal tworzenia ticketu - rozszerzony o wszystkie formularze HR
+  // Modal tworzenia ticketu
   showCreateTicketModal() {
     const html = `
       <div class="modal active" id="createTicketModal">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content">
           <div class="modal-header">
-            <h3>🎟️ Nowy Wniosek / Ticket</h3>
+            <h3>🎟️ Nowy Ticket HR/IT</h3>
             <button class="modal-close" onclick="employeeDashboard.closeModal('createTicketModal')">&times;</button>
           </div>
           <div class="modal-body">
-            <!-- Kategorie wniosków -->
-            <div id="ticketCategorySelection" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
-              <div style="grid-column: span 2; font-weight: 600; color: #10B981; margin-bottom: 5px;">💰 Finanse / Księgowość</div>
-              <button type="button" onclick="employeeDashboard.showTicketForm('expense')" style="padding: 12px; border: 2px solid #10B981; border-radius: 8px; background: white; cursor: pointer; text-align: left;">
-                💰 <strong>Delegacja</strong><br><small style="color: #666;">Rozliczenie kosztów</small>
-              </button>
-              <button type="button" onclick="employeeDashboard.showTicketForm('advance')" style="padding: 12px; border: 2px solid #10B981; border-radius: 8px; background: white; cursor: pointer; text-align: left;">
-                💳 <strong>Zaliczka</strong><br><small style="color: #666;">Wniosek o zaliczkę</small>
-              </button>
+            <form id="createTicketForm">
+              <div class="form-group">
+                <label>Typ ticketu *</label>
+                <select id="ticketType" required>
+                  <option value="">Wybierz...</option>
+                  <option value="HR">HR - Urlop, umowa, dokumenty</option>
+                  <option value="IT">IT - Sprzęt, oprogramowanie, dostęp</option>
+                  <option value="Administracja">Administracja - Biuro, wyposażenie</option>
+                  <option value="Szkolenie">Szkolenie - Kursy, rozwój</option>
+                </select>
+              </div>
               
-              <div style="grid-column: span 2; font-weight: 600; color: #8B5CF6; margin: 10px 0 5px;">💻 IT / Systemy</div>
-              <button type="button" onclick="employeeDashboard.showTicketForm('access')" style="padding: 12px; border: 2px solid #8B5CF6; border-radius: 8px; background: white; cursor: pointer; text-align: left;">
-                🔑 <strong>Dostęp IT</strong><br><small style="color: #666;">Dostęp do systemów</small>
-              </button>
-              <button type="button" onclick="employeeDashboard.showTicketForm('phone')" style="padding: 12px; border: 2px solid #8B5CF6; border-radius: 8px; background: white; cursor: pointer; text-align: left;">
-                📱 <strong>Sprzęt</strong><br><small style="color: #666;">Telefon, laptop, komputer</small>
-              </button>
+              <div class="form-group">
+                <label>Dział *</label>
+                <input type="text" id="ticketDepartment" placeholder="np. IT, HR, Księgowość" required>
+              </div>
               
-              <div style="grid-column: span 2; font-weight: 600; color: #F59E0B; margin: 10px 0 5px;">🏢 Administracja</div>
-              <button type="button" onclick="employeeDashboard.showTicketForm('parking')" style="padding: 12px; border: 2px solid #F59E0B; border-radius: 8px; background: white; cursor: pointer; text-align: left;">
-                🚗 <strong>Parking</strong><br><small style="color: #666;">Miejsce parkingowe</small>
-              </button>
-              <button type="button" onclick="employeeDashboard.showTicketForm('supplies')" style="padding: 12px; border: 2px solid #F59E0B; border-radius: 8px; background: white; cursor: pointer; text-align: left;">
-                🖨️ <strong>Materiały</strong><br><small style="color: #666;">Artykuły biurowe</small>
-              </button>
+              <div class="form-group">
+                <label>Tytuł *</label>
+                <input type="text" id="ticketTitle" placeholder="Krótki opis problemu" required>
+              </div>
               
-              <div style="grid-column: span 2; font-weight: 600; color: #6B7280; margin: 10px 0 5px;">📝 Inne</div>
-              <button type="button" onclick="employeeDashboard.showTicketForm('other')" style="padding: 12px; border: 2px solid #6B7280; border-radius: 8px; background: white; cursor: pointer; text-align: left; grid-column: span 2;">
-                📋 <strong>Inny wniosek</strong><br><small style="color: #666;">Dowolny temat</small>
-              </button>
-            </div>
-            
-            <!-- Formularz szczegółowy (ukryty domyślnie) -->
-            <div id="ticketFormDetails" style="display: none;">
-              <button type="button" onclick="employeeDashboard.backToCategories()" style="margin-bottom: 15px; padding: 8px 15px; background: #f3f4f6; border: none; border-radius: 6px; cursor: pointer;">
-                ← Wróć do wyboru kategorii
-              </button>
-              <form id="createTicketForm">
-                <div id="dynamicFormFields"></div>
-                <div class="modal-actions" style="margin-top: 20px;">
-                  <button type="button" class="btn-secondary" onclick="employeeDashboard.closeModal('createTicketModal')">Anuluj</button>
-                  <button type="submit" class="btn-primary">📤 Wyślij wniosek</button>
-                </div>
-              </form>
-            </div>
+              <div class="form-group">
+                <label>Szczegóły</label>
+                <textarea id="ticketDetails" rows="5" placeholder="Opisz dokładnie problem lub potrzebę..."></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label>Priorytet</label>
+                <select id="ticketPriority">
+                  <option value="low">Niski</option>
+                  <option value="normal" selected>Normalny</option>
+                  <option value="high">Wysoki</option>
+                  <option value="urgent">Pilny</option>
+                </select>
+              </div>
+              
+              <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="employeeDashboard.closeModal('createTicketModal')">Anuluj</button>
+                <button type="submit" class="btn-primary">📤 Wyślij Ticket</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
     `;
     
     document.body.insertAdjacentHTML('beforeend', html);
-  }
-  
-  // Konfiguracja formularzy
-  getFormConfigs() {
-    return {
-      expense: { 
-        title: '💰 Rozliczenie delegacji', 
-        department: 'Księgowość',
-        ticketType: 'delegacja',
-        category: 'finance',
-        fields: [
-          { name: 'destination', label: 'Miejsce wyjazdu', type: 'text', required: true },
-          { name: 'dateFrom', label: 'Data od', type: 'date', required: true },
-          { name: 'dateTo', label: 'Data do', type: 'date', required: true },
-          { name: 'amount', label: 'Kwota (PLN)', type: 'number', required: true },
-          { name: 'description', label: 'Opis kosztów', type: 'textarea', required: true }
-        ]
-      },
-      advance: { 
-        title: '💳 Wniosek o zaliczkę', 
-        department: 'Księgowość',
-        ticketType: 'zaliczka',
-        category: 'finance',
-        fields: [
-          { name: 'amount', label: 'Kwota (PLN)', type: 'number', required: true },
-          { name: 'purpose', label: 'Cel', type: 'textarea', required: true },
-          { name: 'date', label: 'Data potrzebna', type: 'date', required: true }
-        ]
-      },
-      access: { 
-        title: '🔑 Wniosek o dostęp do systemów', 
-        department: 'IT',
-        ticketType: 'dostep_it',
-        category: 'it',
-        fields: [
-          { name: 'system', label: 'System/Aplikacja', type: 'select', options: ['LEX', 'Legalis', 'CRM', 'Email', 'VPN', 'GitHub', 'Google Workspace', 'Inne'], required: true },
-          { name: 'accessLevel', label: 'Poziom dostępu', type: 'select', options: ['Użytkownik', 'Administrator', 'Tylko odczyt'], required: true },
-          { name: 'justification', label: 'Uzasadnienie', type: 'textarea', required: true }
-        ]
-      },
-      phone: { 
-        title: '📱 Wniosek o sprzęt służbowy', 
-        department: 'IT',
-        ticketType: 'sprzet',
-        category: 'it',
-        fields: [
-          { name: 'deviceType', label: 'Typ urządzenia', type: 'select', options: ['Telefon', 'Tablet', 'Laptop', 'Komputer', 'Monitor', 'Inne'], required: true },
-          { name: 'model', label: 'Preferowany model (opcjonalnie)', type: 'text', required: false },
-          { name: 'justification', label: 'Uzasadnienie', type: 'textarea', required: true }
-        ]
-      },
-      parking: { 
-        title: '🚗 Wniosek o miejsce parkingowe', 
-        department: 'Administracja',
-        ticketType: 'parking',
-        category: 'admin',
-        fields: [
-          { name: 'carModel', label: 'Marka i model auta', type: 'text', required: true },
-          { name: 'registration', label: 'Numer rejestracyjny', type: 'text', required: true },
-          { name: 'reason', label: 'Uzasadnienie', type: 'textarea', required: true }
-        ]
-      },
-      supplies: { 
-        title: '🖨️ Zamówienie materiałów biurowych', 
-        department: 'Administracja',
-        ticketType: 'materialy',
-        category: 'admin',
-        fields: [
-          { name: 'items', label: 'Lista artykułów', type: 'textarea', required: true },
-          { name: 'urgency', label: 'Pilność', type: 'select', options: ['Normalna', 'Pilne', 'Bardzo pilne'], required: true }
-        ]
-      },
-      other: { 
-        title: '📋 Inny wniosek', 
-        department: 'Ogólne',
-        ticketType: 'inne',
-        category: 'other',
-        fields: [
-          { name: 'category', label: 'Kategoria', type: 'select', options: ['HR', 'IT', 'Księgowość', 'Administracja', 'Inne'], required: true },
-          { name: 'title', label: 'Tytuł', type: 'text', required: true },
-          { name: 'description', label: 'Opis', type: 'textarea', required: true }
-        ]
-      }
-    };
-  }
-  
-  showTicketForm(type) {
-    const configs = this.getFormConfigs();
-    const config = configs[type];
-    if (!config) return;
-    
-    this.currentTicketConfig = config;
-    
-    // Ukryj kategorie, pokaż formularz
-    document.getElementById('ticketCategorySelection').style.display = 'none';
-    document.getElementById('ticketFormDetails').style.display = 'block';
-    
-    // Generuj pola formularza
-    const fieldsHTML = config.fields.map(field => {
-      if (field.type === 'select') {
-        return `
-          <div class="form-group">
-            <label>${field.label} ${field.required ? '*' : ''}</label>
-            <select name="${field.name}" ${field.required ? 'required' : ''}>
-              <option value="">-- Wybierz --</option>
-              ${field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
-            </select>
-          </div>
-        `;
-      } else if (field.type === 'textarea') {
-        return `
-          <div class="form-group">
-            <label>${field.label} ${field.required ? '*' : ''}</label>
-            <textarea name="${field.name}" ${field.required ? 'required' : ''} rows="4"></textarea>
-          </div>
-        `;
-      } else {
-        return `
-          <div class="form-group">
-            <label>${field.label} ${field.required ? '*' : ''}</label>
-            <input type="${field.type}" name="${field.name}" ${field.required ? 'required' : ''}>
-          </div>
-        `;
-      }
-    }).join('');
-    
-    document.getElementById('dynamicFormFields').innerHTML = `
-      <h4 style="margin-bottom: 15px; color: #1f2937;">${config.title}</h4>
-      <p style="color: #6b7280; margin-bottom: 15px;">Dział: ${config.department}</p>
-      ${fieldsHTML}
-    `;
     
     // Submit handler
-    document.getElementById('createTicketForm').onsubmit = async (e) => {
+    document.getElementById('createTicketForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      await this.submitTicketForm();
-    };
+      await this.createTicket();
+    });
   }
-  
-  backToCategories() {
-    document.getElementById('ticketCategorySelection').style.display = 'grid';
-    document.getElementById('ticketFormDetails').style.display = 'none';
-  }
-  
-  async submitTicketForm() {
-    const form = document.getElementById('createTicketForm');
-    const formData = new FormData(form);
-    const data = {};
-    for (let [key, value] of formData.entries()) {
-      data[key] = value;
-    }
-    
-    const config = this.currentTicketConfig;
-    const ticketPayload = {
+
+  async createTicket() {
+    const ticketData = {
       user_id: this.userId,
-      ticket_type: config.ticketType,
-      title: config.title,
-      department: config.department,
-      details: JSON.stringify(data),
-      priority: 'normal',
-      category: config.category
+      ticket_type: document.getElementById('ticketType').value,
+      title: document.getElementById('ticketTitle').value,
+      department: document.getElementById('ticketDepartment').value,
+      details: document.getElementById('ticketDetails').value,
+      priority: document.getElementById('ticketPriority').value
     };
     
     try {
       const response = await window.api.request('/tickets', {
         method: 'POST',
-        body: JSON.stringify(ticketPayload)
+        body: JSON.stringify(ticketData)
       });
       
       if (response.success) {
-        alert('✅ Wniosek został wysłany!');
+        alert('✅ Ticket został utworzony!');
         this.closeModal('createTicketModal');
         await this.loadData();
         this.switchTab('tickets');
       }
     } catch (error) {
-      console.error('❌ Błąd wysyłania wniosku:', error);
-      alert('Błąd przy wysyłaniu wniosku: ' + error.message);
+      console.error('❌ Błąd tworzenia ticketu:', error);
+      alert('Błąd przy tworzeniu ticketu');
     }
-  }
-
-  async createTicket() {
-    // Stara metoda - zachowana dla kompatybilności
-    await this.submitTicketForm();
   }
 
   // Helper: Zamknij modal
@@ -3630,7 +3471,7 @@ class EmployeeDashboard {
         </div>
         
         <div class="footer">
-          <p>Pro Meritum - Kancelaria Prawna</p>
+          <p>E-PGW - Polska Grupa Wierzytelności</p>
           <p>Raport wygenerowany automatycznie przez system HR</p>
         </div>
       </body>
@@ -3896,15 +3737,11 @@ class EmployeeDashboard {
       await this.loadBenefitsTab();
     } else if (tabName === 'documents') {
       await this.loadDocumentsTab();
-    } else if (tabName === 'certificates') {
-      await this.loadCertificatesTab();
     } else if (tabName === 'statistics') {
       setTimeout(() => this.initCharts(), 100);
     } else if (tabName === 'financial') {
       await this.loadCommissions();
       await this.loadSalaryHistory();
-    } else if (tabName === 'schedule') {
-      await this.loadScheduleTab();
     }
   }
 
@@ -4767,1038 +4604,6 @@ class EmployeeDashboard {
     } catch (error) {
       alert('❌ Błąd pobierania: ' + error.message);
     }
-  }
-  // ============================================
-  // ZAŚWIADCZENIA
-  // ============================================
-  async loadCertificatesTab() {
-    const container = document.getElementById('tab-certificates');
-    container.innerHTML = '<div class="loading">Ładowanie zaświadczeń...</div>';
-    
-    try {
-      // Pobierz tickety użytkownika związane z zaświadczeniami
-      const res = await window.api.request('/tickets');
-      const allTickets = res.tickets || [];
-      
-      // Filtruj tylko zaświadczenia tego użytkownika
-      const certTickets = allTickets.filter(t => 
-        t.user_id === this.userId &&
-        (t.ticket_type?.toLowerCase().includes('zaswiadczenie') || 
-         t.ticket_type?.toLowerCase().includes('certificate') ||
-         t.title?.toLowerCase().includes('zaświadczenie'))
-      );
-      
-      container.innerHTML = `
-        <div class="hr-section">
-          <h3>📜 Moje Zaświadczenia</h3>
-          
-          <button onclick="window.employeeDashboard.showRequestCertificateModal()" 
-                  style="padding: 12px 24px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 20px;">
-            ➕ Złóż wniosek o zaświadczenie
-          </button>
-          
-          ${certTickets.length > 0 ? `
-            <div style="display: grid; gap: 15px; margin-top: 20px;">
-              ${certTickets.map(t => {
-                // Parsuj details
-                let details = {};
-                try {
-                  if (typeof t.details === 'string') {
-                    details = JSON.parse(t.details);
-                    if (typeof details === 'string') details = JSON.parse(details);
-                  } else {
-                    details = t.details || {};
-                  }
-                } catch (e) {
-                  details = {};
-                }
-                
-                const statusColors = {
-                  'Nowy': { bg: '#fff3e0', border: '#FFA726', text: '⏳ Oczekuje' },
-                  'W realizacji': { bg: '#e3f2fd', border: '#2196F3', text: '🔄 W realizacji' },
-                  'Zakończony': { bg: '#e8f5e9', border: '#4CAF50', text: '✅ Gotowe' },
-                  'Odrzucony': { bg: '#ffebee', border: '#EF5350', text: '❌ Odrzucony' }
-                };
-                const status = statusColors[t.status] || statusColors['Nowy'];
-                
-                return `
-                  <div style="background: ${status.bg}; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid ${status.border};">
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                      <div>
-                        <div style="font-weight: 600; font-size: 1.1rem; color: #1a1a1a;">
-                          📄 ${details.certificateType || details.typZaswiadczenia || t.title || 'Zaświadczenie'}
-                        </div>
-                        <div style="color: #333; font-size: 0.9rem; margin-top: 5px;">
-                          <strong>Cel:</strong> ${details.purpose || details.cel || 'Nie podano'}
-                        </div>
-                        <div style="color: #333; font-size: 0.9rem; margin-top: 3px;">
-                          <strong>Język:</strong> ${details.language || details.jezyk || 'Polski'}
-                        </div>
-                        <div style="color: #666; font-size: 0.85rem; margin-top: 5px;">
-                          📅 Złożono: ${new Date(t.created_at).toLocaleDateString('pl-PL')}
-                        </div>
-                      </div>
-                      <span style="padding: 6px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; background: ${status.border}; color: white;">
-                        ${status.text}
-                      </span>
-                    </div>
-                    ${t.admin_note ? `
-                      <div style="margin-top: 15px; padding: 10px; background: white; border-radius: 6px; border-left: 3px solid ${status.border};">
-                        <strong>📝 Notatka HR:</strong><br>
-                        <span style="white-space: pre-line;">${t.admin_note}</span>
-                      </div>
-                    ` : ''}
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          ` : `
-            <div style="text-align: center; padding: 40px; color: #666;">
-              <div style="font-size: 3rem; margin-bottom: 15px;">📜</div>
-              <p>Nie masz jeszcze żadnych wniosków o zaświadczenia</p>
-              <p style="font-size: 0.9rem; color: #999;">Kliknij przycisk powyżej, aby złożyć wniosek</p>
-            </div>
-          `}
-        </div>
-      `;
-      
-    } catch (error) {
-      console.error('❌ Błąd ładowania zaświadczeń:', error);
-      container.innerHTML = `
-        <div style="text-align: center; padding: 40px; color: #c62828;">
-          <h3>❌ Błąd ładowania zaświadczeń</h3>
-          <p>${error.message}</p>
-          <button onclick="employeeDashboard.loadCertificatesTab()" 
-                  style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px;">
-            🔄 Spróbuj ponownie
-          </button>
-        </div>
-      `;
-    }
-  }
-  
-  // Modal: Złóż wniosek o zaświadczenie
-  showRequestCertificateModal() {
-    const modalHTML = `
-      <div id="requestCertificateModal" class="modal active" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;">
-        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%;">
-          <h3 style="margin: 0 0 20px 0;">📜 Wniosek o zaświadczenie</h3>
-          
-          <form id="certificateRequestForm">
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; font-weight: 600;">Typ zaświadczenia *</label>
-              <select name="certificateType" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
-                <option value="">-- Wybierz typ --</option>
-                <optgroup label="📋 Zatrudnienie i zarobki">
-                  <option value="Zaświadczenie o zatrudnieniu">Zaświadczenie o zatrudnieniu</option>
-                  <option value="Zaświadczenie o zarobkach">Zaświadczenie o zarobkach</option>
-                  <option value="Zaświadczenie o zatrudnieniu i zarobkach">Zaświadczenie o zatrudnieniu i zarobkach</option>
-                  <option value="Zaświadczenie o dochodach (PIT)">Zaświadczenie o dochodach (PIT)</option>
-                </optgroup>
-                <optgroup label="📅 Staż i okres pracy">
-                  <option value="Zaświadczenie o stażu pracy">Zaświadczenie o stażu pracy</option>
-                  <option value="Zaświadczenie o okresie zatrudnienia">Zaświadczenie o okresie zatrudnienia</option>
-                  <option value="Świadectwo pracy (kopia)">Świadectwo pracy (kopia)</option>
-                </optgroup>
-                <optgroup label="🏥 Ubezpieczenia i ZUS">
-                  <option value="Zaświadczenie ZUS Z-3">Zaświadczenie ZUS Z-3 (do zasiłku)</option>
-                  <option value="Zaświadczenie o odprowadzanych składkach">Zaświadczenie o odprowadzanych składkach</option>
-                  <option value="Druk RMUA">Druk RMUA</option>
-                </optgroup>
-                <optgroup label="🏖️ Urlopy i nieobecności">
-                  <option value="Zaświadczenie o wykorzystanym urlopie">Zaświadczenie o wykorzystanym urlopie</option>
-                  <option value="Zaświadczenie o urlopie macierzyńskim/rodzicielskim">Zaświadczenie o urlopie macierzyńskim/rodzicielskim</option>
-                </optgroup>
-                <optgroup label="📝 Inne">
-                  <option value="Zaświadczenie do przedszkola/żłobka">Zaświadczenie do przedszkola/żłobka</option>
-                  <option value="Zaświadczenie do MOPS/GOPS">Zaświadczenie do MOPS/GOPS</option>
-                  <option value="Zaświadczenie do sądu">Zaświadczenie do sądu</option>
-                  <option value="Referencje/List polecający">Referencje/List polecający</option>
-                  <option value="Inne zaświadczenie">Inne zaświadczenie (opisz w uwagach)</option>
-                </optgroup>
-              </select>
-            </div>
-            
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; font-weight: 600;">Cel zaświadczenia *</label>
-              <select name="purpose" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
-                <option value="">-- Wybierz cel --</option>
-                <option value="Bank - kredyt hipoteczny">Bank - kredyt hipoteczny</option>
-                <option value="Bank - kredyt gotówkowy">Bank - kredyt gotówkowy</option>
-                <option value="Bank - karta kredytowa">Bank - karta kredytowa</option>
-                <option value="Urząd - zasiłek">Urząd - zasiłek</option>
-                <option value="Urząd - świadczenia">Urząd - świadczenia</option>
-                <option value="Sąd">Sąd</option>
-                <option value="Przedszkole/Szkoła">Przedszkole/Szkoła</option>
-                <option value="Wynajem mieszkania">Wynajem mieszkania</option>
-                <option value="Inne">Inne</option>
-              </select>
-            </div>
-            
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; font-weight: 600;">Język zaświadczenia</label>
-              <select name="language" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
-                <option value="Polski">Polski</option>
-                <option value="Angielski">Angielski</option>
-              </select>
-            </div>
-            
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; font-weight: 600;">Dodatkowe informacje</label>
-              <textarea name="additionalInfo" rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;" 
-                        placeholder="Np. szczególne wymagania, okres zatrudnienia..."></textarea>
-            </div>
-            
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-              <button type="button" onclick="document.getElementById('requestCertificateModal').remove()" 
-                      style="padding: 12px 24px; background: #999; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                Anuluj
-              </button>
-              <button type="submit" 
-                      style="padding: 12px 24px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                📤 Złóż wniosek
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    document.getElementById('certificateRequestForm').onsubmit = async (e) => {
-      e.preventDefault();
-      await this.submitCertificateRequest(e.target);
-    };
-  }
-  
-  // Wyślij wniosek o zaświadczenie
-  async submitCertificateRequest(form) {
-    const formData = new FormData(form);
-    const certificateType = formData.get('certificateType');
-    const purpose = formData.get('purpose');
-    const language = formData.get('language');
-    const additionalInfo = formData.get('additionalInfo');
-    
-    if (!certificateType) {
-      alert('Wybierz typ zaświadczenia');
-      return;
-    }
-    
-    if (!purpose) {
-      alert('Wybierz cel zaświadczenia');
-      return;
-    }
-    
-    try {
-      const response = await window.api.request('/tickets', {
-        method: 'POST',
-        body: JSON.stringify({
-          user_id: this.userId,
-          ticket_type: 'zaswiadczenie',
-          title: certificateType,
-          department: 'HR',
-          priority: 'normal',
-          details: JSON.stringify({
-            certificateType: certificateType,
-            typZaswiadczenia: certificateType,
-            purpose: purpose,
-            cel: purpose,
-            language: language,
-            jezyk: language,
-            additionalInfo: additionalInfo
-          })
-        })
-      });
-      
-      if (response.success) {
-        document.getElementById('requestCertificateModal').remove();
-        alert('✅ Wniosek o zaświadczenie został złożony!');
-        await this.loadCertificatesTab();
-      }
-    } catch (error) {
-      console.error('❌ Błąd składania wniosku:', error);
-      alert('❌ Błąd: ' + error.message);
-    }
-  }
-
-  // ============================================
-  // MÓJ GRAFIK PRACY
-  // ============================================
-  async loadScheduleTab() {
-    const container = document.getElementById('tab-schedule');
-    container.innerHTML = '<div class="loading">Ładowanie grafiku...</div>';
-    
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    
-    try {
-      const res = await window.api.request(`/work-schedule/user/${this.userId}/${year}/${String(month).padStart(2, '0')}`);
-      
-      const monthNames = ['', 'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 
-                         'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
-      const dayNames = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So'];
-      
-      const SCHEDULE_STATUSES = {
-        'praca': { label: 'W pracy', color: '#4CAF50', icon: '🏢' },
-        'zdalna': { label: 'Praca zdalna', color: '#2196F3', icon: '🏠' },
-        'urlop': { label: 'Urlop', color: '#FF9800', icon: '🏖️' },
-        'choroba': { label: 'Zwolnienie L4', color: '#F44336', icon: '🏥' },
-        'wolne': { label: 'Dzień wolny', color: '#9C27B0', icon: '📅' },
-        'nieobecny': { label: 'Nieobecny', color: '#757575', icon: '❌' },
-        'delegacja': { label: 'Delegacja', color: '#00BCD4', icon: '✈️' }
-      };
-      
-      const today = now.toISOString().split('T')[0];
-      
-      container.innerHTML = `
-        <div class="schedule-container" style="padding: 20px;">
-          <h3 style="margin: 0 0 20px 0;">📅 Mój grafik pracy - ${monthNames[month]} ${year}</h3>
-          
-          <!-- Legenda -->
-          <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; padding: 12px; background: #f5f5f5; border-radius: 8px;">
-            ${Object.entries(SCHEDULE_STATUSES).map(([key, val]) => `
-              <span style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem;">
-                <span style="width: 16px; height: 16px; background: ${val.color}; border-radius: 4px;"></span>
-                ${val.icon} ${val.label}
-              </span>
-            `).join('')}
-          </div>
-          
-          <!-- Kalendarz -->
-          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding-bottom: 15px;">
-            ${dayNames.map(d => `<div style="text-align: center; font-weight: 600; padding: 10px; color: #666;">${d}</div>`).join('')}
-            
-            ${(() => {
-              const firstDay = new Date(year, month - 1, 1).getDay();
-              const daysInMonth = new Date(year, month, 0).getDate();
-              let html = '';
-              
-              // Puste komórki przed pierwszym dniem
-              for (let i = 0; i < firstDay; i++) {
-                html += '<div></div>';
-              }
-              
-              // Dni miesiąca
-              for (let day = 1; day <= daysInMonth; day++) {
-                const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const scheduleEntry = res.schedule.find(s => s.date === dateStr);
-                const status = scheduleEntry?.status || 'zdalna';
-                const statusInfo = SCHEDULE_STATUSES[status] || SCHEDULE_STATUSES['zdalna'];
-                const isToday = dateStr === today;
-                const isWeekend = new Date(dateStr).getDay() === 0 || new Date(dateStr).getDay() === 6;
-                const isPast = new Date(dateStr) < new Date(today);
-                const tooltipText = `${day}.${month}.${year}\\n${statusInfo.label}\\nGodziny: ${scheduleEntry?.start_time || '09:00'} - ${scheduleEntry?.end_time || '17:00'}${scheduleEntry?.notes ? '\\nUwagi: ' + scheduleEntry.notes : ''}\\n\\nKliknij aby zarezerwować biuro`;
-                
-                html += `
-                  <div style="
-                    padding: 12px 8px;
-                    border-radius: 8px;
-                    text-align: center;
-                    background: ${statusInfo.color}20;
-                    border: 2px solid ${isToday ? '#1976D2' : 'transparent'};
-                    ${isWeekend ? 'opacity: 0.7;' : ''}
-                    ${!isWeekend && !isPast ? 'cursor: pointer;' : ''}
-                    transition: transform 0.2s, box-shadow 0.2s;
-                  "
-                  title="${tooltipText}"
-                  ${!isWeekend && !isPast ? `onclick="employeeDashboard.openBookingModal('${dateStr}')"` : ''}
-                  ${!isWeekend && !isPast ? `onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';"` : ''}
-                  ${!isWeekend && !isPast ? `onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';"` : ''}
-                  >
-                    <div style="font-weight: ${isToday ? 'bold' : 'normal'}; color: ${isToday ? '#1976D2' : '#333'};">${day}</div>
-                    <div style="font-size: 1.2rem; margin: 4px 0;">${statusInfo.icon}</div>
-                    <div style="font-size: 0.7rem; color: #666;">${scheduleEntry?.start_time || '09:00'}-${scheduleEntry?.end_time || '17:00'}</div>
-                  </div>
-                `;
-              }
-              
-              return html;
-            })()}
-          </div>
-          
-          <div style="height: 20px;"></div>
-          
-          <!-- Szczegóły dzisiejszego dnia -->
-          ${(() => {
-            const todayEntry = res.schedule.find(s => s.date === today);
-            if (!todayEntry) return '';
-            const statusInfo = SCHEDULE_STATUSES[todayEntry.status] || SCHEDULE_STATUSES['praca'];
-            return `
-              <div style="margin-top: 35px; padding: 20px; background: linear-gradient(135deg, ${statusInfo.color}40, ${statusInfo.color}20); border-radius: 12px; border-left: 4px solid ${statusInfo.color}; color: #333;">
-                <h4 style="margin: 0 0 10px 0; color: #222;">${statusInfo.icon} Dzisiaj: ${statusInfo.label}</h4>
-                <div style="display: flex; gap: 20px; flex-wrap: wrap; color: #444;">
-                  <span>⏰ Godziny: <strong style="color: #222;">${todayEntry.start_time} - ${todayEntry.end_time}</strong></span>
-                  <span>☕ Przerwa: <strong style="color: #222;">${todayEntry.break_minutes} min</strong></span>
-                  ${todayEntry.notes ? `<span>📝 ${todayEntry.notes}</span>` : ''}
-                </div>
-              </div>
-            `;
-          })()}
-        </div>
-      `;
-      
-    } catch (error) {
-      console.error('❌ Błąd ładowania grafiku:', error);
-      container.innerHTML = `
-        <div class="empty-state" style="padding: 40px; text-align: center;">
-          <div style="font-size: 3rem;">📅</div>
-          <h3>Nie można załadować grafiku</h3>
-          <p style="color: #666;">${error.message}</p>
-          <button onclick="employeeDashboard.loadScheduleTab()" style="margin-top: 15px; padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer;">
-            🔄 Spróbuj ponownie
-          </button>
-        </div>
-      `;
-    }
-  }
-
-  // ============================================
-  // REZERWACJA BIURA
-  // ============================================
-  async loadOfficeBookingTab() {
-    const container = document.getElementById('tab-office-booking');
-    container.innerHTML = '<div class="loading">Ładowanie systemu rezerwacji...</div>';
-    
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const [resourcesRes, myBookingsRes, summaryRes] = await Promise.all([
-        window.api.request('/office-booking/resources'),
-        window.api.request(`/office-booking/my-bookings/${this.userId}`),
-        window.api.request(`/office-booking/summary/${today}`)
-      ]);
-      
-      const resources = resourcesRes.resources || [];
-      const myBookings = myBookingsRes.bookings || [];
-      const summary = summaryRes;
-      
-      container.innerHTML = `
-        <div class="hr-section">
-          <h3>🏢 Rezerwacja Biura - Gwiazdzista 6/5, Wrocław</h3>
-          
-          <!-- Info o biurze -->
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
-            <h4 style="margin: 0 0 15px 0;">📍 Biuro Pro Meritum</h4>
-            <p style="margin: 0 0 10px 0; opacity: 0.9;">Domyślnie wszyscy pracują zdalnie. Jeśli chcesz przyjść do biura, zarezerwuj stanowisko.</p>
-            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 15px;">
-              <div>
-                <strong>🪑 Biurka:</strong> ${summary.desks?.available || 0}/${summary.desks?.total || 3} wolne
-              </div>
-              <div>
-                <strong>🏛️ Sala konferencyjna:</strong> ${summary.conference_rooms?.available || 0}/${summary.conference_rooms?.total || 1} wolna
-              </div>
-            </div>
-          </div>
-          
-          <!-- Formularz rezerwacji -->
-          <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
-            <h4 style="margin: 0 0 15px 0;">➕ Nowa rezerwacja</h4>
-            <form id="booking-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-              <div>
-                <label style="display: block; margin-bottom: 5px; font-weight: 600;">📅 Data</label>
-                <input type="date" id="booking-date" min="${today}" value="${today}" 
-                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;"
-                       onchange="employeeDashboard.checkAvailability()">
-              </div>
-              <div>
-                <label style="display: block; margin-bottom: 5px; font-weight: 600;">🪑 Zasób</label>
-                <select id="booking-resource" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;"
-                        onchange="employeeDashboard.checkAvailability()">
-                  ${resources.map(r => `
-                    <option value="${r.id}" data-type="${r.type}">
-                      ${r.type === 'desk' ? '🪑' : '🏛️'} ${r.name} ${r.type === 'conference_room' ? `(do ${r.capacity} osób)` : ''}
-                    </option>
-                  `).join('')}
-                </select>
-              </div>
-              <div>
-                <label style="display: block; margin-bottom: 5px; font-weight: 600;">⏰ Od godziny</label>
-                <select id="booking-start" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;"
-                        onchange="employeeDashboard.updateEndTime()">
-                  ${Array.from({length: 10}, (_, i) => i + 8).map(h => `
-                    <option value="${String(h).padStart(2, '0')}:00">${String(h).padStart(2, '0')}:00</option>
-                  `).join('')}
-                </select>
-              </div>
-              <div>
-                <label style="display: block; margin-bottom: 5px; font-weight: 600;">⏰ Do godziny</label>
-                <select id="booking-end" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
-                  ${Array.from({length: 10}, (_, i) => i + 9).map(h => `
-                    <option value="${String(h).padStart(2, '0')}:00">${String(h).padStart(2, '0')}:00</option>
-                  `).join('')}
-                </select>
-              </div>
-              <div style="grid-column: 1 / -1;">
-                <label style="display: block; margin-bottom: 5px; font-weight: 600;">📝 Cel wizyty (opcjonalnie)</label>
-                <input type="text" id="booking-purpose" placeholder="np. Spotkanie z klientem, praca nad dokumentami..."
-                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
-              </div>
-              <div style="grid-column: 1 / -1;">
-                <div id="availability-info" style="padding: 10px; border-radius: 8px; display: none;"></div>
-              </div>
-              <div style="grid-column: 1 / -1;">
-                <button type="submit" style="width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem;">
-                  ✅ Zarezerwuj
-                </button>
-              </div>
-            </form>
-          </div>
-          
-          <!-- Moje rezerwacje -->
-          <div style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
-            <h4 style="margin: 0; padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #eee;">📋 Moje nadchodzące rezerwacje</h4>
-            ${myBookings.length === 0 ? `
-              <div style="padding: 30px; text-align: center; color: #666;">
-                <p>Nie masz żadnych rezerwacji</p>
-              </div>
-            ` : `
-              <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                  <tr style="background: #f8f9fa;">
-                    <th style="padding: 12px; text-align: left;">Data</th>
-                    <th style="padding: 12px; text-align: left;">Zasób</th>
-                    <th style="padding: 12px; text-align: center;">Godziny</th>
-                    <th style="padding: 12px; text-align: left;">Cel</th>
-                    <th style="padding: 12px; text-align: center;">Akcje</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${myBookings.map(b => `
-                    <tr style="border-bottom: 1px solid #eee;">
-                      <td style="padding: 12px;">
-                        <strong>${new Date(b.date).toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' })}</strong>
-                      </td>
-                      <td style="padding: 12px;">
-                        ${b.resource_type === 'desk' ? '🪑' : '🏛️'} ${b.resource_name}
-                      </td>
-                      <td style="padding: 12px; text-align: center;">
-                        ${b.start_time.substring(0, 5)} - ${b.end_time.substring(0, 5)}
-                      </td>
-                      <td style="padding: 12px; color: #666;">${b.purpose || '-'}</td>
-                      <td style="padding: 12px; text-align: center;">
-                        <button onclick="employeeDashboard.cancelBooking(${b.id})" 
-                                style="padding: 6px 12px; background: #F44336; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">
-                          ❌ Anuluj
-                        </button>
-                      </td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            `}
-          </div>
-        </div>
-      `;
-      
-      // Obsługa formularza
-      document.getElementById('booking-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await this.submitBooking();
-      });
-      
-      // Sprawdź dostępność na start
-      this.checkAvailability();
-      
-    } catch (error) {
-      console.error('❌ Błąd ładowania rezerwacji:', error);
-      container.innerHTML = `
-        <div class="empty-state">
-          <h3>❌ Błąd ładowania</h3>
-          <p>${error.message}</p>
-          <button onclick="employeeDashboard.loadOfficeBookingTab()" class="btn btn-primary">🔄 Spróbuj ponownie</button>
-        </div>
-      `;
-    }
-  }
-  
-  async checkAvailability() {
-    const date = document.getElementById('booking-date')?.value;
-    const resourceId = document.getElementById('booking-resource')?.value;
-    const infoDiv = document.getElementById('availability-info');
-    
-    if (!date || !resourceId || !infoDiv) return;
-    
-    try {
-      const res = await window.api.request(`/office-booking/availability/${resourceId}/${date}`);
-      const slots = res.slots || [];
-      const availableSlots = slots.filter(s => s.available);
-      
-      if (availableSlots.length === 0) {
-        infoDiv.style.display = 'block';
-        infoDiv.style.background = '#ffebee';
-        infoDiv.style.color = '#c62828';
-        infoDiv.innerHTML = '❌ Brak wolnych terminów w tym dniu. Wybierz inny dzień lub zasób.';
-      } else if (availableSlots.length < slots.length) {
-        infoDiv.style.display = 'block';
-        infoDiv.style.background = '#fff3e0';
-        infoDiv.style.color = '#e65100';
-        const bookedBy = res.bookings.map(b => `${b.start_time.substring(0,5)}-${b.end_time.substring(0,5)}: ${b.user_name}`).join(', ');
-        infoDiv.innerHTML = `⚠️ Częściowo zajęte: ${bookedBy}. Wolne: ${availableSlots.map(s => s.start_time).join(', ')}`;
-      } else {
-        infoDiv.style.display = 'block';
-        infoDiv.style.background = '#e8f5e9';
-        infoDiv.style.color = '#2e7d32';
-        infoDiv.innerHTML = '✅ Zasób dostępny cały dzień!';
-      }
-    } catch (error) {
-      console.error('Błąd sprawdzania dostępności:', error);
-    }
-  }
-  
-  updateEndTime() {
-    const startSelect = document.getElementById('booking-start');
-    const endSelect = document.getElementById('booking-end');
-    if (!startSelect || !endSelect) return;
-    
-    const startHour = parseInt(startSelect.value.split(':')[0]);
-    endSelect.innerHTML = '';
-    
-    for (let h = startHour + 1; h <= 18; h++) {
-      const option = document.createElement('option');
-      option.value = `${String(h).padStart(2, '0')}:00`;
-      option.textContent = `${String(h).padStart(2, '0')}:00`;
-      endSelect.appendChild(option);
-    }
-  }
-  
-  async submitBooking() {
-    const date = document.getElementById('booking-date').value;
-    const resourceId = document.getElementById('booking-resource').value;
-    const startTime = document.getElementById('booking-start').value;
-    const endTime = document.getElementById('booking-end').value;
-    const purpose = document.getElementById('booking-purpose').value;
-    
-    if (!date || !resourceId || !startTime || !endTime) {
-      alert('Wypełnij wszystkie wymagane pola');
-      return;
-    }
-    
-    try {
-      const res = await window.api.request('/office-booking/book', {
-        method: 'POST',
-        body: JSON.stringify({
-          resource_id: parseInt(resourceId),
-          user_id: this.userId,
-          date,
-          start_time: startTime,
-          end_time: endTime,
-          purpose
-        })
-      });
-      
-      if (res.success) {
-        alert('✅ Rezerwacja utworzona! Twój grafik został zaktualizowany.');
-        this.loadOfficeBookingTab();
-      } else {
-        alert('❌ ' + (res.error || 'Błąd tworzenia rezerwacji'));
-      }
-    } catch (error) {
-      alert('❌ ' + error.message);
-    }
-  }
-  
-  async cancelBooking(bookingId) {
-    if (!confirm('Czy na pewno chcesz anulować tę rezerwację?')) return;
-    
-    try {
-      const res = await window.api.request(`/office-booking/cancel/${bookingId}?user_id=${this.userId}`, {
-        method: 'DELETE'
-      });
-      
-      if (res.success) {
-        alert('✅ Rezerwacja anulowana');
-        this.loadOfficeBookingTab();
-        this.loadScheduleTab(); // Odśwież też kalendarz
-      } else {
-        alert('❌ ' + (res.error || 'Błąd anulowania'));
-      }
-    } catch (error) {
-      alert('❌ ' + error.message);
-    }
-  }
-  
-  // ============================================
-  // MODAL REZERWACJI BIURA
-  // ============================================
-  async openBookingModal(date) {
-    // Pobierz wszystkie dane równolegle
-    const [resourcesRes, tasksRes, eventsRes, scheduleRes] = await Promise.all([
-      window.api.request('/office-booking/resources'),
-      window.api.request(`/tasks?assigned_to=${this.userId}`).catch(() => ({ tasks: [] })),
-      window.api.request('/events').catch(() => ({ events: [] })),
-      window.api.request(`/work-schedule/user/${this.userId}/${date.split('-')[0]}/${date.split('-')[1]}`).catch(() => ({ schedule: [] }))
-    ]);
-    
-    const resources = resourcesRes.resources || [];
-    const allTasks = tasksRes.tasks || [];
-    const allEvents = eventsRes.events || eventsRes || [];
-    
-    // Filtruj zadania i wydarzenia na wybrany dzień
-    const dayTasks = allTasks.filter(t => t.due_date && t.due_date.startsWith(date));
-    const dayEvents = (Array.isArray(allEvents) ? allEvents : []).filter(e => {
-      const eventDate = e.date || e.start_date;
-      return eventDate && eventDate.startsWith(date);
-    });
-    
-    // Pobierz notatkę z grafiku
-    const scheduleEntry = (scheduleRes.schedule || []).find(s => s.date === date);
-    const existingNote = scheduleEntry?.notes || '';
-    
-    const formattedDate = new Date(date).toLocaleDateString('pl-PL', { 
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
-    });
-    
-    // Utwórz modal
-    const modal = document.createElement('div');
-    modal.id = 'booking-modal';
-    modal.style.cssText = `
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); display: flex; align-items: center;
-      justify-content: center; z-index: 10000;
-    `;
-    
-    modal.innerHTML = `
-      <div style="background: white; border-radius: 16px; width: 95%; max-width: 700px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 16px 16px 0 0;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0;">📅 Szczegóły dnia</h3>
-            <button onclick="document.getElementById('booking-modal').remove()" 
-                    style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1.2rem;">✕</button>
-          </div>
-          <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 1.1rem;">${formattedDate}</p>
-        </div>
-        
-        <div style="padding: 20px;">
-          <!-- Zakładki -->
-          <div style="display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
-            <button onclick="employeeDashboard.switchDayTab('tasks')" id="day-tab-tasks" class="day-tab active"
-                    style="padding: 10px 15px; background: #3B82F6; color: white; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600;">
-              ✅ Zadania (${dayTasks.length})
-            </button>
-            <button onclick="employeeDashboard.switchDayTab('events')" id="day-tab-events" class="day-tab"
-                    style="padding: 10px 15px; background: #e0e0e0; color: #333; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600;">
-              📆 Wydarzenia (${dayEvents.length})
-            </button>
-            <button onclick="employeeDashboard.switchDayTab('booking')" id="day-tab-booking" class="day-tab"
-                    style="padding: 10px 15px; background: #e0e0e0; color: #333; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600;">
-              🏢 Biuro
-            </button>
-            <button onclick="employeeDashboard.switchDayTab('notes')" id="day-tab-notes" class="day-tab"
-                    style="padding: 10px 15px; background: #e0e0e0; color: #333; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600;">
-              📝 Notatka
-            </button>
-          </div>
-          
-          <!-- Panel: Zadania -->
-          <div id="day-panel-tasks" class="day-panel">
-            ${dayTasks.length === 0 ? `
-              <div style="text-align: center; padding: 30px; color: #666;">
-                <div style="font-size: 2.5rem; margin-bottom: 10px;">✅</div>
-                <p>Brak zadań na ten dzień</p>
-              </div>
-            ` : `
-              <div style="display: flex; flex-direction: column; gap: 10px;">
-                ${dayTasks.map(t => `
-                  <div style="padding: 12px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid ${t.status === 'completed' ? '#4CAF50' : t.priority === 'high' ? '#F44336' : '#FF9800'};">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                      <strong>${t.title}</strong>
-                      <span style="font-size: 0.8rem; padding: 4px 8px; border-radius: 12px; background: ${t.status === 'completed' ? '#e8f5e9' : '#fff3e0'}; color: ${t.status === 'completed' ? '#2e7d32' : '#e65100'};">
-                        ${t.status === 'completed' ? '✅ Ukończone' : t.status === 'in_progress' ? '🔄 W trakcie' : '⏳ Do zrobienia'}
-                      </span>
-                    </div>
-                    ${t.description ? `<p style="margin: 8px 0 0 0; font-size: 0.9rem; color: #666;">${t.description.substring(0, 100)}${t.description.length > 100 ? '...' : ''}</p>` : ''}
-                  </div>
-                `).join('')}
-              </div>
-            `}
-          </div>
-          
-          <!-- Panel: Wydarzenia -->
-          <div id="day-panel-events" class="day-panel" style="display: none;">
-            ${dayEvents.length === 0 ? `
-              <div style="text-align: center; padding: 30px; color: #666;">
-                <div style="font-size: 2.5rem; margin-bottom: 10px;">📆</div>
-                <p>Brak wydarzeń na ten dzień</p>
-              </div>
-            ` : `
-              <div style="display: flex; flex-direction: column; gap: 10px;">
-                ${dayEvents.map(e => `
-                  <div style="padding: 12px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196F3;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                      <strong>${e.title || e.name}</strong>
-                      ${e.time || e.start_time ? `<span style="color: #1565c0;">⏰ ${e.time || e.start_time}</span>` : ''}
-                    </div>
-                    ${e.description || e.location ? `<p style="margin: 8px 0 0 0; font-size: 0.9rem; color: #666;">${e.description || e.location}</p>` : ''}
-                  </div>
-                `).join('')}
-              </div>
-            `}
-          </div>
-          
-          <!-- Panel: Rezerwacja biura -->
-          <div id="day-panel-booking" class="day-panel" style="display: none;">
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; font-weight: 600;">🪑 Wybierz zasób</label>
-              <select id="modal-resource" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;"
-                      onchange="employeeDashboard.checkModalAvailability('${date}')">
-                ${resources.map(r => `
-                  <option value="${r.id}">
-                    ${r.type === 'desk' ? '🪑' : '🏛️'} ${r.name} ${r.type === 'conference_room' ? `(do ${r.capacity} osób)` : ''}
-                  </option>
-                `).join('')}
-              </select>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-              <div>
-                <label style="display: block; margin-bottom: 5px; font-weight: 600;">⏰ Od godziny</label>
-                <select id="modal-start" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;"
-                        onchange="employeeDashboard.updateModalEndTime()">
-                  ${Array.from({length: 10}, (_, i) => i + 8).map(h => `
-                    <option value="${String(h).padStart(2, '0')}:00">${String(h).padStart(2, '0')}:00</option>
-                  `).join('')}
-                </select>
-              </div>
-              <div>
-                <label style="display: block; margin-bottom: 5px; font-weight: 600;">⏰ Do godziny</label>
-                <select id="modal-end" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
-                  ${Array.from({length: 10}, (_, i) => i + 9).map(h => `
-                    <option value="${String(h).padStart(2, '0')}:00">${String(h).padStart(2, '0')}:00</option>
-                  `).join('')}
-                </select>
-              </div>
-            </div>
-            
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; font-weight: 600;">📝 Cel wizyty (opcjonalnie)</label>
-              <input type="text" id="modal-purpose" placeholder="np. Spotkanie z klientem..."
-                     style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
-            </div>
-            
-            <div id="modal-availability" style="padding: 12px; border-radius: 8px; margin-bottom: 15px; background: #e8f5e9; color: #2e7d32;">
-              ✅ Sprawdzanie dostępności...
-            </div>
-            
-            <div style="padding: 10px; border-radius: 8px; margin-bottom: 15px; background: #fff3e0; color: #e65100; font-size: 0.85rem;">
-              ⏰ Rezerwację można złożyć minimum <strong>12 godzin</strong> przed terminem
-            </div>
-            
-            <button onclick="employeeDashboard.submitModalBooking('${date}')" 
-                    style="width: 100%; padding: 14px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600;">
-              ✅ Zarezerwuj biuro
-            </button>
-          </div>
-          
-          <!-- Panel: Notatka -->
-          <div id="day-panel-notes" class="day-panel" style="display: none;">
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; font-weight: 600;">📝 Notatka na ten dzień</label>
-              <textarea id="modal-note" placeholder="Wpisz notatkę, przypomnienie lub plan na ten dzień..."
-                        style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; box-sizing: border-box; min-height: 150px; resize: vertical;">${existingNote}</textarea>
-            </div>
-            <button onclick="employeeDashboard.saveNote('${date}')" 
-                    style="width: 100%; padding: 14px; background: #9C27B0; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600;">
-              💾 Zapisz notatkę
-            </button>
-          </div>
-          
-          <!-- Przycisk zamknij -->
-          <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;">
-            <button onclick="document.getElementById('booking-modal').remove()" 
-                    style="width: 100%; padding: 12px; background: #f5f5f5; color: #333; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;">
-              Zamknij
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Zamknij po kliknięciu w tło
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.remove();
-    });
-    
-    // Sprawdź dostępność biura
-    this.checkModalAvailability(date);
-  }
-  
-  switchDayTab(tabName) {
-    // Ukryj wszystkie panele
-    document.querySelectorAll('.day-panel').forEach(p => p.style.display = 'none');
-    // Resetuj style zakładek
-    document.querySelectorAll('.day-tab').forEach(t => {
-      t.style.background = '#e0e0e0';
-      t.style.color = '#333';
-    });
-    // Pokaż wybrany panel
-    document.getElementById(`day-panel-${tabName}`).style.display = 'block';
-    // Aktywuj zakładkę
-    const activeTab = document.getElementById(`day-tab-${tabName}`);
-    activeTab.style.background = '#3B82F6';
-    activeTab.style.color = 'white';
-  }
-  
-  async saveNote(date) {
-    const note = document.getElementById('modal-note').value;
-    
-    try {
-      await window.api.request('/work-schedule/entry', {
-        method: 'PUT',
-        body: JSON.stringify({
-          user_id: this.userId,
-          date: date,
-          status: 'zdalna', // Zachowaj domyślny status
-          notes: note
-        })
-      });
-      
-      this.showNotification('💾 Notatka zapisana!', 'Twoja notatka została zapisana w grafiku.', 'success');
-      this.loadScheduleTab();
-    } catch (error) {
-      this.showNotification('❌ Błąd', error.message, 'error');
-    }
-  }
-  
-  async checkModalAvailability(date) {
-    const resourceId = document.getElementById('modal-resource')?.value;
-    const infoDiv = document.getElementById('modal-availability');
-    if (!resourceId || !infoDiv) return;
-    
-    try {
-      const res = await window.api.request(`/office-booking/availability/${resourceId}/${date}`);
-      const slots = res.slots || [];
-      const availableSlots = slots.filter(s => s.available);
-      
-      if (availableSlots.length === 0) {
-        infoDiv.style.background = '#ffebee';
-        infoDiv.style.color = '#c62828';
-        infoDiv.innerHTML = '❌ Brak wolnych terminów. Wybierz inny zasób.';
-      } else if (availableSlots.length < slots.length) {
-        infoDiv.style.background = '#fff3e0';
-        infoDiv.style.color = '#e65100';
-        const bookedBy = res.bookings.map(b => `${b.start_time.substring(0,5)}-${b.end_time.substring(0,5)}: ${b.user_name}`).join(', ');
-        infoDiv.innerHTML = `⚠️ Częściowo zajęte: ${bookedBy}`;
-      } else {
-        infoDiv.style.background = '#e8f5e9';
-        infoDiv.style.color = '#2e7d32';
-        infoDiv.innerHTML = '✅ Zasób dostępny cały dzień!';
-      }
-    } catch (error) {
-      infoDiv.innerHTML = '❌ Błąd sprawdzania dostępności';
-    }
-  }
-  
-  updateModalEndTime() {
-    const startSelect = document.getElementById('modal-start');
-    const endSelect = document.getElementById('modal-end');
-    if (!startSelect || !endSelect) return;
-    
-    const startHour = parseInt(startSelect.value.split(':')[0]);
-    endSelect.innerHTML = '';
-    
-    for (let h = startHour + 1; h <= 18; h++) {
-      const option = document.createElement('option');
-      option.value = `${String(h).padStart(2, '0')}:00`;
-      option.textContent = `${String(h).padStart(2, '0')}:00`;
-      endSelect.appendChild(option);
-    }
-  }
-  
-  async submitModalBooking(date) {
-    const resourceId = document.getElementById('modal-resource').value;
-    const startTime = document.getElementById('modal-start').value;
-    const endTime = document.getElementById('modal-end').value;
-    const purpose = document.getElementById('modal-purpose').value;
-    
-    try {
-      const res = await window.api.request('/office-booking/book', {
-        method: 'POST',
-        body: JSON.stringify({
-          resource_id: parseInt(resourceId),
-          user_id: this.userId,
-          date,
-          start_time: startTime,
-          end_time: endTime,
-          purpose
-        })
-      });
-      
-      if (res.success) {
-        document.getElementById('booking-modal').remove();
-        this.showNotification('✅ Rezerwacja utworzona!', 'Twoje miejsce w biurze zostało zarezerwowane.', 'success');
-        this.loadScheduleTab();
-      } else {
-        this.showNotification('❌ Nie można zarezerwować', res.error || 'Ten termin jest już zajęty. Wybierz inny zasób lub godziny.', 'error');
-      }
-    } catch (error) {
-      this.showNotification('❌ Błąd', error.message, 'error');
-    }
-  }
-  
-  // Ładny modal z komunikatem
-  showNotification(title, message, type = 'info') {
-    const colors = {
-      success: { bg: '#4CAF50', icon: '✅' },
-      error: { bg: '#F44336', icon: '❌' },
-      warning: { bg: '#FF9800', icon: '⚠️' },
-      info: { bg: '#2196F3', icon: 'ℹ️' }
-    };
-    const color = colors[type] || colors.info;
-    
-    const notification = document.createElement('div');
-    notification.id = 'notification-modal';
-    notification.style.cssText = `
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.4); display: flex; align-items: center;
-      justify-content: center; z-index: 10001; animation: fadeIn 0.2s ease;
-    `;
-    
-    notification.innerHTML = `
-      <style>
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-      </style>
-      <div style="
-        background: white; border-radius: 16px; width: 90%; max-width: 400px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;
-        animation: slideIn 0.3s ease;
-      ">
-        <div style="background: ${color.bg}; padding: 25px; text-align: center;">
-          <div style="font-size: 3rem; margin-bottom: 10px;">${color.icon}</div>
-          <h3 style="margin: 0; color: white; font-size: 1.3rem;">${title}</h3>
-        </div>
-        <div style="padding: 25px; text-align: center;">
-          <p style="margin: 0 0 20px 0; color: #555; font-size: 1rem; line-height: 1.5;">${message}</p>
-          <button onclick="document.getElementById('notification-modal').remove()" 
-                  style="padding: 12px 40px; background: ${color.bg}; color: white; border: none; 
-                         border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600;
-                         transition: transform 0.2s, box-shadow 0.2s;"
-                  onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 15px ${color.bg}50';"
-                  onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
-            OK
-          </button>
-        </div>
-      </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Zamknij po kliknięciu w tło
-    notification.addEventListener('click', (e) => {
-      if (e.target === notification) notification.remove();
-    });
-    
-    // Zamknij po ESC
-    const escHandler = (e) => {
-      if (e.key === 'Escape') {
-        notification.remove();
-        document.removeEventListener('keydown', escHandler);
-      }
-    };
-    document.addEventListener('keydown', escHandler);
   }
 }
 

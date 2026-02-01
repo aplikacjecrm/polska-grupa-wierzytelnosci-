@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 fileFormData.append('description', `Dokument sprawy: ${file.name}`);
                                 
                                 const token = localStorage.getItem('token');
-                                const uploadResponse = await fetch(`https://web-production-ef868.up.railway.app/api/cases/${savedCaseId}/documents`, {
+                                const uploadResponse = await fetch(`http://localhost:3500/api/cases/${savedCaseId}/documents`, {
                                     method: 'POST',
                                     headers: {
                                         'Authorization': `Bearer ${token}`
@@ -214,4 +214,3 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 console.log('✅ Case Type Loader v1.0 - Ready!');
-

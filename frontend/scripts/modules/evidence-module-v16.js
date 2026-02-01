@@ -14,27 +14,6 @@ const evidenceModule = {
     this.currentCaseId = caseId;
     console.log('📦 Renderuję zakładkę dowodów dla sprawy:', caseId);
     
-    // Pokaż okienko ładowania w kontenerze
-    const container = document.getElementById('caseTabContent') ||
-                     document.getElementById('caseTabContentArea') ||
-                     document.querySelector('[id*="Tab"][id*="Content"]');
-    
-    if (container) {
-        container.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: center; padding: 60px; flex-direction: column;">
-                <div style="font-size: 3rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">🔍</div>
-                <div style="font-size: 1.2rem; font-weight: 600; color: #1a2332; margin-bottom: 15px;">Ładowanie dowodów...</div>
-                <div style="width: 200px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
-                    <div style="width: 30%; height: 100%; background: linear-gradient(90deg, #3B82F6, #1E40AF); border-radius: 3px; animation: loadingBar 1.5s ease-in-out infinite;"></div>
-                </div>
-                <style>
-                    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-                    @keyframes loadingBar { 0% { width: 0%; margin-left: 0%; } 50% { width: 60%; margin-left: 20%; } 100% { width: 0%; margin-left: 100%; } }
-                </style>
-            </div>
-        `;
-    }
-    
     try {
       const response = await window.api.request(`/evidence/case/${caseId}`);
       this.evidenceList = response.evidence || [];
@@ -1015,7 +994,7 @@ const evidenceModule = {
       for (const doc of this.selectedSystemDocs) {
         try {
           // Pobierz plik z systemu
-          const response = await fetch(`https://web-production-ef868.up.railway.app/api/cases/${caseId}/documents/${doc.id}/download`, {
+          const response = await fetch(`http://localhost:3500/api/cases/${caseId}/documents/${doc.id}/download`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
@@ -1068,43 +1047,12 @@ const evidenceModule = {
   // === SZCZEGÓŁY DOWODU ===
   
   async viewDetails(evidenceId) {
-    // Pokaż okienko ładowania
-    const loadingModal = document.createElement('div');
-    loadingModal.id = 'evidenceLoadingModal';
-    loadingModal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.85); display: flex; align-items: center;
-        justify-content: center; z-index: 10000;
-    `;
-    loadingModal.innerHTML = `
-        <div style="text-align: center; color: white;">
-            <div style="font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">🔍</div>
-            <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 15px;">Ładowanie dowodu...</div>
-            <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; margin: 0 auto;">
-                <div style="width: 30%; height: 100%; background: linear-gradient(90deg, #3B82F6, #1E40AF); border-radius: 3px; animation: loadingBar 1.5s ease-in-out infinite;"></div>
-            </div>
-            <style>
-                @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-                @keyframes loadingBar { 0% { width: 0%; margin-left: 0%; } 50% { width: 60%; margin-left: 20%; } 100% { width: 0%; margin-left: 100%; } }
-            </style>
-        </div>
-    `;
-    document.body.appendChild(loadingModal);
-    
     try {
       const response = await window.api.request(`/evidence/${evidenceId}`);
       const evidence = response.evidence;
       
       console.log('📦 Szczegóły dowodu:', evidence);
       console.log(`📎 Liczba załączników: ${evidence.attachments ? evidence.attachments.length : 0}`);
-      
-      // Płynne przejście z ładowania do modala
-      const loadingEl = document.getElementById('evidenceLoadingModal');
-      if (loadingEl) {
-          loadingEl.style.transition = 'opacity 0.3s ease';
-          loadingEl.style.opacity = '0';
-          setTimeout(() => loadingEl.remove(), 300);
-      }
       
       const modal = document.createElement('div');
       modal.id = 'evidenceDetailsModal';
@@ -1251,7 +1199,7 @@ const evidenceModule = {
                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(76,175,80,0.3)'">
                           ⬇️ Pobierz
                         </a>
-                        ${att.mimetype.includes('image') || att.mimetype.includes('video') ? `
+                        ${att.mimetype.includes('image') ? `
                           <button onclick="evidenceModule.previewAttachment('${att.filename}', '${att.mimetype}', '${att.file_data}')"
                                   style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
                             👁️ Podgląd
@@ -1300,24 +1248,7 @@ const evidenceModule = {
       `;
       
       document.body.appendChild(modal);
-      
-      // Płynne pojawienie się modala
-      const modalContent = modal.querySelector('div');
-      if (modalContent) {
-          modalContent.style.opacity = '0';
-          modalContent.style.transform = 'scale(0.95)';
-          modalContent.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-          
-          requestAnimationFrame(() => {
-              modalContent.style.opacity = '1';
-              modalContent.style.transform = 'scale(1)';
-          });
-      }
     } catch (error) {
-      // Usuń okienko ładowania w przypadku błędu
-      const loadingEl = document.getElementById('evidenceLoadingModal');
-      if (loadingEl) loadingEl.remove();
-      
       console.error('❌ Błąd ładowania szczegółów:', error);
       alert('Błąd: ' + error.message);
     }
@@ -1393,29 +1324,14 @@ const evidenceModule = {
     const modal = document.createElement('div');
     modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0,0,0,0.95); z-index: 10002; display: flex; justify-content: center; align-items: center; padding: 20px;';
     
-    // Określ typ zawartości
-    let contentHtml = '';
-    if (mimetype.includes('video')) {
-      contentHtml = `
-        <video controls autoplay style="max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-          <source src="data:${mimetype};base64,${base64data}" type="${mimetype}">
-          Twoja przeglądarka nie obsługuje odtwarzania wideo.
-        </video>
-      `;
-    } else {
-      contentHtml = `
-        <img src="data:${mimetype};base64,${base64data}" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-      `;
-    }
-    
     modal.innerHTML = `
       <div style="position: relative; max-width: 95vw; max-height: 95vh; background: white; border-radius: 12px; padding: 20px; display: flex; flex-direction: column;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
-          <h3 style="margin: 0; color: #1a2332;">${mimetype.includes('video') ? '🎥' : '🖼️'} ${filename}</h3>
+          <h3 style="margin: 0; color: #1a2332;">${filename}</h3>
           <button onclick="this.closest('div[style*=\"position: fixed\"]').remove()" style="background: #dc3545; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; font-weight: 600;">✕</button>
         </div>
         <div style="flex: 1; overflow: auto; display: flex; justify-content: center; align-items: center;">
-          ${contentHtml}
+          <img src="data:${mimetype};base64,${base64data}" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
         </div>
       </div>
     `;
@@ -1435,4 +1351,3 @@ window.renderEvidenceTab = (caseId) => evidenceModule.renderTab(caseId);
 window.evidenceModule = evidenceModule; // ✅ Eksport modułu do użycia w ankietach
 
 console.log('✅ Moduł dowodów gotowy do użycia');
-

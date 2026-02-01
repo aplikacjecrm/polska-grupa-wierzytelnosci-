@@ -51,20 +51,8 @@ class AdminDashboard {
     async loadTickets() {
         try {
             const response = await api.request('/tickets');
-            let allTickets = response.tickets || [];
-            
-            // Filtruj tickety:
-            // - Tickety HR (department = 'HR') pokazuj tylko jeśli hr_approved = 1
-            // - Pozostałe tickety (IT, Finance, Admin) pokazuj wszystkie
-            this.tickets = allTickets.filter(t => {
-                const isHR = t.department?.toLowerCase() === 'hr';
-                if (isHR) {
-                    return t.hr_approved === 1; // HR tickety tylko po zatwierdzeniu
-                }
-                return true; // Inne tickety zawsze
-            });
-            
-            console.log(`✅ Tickets loaded: ${this.tickets.length} (filtered from ${allTickets.length})`);
+            this.tickets = response.tickets || [];
+            console.log(`✅ Tickets loaded: ${this.tickets.length}`);
         } catch (error) {
             console.error('Błąd ładowania ticketów:', error);
             this.tickets = [];
@@ -1183,16 +1171,9 @@ class AdminDashboard {
     // PANEL TICKETÓW HR/IT
     // =====================================
     showTicketsPanel() {
-        // Sprawdź czy modal już istnieje - jeśli tak, tylko odśwież zawartość
-        let modal = document.getElementById('ticketsPanelModal');
-        const isRefresh = !!modal;
-        
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'ticketsPanelModal';
-            modal.className = 'modal';
-            modal.style.display = 'flex';
-        }
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
         
         const ticketStats = {
             total: this.tickets?.length || 0,
@@ -1209,9 +1190,8 @@ class AdminDashboard {
         };
         
         modal.innerHTML = `
-            <div class="modal-content" style="max-width: 95vw; width: 1400px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
-                <!-- STICKY HEADER - nie scrolluje się -->
-                <div style="background: linear-gradient(135deg, #3B82F6 0%, #3B82F6 100%); padding: 20px; border-radius: 12px 12px 0 0; color: white; flex-shrink: 0;">
+            <div class="modal-content" style="max-width: 95vw; width: 1400px; max-height: 90vh; overflow-y: auto;">
+                <div style="background: linear-gradient(135deg, #3B82F6 0%, #3B82F6 100%); padding: 20px; border-radius: 12px 12px 0 0; color: white; position: sticky; top: 0; z-index: 10;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <h2 style="margin: 0;">🎫 Panel Ticketów HR/IT</h2>
                         <button onclick="this.closest('.modal').remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; cursor: pointer; width: 40px; height: 40px; border-radius: 50%;">✕</button>
@@ -1238,8 +1218,7 @@ class AdminDashboard {
                     </div>
                 </div>
                 
-                <!-- SCROLLABLE CONTENT -->
-                <div style="padding: 20px; overflow-y: auto; flex: 1;">
+                <div style="padding: 20px;">
                     <!-- Filtry -->
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px;">
@@ -1257,7 +1236,7 @@ class AdminDashboard {
                                 <option value="W realizacji">W realizacji</option>
                                 <option value="Zakończony">Zakończone</option>
                             </select>
-                            <button onclick="adminDashboard.refreshTicketsList();" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            <button onclick="adminDashboard.loadTickets(); adminDashboard.showTicketsPanel();" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 6px; cursor: pointer;">
                                 🔄 Odśwież
                             </button>
                         </div>
@@ -1271,48 +1250,13 @@ class AdminDashboard {
             </div>
         `;
         
-        // Dodaj modal tylko jeśli to nowy (nie odświeżanie)
-        if (!isRefresh) {
-            document.body.appendChild(modal);
-        }
+        document.body.appendChild(modal);
         
         // Event listeners dla filtrów
         ['ticketSearch', 'ticketDepartmentFilter', 'ticketStatusFilter'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('change', () => this.filterTickets());
         });
-    }
-    
-    // Metoda do odświeżania tylko listy ticketów (bez przeładowania całego modala)
-    async refreshTicketsList() {
-        await this.loadTickets();
-        const ticketsList = document.getElementById('ticketsList');
-        if (ticketsList) {
-            ticketsList.innerHTML = this.renderTicketsList();
-        }
-        // Odśwież też statystyki w headerze
-        this.updateTicketStats();
-    }
-    
-    updateTicketStats() {
-        const modal = document.getElementById('ticketsPanelModal');
-        if (!modal) return;
-        
-        const stats = {
-            total: this.tickets?.length || 0,
-            new: this.tickets?.filter(t => t.status === 'Nowy').length || 0,
-            inProgress: this.tickets?.filter(t => t.status === 'W realizacji').length || 0,
-            completed: this.tickets?.filter(t => t.status === 'Zakończony').length || 0
-        };
-        
-        // Znajdź i zaktualizuj statystyki (pierwsze 4 divy z liczbami)
-        const statDivs = modal.querySelectorAll('[style*="font-size: 2rem"]');
-        if (statDivs.length >= 4) {
-            statDivs[0].textContent = stats.total;
-            statDivs[1].textContent = stats.new;
-            statDivs[2].textContent = stats.inProgress;
-            statDivs[3].textContent = stats.completed;
-        }
     }
     
     renderTicketsList() {
@@ -1328,19 +1272,7 @@ class AdminDashboard {
         };
         
         return this.tickets.map(ticket => {
-            let details = {};
-            if (ticket.details) {
-                if (typeof ticket.details === 'string') {
-                    try {
-                        details = JSON.parse(ticket.details);
-                    } catch (e) {
-                        // Jeśli nie jest JSON, pokaż jako tekst
-                        details = { 'Opis': ticket.details };
-                    }
-                } else {
-                    details = ticket.details;
-                }
-            }
+            const details = typeof ticket.details === 'string' ? JSON.parse(ticket.details) : ticket.details;
             const statusColor = statusColors[ticket.status] || '#95a5a6';
             
             return `
@@ -1363,14 +1295,14 @@ class AdminDashboard {
                         </select>
                     </div>
                     
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-                        <span style="background: #3B82F6; padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; color: #fff !important; font-weight: 500;">
+                    <div style="display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <span style="background: #e8f4f8; padding: 5px 10px; border-radius: 4px; font-size: 0.85rem;">
                             🏢 ${ticket.department}
                         </span>
-                        <span style="background: #8B5CF6; padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; color: #fff !important; font-weight: 500;">
+                        <span style="background: #f0e6f6; padding: 5px 10px; border-radius: 4px; font-size: 0.85rem;">
                             👤 ${ticket.requester_name || 'N/A'}
                         </span>
-                        <span style="background: #10B981; padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; color: #fff !important; font-weight: 500;">
+                        <span style="background: #F8FAFC; padding: 5px 10px; border-radius: 4px; font-size: 0.85rem;">
                             📅 ${new Date(ticket.created_at).toLocaleDateString('pl-PL')}
                         </span>
                     </div>
@@ -1424,56 +1356,17 @@ class AdminDashboard {
                 body: JSON.stringify({ status: newStatus })
             });
             
-            // Odśwież listę bez otwierania nowego modala
-            await this.refreshTicketsList();
+            alert(`✅ Status ticketu zmieniony na: ${newStatus}`);
+            await this.loadTickets();
+            this.showTicketsPanel();
         } catch (error) {
             alert('❌ Błąd zmiany statusu: ' + error.message);
         }
     }
     
     async addAdminNote(ticketId) {
-        const ticket = this.tickets.find(t => t.id === ticketId);
-        
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.id = 'addNoteModal';
-        modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
-        
-        modal.innerHTML = `
-            <div style="background: white; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
-                <div style="background: linear-gradient(135deg, #17a2b8, #138496); padding: 20px; border-radius: 12px 12px 0 0; color: white;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="margin: 0;">📝 Dodaj notatkę</h3>
-                        <button onclick="document.getElementById('addNoteModal').remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 20px; cursor: pointer; width: 35px; height: 35px; border-radius: 50%;">✕</button>
-                    </div>
-                    <p style="margin: 10px 0 0; opacity: 0.9; font-size: 0.9rem;">${ticket?.ticket_number || ''}</p>
-                </div>
-                
-                <div style="padding: 20px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Treść notatki:</label>
-                    <textarea id="adminNoteText" rows="4" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem; resize: vertical; box-sizing: border-box;" placeholder="Wpisz notatkę...">${ticket?.admin_note || ''}</textarea>
-                    
-                    <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
-                        <button onclick="document.getElementById('addNoteModal').remove()" style="padding: 10px 20px; background: #f3f4f6; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Anuluj</button>
-                        <button onclick="adminDashboard.saveAdminNote(${ticketId})" style="padding: 10px 20px; background: #17a2b8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">💾 Zapisz</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-        
-        // Focus na textarea
-        setTimeout(() => document.getElementById('adminNoteText')?.focus(), 100);
-    }
-    
-    async saveAdminNote(ticketId) {
-        const note = document.getElementById('adminNoteText')?.value;
-        if (!note) {
-            alert('Wpisz treść notatki');
-            return;
-        }
+        const note = prompt('📝 Wprowadź notatkę administratora:');
+        if (!note) return;
         
         try {
             await api.request(`/tickets/${ticketId}/status`, {
@@ -1481,8 +1374,9 @@ class AdminDashboard {
                 body: JSON.stringify({ admin_note: note })
             });
             
-            document.getElementById('addNoteModal')?.remove();
-            await this.refreshTicketsList();
+            alert('✅ Notatka dodana');
+            await this.loadTickets();
+            this.showTicketsPanel();
         } catch (error) {
             alert('❌ Błąd dodawania notatki: ' + error.message);
         }
@@ -1492,76 +1386,7 @@ class AdminDashboard {
         const ticket = this.tickets.find(t => t.id === ticketId);
         if (!ticket) return;
         
-        // Parsuj details
-        let details = {};
-        if (ticket.details) {
-            try {
-                let parsed = JSON.parse(ticket.details);
-                if (typeof parsed === 'string') {
-                    parsed = JSON.parse(parsed);
-                }
-                details = parsed;
-            } catch (e) {
-                details = { 'Opis': ticket.details };
-            }
-        }
-        
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
-        
-        modal.innerHTML = `
-            <div style="background: white; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
-                <div style="background: linear-gradient(135deg, #3B82F6, #1E40AF); padding: 20px; border-radius: 12px 12px 0 0; color: white;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="margin: 0;">🎫 ${ticket.ticket_number}</h3>
-                        <button onclick="this.closest('.modal').remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 20px; cursor: pointer; width: 35px; height: 35px; border-radius: 50%;">✕</button>
-                    </div>
-                    <p style="margin: 10px 0 0; opacity: 0.9;">${ticket.title}</p>
-                </div>
-                
-                <div style="padding: 20px;">
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
-                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
-                            <div style="color: #6b7280; font-size: 0.8rem; margin-bottom: 4px;">Status</div>
-                            <div style="font-weight: 600; color: #3B82F6;">${ticket.status}</div>
-                        </div>
-                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
-                            <div style="color: #6b7280; font-size: 0.8rem; margin-bottom: 4px;">Dział</div>
-                            <div style="font-weight: 600; color: #1f2937;">${ticket.department}</div>
-                        </div>
-                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
-                            <div style="color: #6b7280; font-size: 0.8rem; margin-bottom: 4px;">Zgłaszający</div>
-                            <div style="font-weight: 600; color: #1f2937;">${ticket.requester_name || 'N/A'}</div>
-                        </div>
-                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
-                            <div style="color: #6b7280; font-size: 0.8rem; margin-bottom: 4px;">Data utworzenia</div>
-                            <div style="font-weight: 600; color: #1f2937;">${new Date(ticket.created_at).toLocaleString('pl-PL')}</div>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #f0f9ff; border-left: 4px solid #3B82F6; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 15px;">
-                        <div style="font-weight: 600; margin-bottom: 10px; color: #1e40af;">📋 Szczegóły wniosku</div>
-                        ${Object.entries(details).map(([key, value]) => `
-                            <div style="display: flex; margin-bottom: 8px;">
-                                <span style="color: #374151; min-width: 120px; font-weight: 500;">${key}:</span>
-                                <span style="font-weight: 600; color: #1f2937;">${value}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                    
-                    ${ticket.admin_note ? `
-                        <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 0 8px 8px 0;">
-                            <div style="font-weight: 600; margin-bottom: 5px; color: #92400e;">📝 Notatka administratora</div>
-                            <div>${ticket.admin_note}</div>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+        alert(`🎫 Szczegóły Ticketu\n\n${JSON.stringify(ticket, null, 2)}`);
     }
 
     // =====================================

@@ -229,18 +229,16 @@ window.renderWitnessesTab = async function(caseId) {
                                                 ⚠️ Wycofaj
                                             </button>
                                         ` : ''}
-                                        <button onclick="witnessesModule.deleteWitness(${w.id}, ${caseId}, '${w.first_name} ${w.last_name}', '${w.witness_code}')" style="
+                                        <button onclick="if(confirm('Na pewno usunąć świadka?')) witnessesModule.deleteWitness(${w.id}, ${caseId})" style="
                                             padding: 10px 18px;
-                                            background: linear-gradient(135deg, #dc3545, #b02a37);
+                                            background: #dc3545;
                                             color: white;
                                             border: none;
                                             border-radius: 8px;
                                             cursor: pointer;
                                             font-size: 0.9rem;
-                                            font-weight: 700;
-                                            box-shadow: 0 2px 8px rgba(220,53,69,0.3);
-                                            transition: all 0.3s;
-                                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(220,53,69,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(220,53,69,0.3)'">
+                                            font-weight: 600;
+                                        ">
                                             🗑️ Usuń
                                         </button>
                                     </div>
@@ -441,17 +439,6 @@ window.witnessesModule = {
                             <label style="display: block; color: #666; font-weight: 600; margin-bottom: 8px;">Notatki</label>
                             <textarea id="witnessNotes" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; min-height: 80px; resize: vertical;"></textarea>
                         </div>
-                        
-                        <!-- Dokumenty świadka -->
-                        <div style="border: 2px solid #e8f2ff; border-radius: 12px; padding: 20px; background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(30,64,175,0.05));">
-                            <label style="display: block; color: #1a2332; font-weight: 700; margin-bottom: 12px; font-size: 1.05rem;">📎 Dokumenty świadka (opcjonalne)</label>
-                            <p style="color: #666; font-size: 0.9rem; margin-bottom: 12px;">Możesz dodać dokumenty już teraz lub później po zapisaniu świadka.</p>
-                            <input type="file" id="witnessDocuments" multiple accept="*/*" style="width: 100%; padding: 12px; border: 2px dashed #3B82F6; border-radius: 8px; background: white; cursor: pointer; font-size: 0.95rem;">
-                            <div id="witnessFilesPreview" style="margin-top: 12px; display: none;">
-                                <p style="color: #3B82F6; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px;">Wybrane pliki:</p>
-                                <div id="witnessFilesList" style="display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto;"></div>
-                            </div>
-                        </div>
                     </div>
                     
                     <!-- Przyciski -->
@@ -468,34 +455,6 @@ window.witnessesModule = {
         `;
         
         document.body.appendChild(modal);
-        
-        // Dodaj listener do podglądu wybranych plików
-        setTimeout(() => {
-            const filesInput = document.getElementById('witnessDocuments');
-            if (filesInput) {
-                filesInput.addEventListener('change', (e) => {
-                    const preview = document.getElementById('witnessFilesPreview');
-                    const filesList = document.getElementById('witnessFilesList');
-                    
-                    if (e.target.files.length > 0) {
-                        preview.style.display = 'block';
-                        filesList.innerHTML = '';
-                        
-                        Array.from(e.target.files).forEach((file, index) => {
-                            const fileItem = document.createElement('div');
-                            fileItem.style.cssText = 'padding: 8px; background: white; border-radius: 6px; border: 1px solid #e0e0e0; font-size: 0.85rem; color: #333; display: flex; justify-content: space-between; align-items: center;';
-                            fileItem.innerHTML = `
-                                <span>📄 ${file.name}</span>
-                                <span style="color: #666; font-size: 0.8rem;">${(file.size / 1024).toFixed(1)} KB</span>
-                            `;
-                            filesList.appendChild(fileItem);
-                        });
-                    } else {
-                        preview.style.display = 'none';
-                    }
-                });
-            }
-        }, 100);
     },
     
     // Zapisz świadka
@@ -558,62 +517,19 @@ window.witnessesModule = {
             });
             
             console.log('✅ Dodano świadka:', response);
-            
-            const witnessId = response.witnessId;
-            
-            // Sprawdź czy są wybrane pliki do uploadu
-            const filesInput = document.getElementById('witnessDocuments');
-            if (filesInput && filesInput.files.length > 0) {
-                console.log(`📎 Uploading ${filesInput.files.length} dokumentów świadka...`);
-                
-                try {
-                    const formData = new FormData();
-                    Array.from(filesInput.files).forEach(file => {
-                        formData.append('documents', file);
-                    });
-                    
-                    // Upload dokumentów - użyj poprawnego API URL
-                    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-                    const token = localStorage.getItem('token');
-                    
-                    const uploadResponse = await fetch(`${apiUrl}/witnesses/${witnessId}/documents`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: formData
-                    });
-                    
-                    if (!uploadResponse.ok) {
-                        const errorText = await uploadResponse.text();
-                        console.error('❌ Upload error:', errorText);
-                        throw new Error('Błąd uploadu dokumentów');
-                    }
-                    
-                    const uploadResult = await uploadResponse.json();
-                    console.log('✅ Dokumenty uploadu:', uploadResult);
-                    
-                } catch (uploadError) {
-                    console.error('⚠️ Błąd uploadu dokumentów:', uploadError);
-                    alert(`⚠️ Świadek zapisany, ale błąd uploadu dokumentów: ${uploadError.message}`);
-                }
-            }
+            // Komunikat ukryty - lista świadków odświeży się automatycznie
+            // alert('✅ Dodano świadka!');
             
             // Emit event
             if (window.eventBus) {
-                window.eventBus.emit('witness:added', { witnessId: witnessId, caseId });
+                window.eventBus.emit('witness:added', { witnessId: response.witnessId, caseId });
             }
             
             // Zamknij modal
             document.getElementById('addWitnessModal').remove();
             
-            // Odśwież zakładkę i otwórz szczegóły świadka (żeby zobaczyć dodane dokumenty)
+            // Odśwież zakładkę
             window.crmManager.switchCaseTab(caseId, 'witnesses');
-            
-            // Po krótkiej chwili otwórz szczegóły świadka
-            setTimeout(() => {
-                this.viewWitnessDetails(witnessId, caseId);
-            }, 500);
             
         } catch (error) {
             console.error('❌ Błąd dodawania świadka:', error);
@@ -925,30 +841,6 @@ window.witnessesModule = {
     viewWitnessDetails: async function(witnessId) {
         console.log('👁️ Szczegóły świadka:', witnessId);
         
-        // Pokaż okienko ładowania
-        const loadingModal = document.createElement('div');
-        loadingModal.id = 'witnessLoadingModal';
-        loadingModal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: flex; align-items: center;
-            justify-content: center; z-index: 10000; animation: fadeIn 0.2s;
-        `;
-        loadingModal.innerHTML = `
-            <div style="text-align: center; color: white;">
-                <div style="font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">👤</div>
-                <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 15px;">Ładowanie danych świadka...</div>
-                <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; margin: 0 auto;">
-                    <div style="width: 30%; height: 100%; background: linear-gradient(90deg, #3B82F6, #1E40AF); border-radius: 3px; animation: loadingBar 1.5s ease-in-out infinite;"></div>
-                </div>
-                <style>
-                    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-                    @keyframes loadingBar { 0% { width: 0%; margin-left: 0%; } 50% { width: 60%; margin-left: 20%; } 100% { width: 0%; margin-left: 100%; } }
-                    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                </style>
-            </div>
-        `;
-        document.body.appendChild(loadingModal);
-        
         try {
             // Pobierz dane świadka
             const response = await window.api.request(`/witnesses/${witnessId}`);
@@ -962,10 +854,6 @@ window.witnessesModule = {
             const testimonies = testimResp.testimonies || [];
             
             console.log('📝 Pobrano zeznań dla szczegółów:', testimonies.length);
-            
-            // Usuń okienko ładowania
-            const loadingEl = document.getElementById('witnessLoadingModal');
-            if (loadingEl) loadingEl.remove();
             
             // Stwórz modal ze szczegółami
             const modal = document.createElement('div');
@@ -1009,29 +897,6 @@ window.witnessesModule = {
                             </div>
                         </div>
                         
-                        <!-- Dokumenty świadka -->
-                        <div style="background: #ffffff; padding: 20px 22px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #dde3f0;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <h4 style="margin: 0; color: #111827; font-size: 1.05rem;">📎 Dokumenty świadka</h4>
-                                <button onclick="witnessesModule.showUploadWitnessDocuments(${witnessId}, ${caseId})" style="
-                                    padding: 8px 16px;
-                                    background: linear-gradient(135deg, #FFD700, #FFA500);
-                                    color: #1a2332;
-                                    border: none;
-                                    border-radius: 8px;
-                                    cursor: pointer;
-                                    font-size: 0.85rem;
-                                    font-weight: 700;
-                                    box-shadow: 0 2px 8px rgba(255,215,0,0.3);
-                                ">
-                                    + Dodaj dokumenty
-                                </button>
-                            </div>
-                            <div id="witnessDocumentsList-${witnessId}">
-                                <div style="text-align: center; padding: 20px; color: #999;">Ładowanie dokumentów...</div>
-                            </div>
-                        </div>
-                        
                         <!-- Zeznania świadka -->
                         <div style="margin-top: 25px;">
                             <div style="margin-bottom: 15px;">
@@ -1052,627 +917,69 @@ window.witnessesModule = {
                                             border-radius: 12px;
                                             padding: 18px;
                                             ${t.is_retracted ? 'opacity: 0.7;' : ''}
+                                            cursor: pointer;
                                             transition: all 0.3s;
-                                        ">
-                                            <!-- Nagłówek zeznania - klikalne -->
-                                            <div style="cursor: pointer;" onclick="witnessesModule.viewTestimonyDetails(${witnessId}, ${t.id})" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-                                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                                                    <div>
-                                                        <div style="display: inline-block; padding: 5px 10px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2332; border-radius: 6px; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">
-                                                            Wersja ${t.version_number}
-                                                        </div>
-                                                        <div style="color: #666; font-size: 0.85rem; margin-top: 4px;">
-                                                            📅 ${new Date(t.testimony_date).toLocaleDateString('pl-PL', {year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})}
-                                                        </div>
+                                        " onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'; this.style.borderColor='#3B82F6'" onmouseout="this.style.boxShadow='none'; this.style.borderColor='${t.is_retracted ? '#dc3545' : '#e0e0e0'}'" onclick="witnessesModule.viewTestimonyDetails(${witnessId}, ${t.id})">
+                                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                                <div>
+                                                    <div style="display: inline-block; padding: 5px 10px; background: linear-gradient(135deg, #3B82F6, #1E40AF); color: white; border-radius: 6px; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">
+                                                        Wersja ${t.version_number}
                                                     </div>
-                                                    <span style="padding: 5px 10px; background: ${t.testimony_type === 'written' ? '#FFA500' : t.testimony_type === 'oral' ? '#FFB84D' : '#dc3545'}; color: ${t.testimony_type === 'recorded' ? 'white' : '#1a2332'}; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">
-                                                        ${t.testimony_type === 'written' ? '📄 Pisemne' : t.testimony_type === 'oral' ? '🎤 Ustne' : '🔴 Nagranie'}
-                                                    </span>
-                                                </div>
-                                                
-                                                <div style="color: #1a2332; font-size: 0.9rem; line-height: 1.5; margin-bottom: 10px; max-height: 60px; overflow: hidden; text-overflow: ellipsis;">
-                                                    ${t.testimony_content.substring(0, 150)}${t.testimony_content.length > 150 ? '...' : ''}
-                                                </div>
-                                                
-                                                ${t.is_retracted ? `
-                                                    <div style="display: inline-block; padding: 4px 10px; background: #dc3545; color: white; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
-                                                        ❌ WYCOFANE
+                                                    <div style="color: #666; font-size: 0.85rem; margin-top: 4px;">
+                                                        📅 ${new Date(t.testimony_date).toLocaleDateString('pl-PL', {year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})}
                                                     </div>
-                                                ` : ''}
-                                                
-                                                <div style="margin-top: 10px; text-align: right;">
-                                                    <span style="color: #FFD700; font-size: 0.85rem; font-weight: 600;">👁️ Kliknij aby zobaczyć szczegóły</span>
                                                 </div>
+                                                <span style="padding: 5px 10px; background: ${t.testimony_type === 'written' ? '#3B82F6' : t.testimony_type === 'oral' ? '#3B82F6' : '#3B82F6'}; color: white; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
+                                                    ${t.testimony_type === 'written' ? '📄 Pisemne' : t.testimony_type === 'oral' ? '🎤 Ustne' : '📹 Nagranie'}
+                                                </span>
                                             </div>
                                             
-                                            <!-- Załączniki do tego zeznania -->
-                                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e0e0e0;">
-                                                <div id="testimony-attachments-${t.id}" style="margin-bottom: 10px;"></div>
-                                                <button onclick="event.stopPropagation(); witnessesModule.showAddTestimonyAttachment(${witnessId}, ${t.id}, ${caseId}, ${t.version_number})" 
-                                                    style="width: 100%; padding: 10px; background: linear-gradient(135deg, #FFD700, #d4af37); color: #1a2332; border: 2px dashed #d4af37; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                                                    📎 Dodaj załącznik do zeznania v${t.version_number}
-                                                </button>
+                                            <div style="color: #1a2332; font-size: 0.9rem; line-height: 1.5; margin-bottom: 10px; max-height: 60px; overflow: hidden; text-overflow: ellipsis;">
+                                                ${t.testimony_content.substring(0, 150)}${t.testimony_content.length > 150 ? '...' : ''}
+                                            </div>
+                                            
+                                            ${t.is_retracted ? `
+                                                <div style="display: inline-block; padding: 4px 10px; background: #dc3545; color: white; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                                                    ❌ WYCOFANE
+                                                </div>
+                                            ` : ''}
+                                            
+                                            <div style="margin-top: 10px; text-align: right;">
+                                                <span style="color: #3B82F6; font-size: 0.85rem; font-weight: 600;">👁️ Kliknij aby zobaczyć szczegóły</span>
                                             </div>
                                         </div>
                                     `).join('')}
                                 </div>
                             `}
                         </div>
+                        
+                        <!-- Załączniki -->
+                        <div id="witness-attachments-container-${witnessId}" style="margin-top: 30px;"></div>
                     </div>
                 </div>
             `;
             
             document.body.appendChild(modal);
             
-            // Załaduj dokumenty świadka
-            this.loadWitnessDocuments(witnessId);
+            // Inicjalizuj uploader załączników
+            const uploader = new AttachmentUploader({
+                caseId: caseId,
+                entityType: 'witness',
+                entityId: witnessId,
+                category: 'zeznanie',
+                containerId: `witness-attachments-container-${witnessId}`,
+                onSuccess: () => {
+                    console.log('✅ Załącznik świadka dodany!');
+                }
+            });
             
-            // Załaduj załączniki dla każdego zeznania
-            for (const t of testimonies) {
-                this.loadTestimonyAttachments(witnessId, t.id, caseId, t.version_number);
-            }
+            // Zapisz instancję
+            window.attachmentUploaders[`witness-attachments-container-${witnessId}`] = uploader;
+            
+            uploader.render();
             
         } catch (error) {
-            // Usuń okienko ładowania w przypadku błędu
-            const loadingEl = document.getElementById('witnessLoadingModal');
-            if (loadingEl) loadingEl.remove();
-            
             console.error('❌ Błąd ładowania szczegółów:', error);
-            alert('❌ Błąd: ' + error.message);
-        }
-    },
-    
-    // Załaduj dokumenty świadka
-    loadWitnessDocuments: async function(witnessId) {
-        const container = document.getElementById(`witnessDocumentsList-${witnessId}`);
-        if (!container) return;
-        
-        try {
-            const response = await window.api.request(`/witnesses/${witnessId}/documents`);
-            const documents = response.documents || [];
-            
-            console.log(`📎 Pobrano ${documents.length} dokumentów świadka ${witnessId}`);
-            
-            if (documents.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #999; font-size: 0.9rem;">Brak dokumentów</div>';
-            } else {
-                container.innerHTML = `
-                    <div style="display: grid; gap: 12px;">
-                        ${documents.map(doc => `
-                            <div style="background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 16px; border-left: 4px solid #FFD700;">
-                                <!-- Kod dokumentu -->
-                                ${doc.document_code ? `
-                                    <div style="display: inline-block; padding: 6px 12px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2332; border-radius: 8px; font-size: 0.8rem; font-weight: 700; margin-bottom: 10px;">
-                                        📋 ${doc.document_code}
-                                    </div>
-                                ` : ''}
-                                
-                                <!-- Nazwa pliku -->
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                                    <div style="flex: 1;">
-                                        <div style="font-weight: 600; color: #1a2332; font-size: 1rem; margin-bottom: 4px;">📄 ${doc.file_name}</div>
-                                        <div style="font-size: 0.85rem; color: #666;">
-                                            ${(doc.file_size / 1024).toFixed(1)} KB • ${new Date(doc.uploaded_at).toLocaleDateString('pl-PL')} • ${doc.uploaded_by_name || 'Admin'}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Przyciski -->
-                                <div style="display: flex; gap: 8px; margin-top: 12px;">
-                                    <button onclick="witnessesModule.viewWitnessDocument(${witnessId}, ${doc.id})" style="
-                                        flex: 1;
-                                        padding: 10px 16px;
-                                        background: linear-gradient(135deg, #FFD700, #FFA500);
-                                        color: #1a2332;
-                                        border: none;
-                                        border-radius: 8px;
-                                        cursor: pointer;
-                                        font-size: 0.9rem;
-                                        font-weight: 700;
-                                        box-shadow: 0 2px 8px rgba(255,215,0,0.3);
-                                        transition: all 0.3s;
-                                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,215,0,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(255,215,0,0.3)'">
-                                        👁️ Pokaż
-                                    </button>
-                                    <button onclick="witnessesModule.downloadWitnessDocument(${witnessId}, ${doc.id})" style="
-                                        flex: 1;
-                                        padding: 10px 16px;
-                                        background: linear-gradient(135deg, #3B82F6, #2563EB);
-                                        color: white;
-                                        border: none;
-                                        border-radius: 8px;
-                                        cursor: pointer;
-                                        font-size: 0.9rem;
-                                        font-weight: 700;
-                                        box-shadow: 0 2px 8px rgba(59,130,246,0.3);
-                                        transition: all 0.3s;
-                                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(59,130,246,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(59,130,246,0.3)'">
-                                        📥 Pobierz
-                                    </button>
-                                    <button onclick="if(confirm('Usunąć dokument ${doc.file_name}?')) witnessesModule.deleteWitnessDocument(${witnessId}, ${doc.id})" style="
-                                        padding: 10px 16px;
-                                        background: #dc3545;
-                                        color: white;
-                                        border: none;
-                                        border-radius: 8px;
-                                        cursor: pointer;
-                                        font-size: 0.9rem;
-                                        font-weight: 700;
-                                    ">
-                                        🗑️
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-        } catch (error) {
-            console.error('❌ Błąd ładowania dokumentów świadka:', error);
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">Błąd ładowania dokumentów</div>';
-        }
-    },
-    
-    // Pokaż modal uploadu dokumentów świadka
-    showUploadWitnessDocuments: function(witnessId, caseId) {
-        const modal = document.createElement('div');
-        modal.id = 'uploadWitnessDocsModal';
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 10003; display: flex;
-            justify-content: center; align-items: center; padding: 20px;
-        `;
-        modal.innerHTML = `
-            <div style="background: white; border-radius: 16px; padding: 25px; max-width: 500px; width: 100%;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0;">📎 Dodaj dokumenty świadka</h3>
-                    <button onclick="document.getElementById('uploadWitnessDocsModal').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
-                </div>
-                
-                <input type="file" id="witnessDocsFiles" multiple style="width: 100%; padding: 12px; border: 2px dashed #3B82F6; border-radius: 8px; margin-bottom: 15px;">
-                <div id="witnessDocsPreview" style="margin-bottom: 15px; display: none;"></div>
-                
-                <button onclick="witnessesModule.uploadWitnessDocuments(${witnessId})" style="
-                    width: 100%;
-                    padding: 14px;
-                    background: linear-gradient(135deg, #3B82F6, #1E40AF);
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-weight: 700;
-                    font-size: 1rem;
-                ">
-                    📤 Wgraj dokumenty
-                </button>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        
-        // Preview
-        document.getElementById('witnessDocsFiles').addEventListener('change', (e) => {
-            const preview = document.getElementById('witnessDocsPreview');
-            if (e.target.files.length > 0) {
-                preview.style.display = 'block';
-                preview.innerHTML = `<div style="font-size: 0.9rem; color: #666;">Wybrano: ${e.target.files.length} plik(ów)</div>`;
-            }
-        });
-    },
-    
-    // Upload dokumentów świadka
-    uploadWitnessDocuments: async function(witnessId) {
-        const filesInput = document.getElementById('witnessDocsFiles');
-        if (!filesInput.files.length) {
-            alert('❌ Wybierz pliki');
-            return;
-        }
-        
-        const formData = new FormData();
-        Array.from(filesInput.files).forEach(file => {
-            formData.append('documents', file);
-        });
-        
-        // Pokaż progress
-        const modal = document.getElementById('uploadWitnessDocsModal');
-        const uploadBtn = modal.querySelector('button[onclick*="uploadWitnessDocuments"]');
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                <div style="
-                    width: 20px; height: 20px;
-                    border: 3px solid rgba(255,255,255,0.3);
-                    border-top-color: white;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                "></div>
-                <span>Wgrywanie...</span>
-            </div>
-        `;
-        
-        try {
-            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-            const token = localStorage.getItem('token');
-            
-            console.log('📤 Rozpoczynam upload', filesInput.files.length, 'plików...');
-            
-            const response = await fetch(`${apiUrl}/witnesses/${witnessId}/documents`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Błąd uploadu');
-            }
-            
-            const result = await response.json();
-            console.log('✅ Upload dokumentów zakończony:', result);
-            
-            alert(`✅ Wgrano ${result.count} dokumentów`);
-            document.getElementById('uploadWitnessDocsModal').remove();
-            this.loadWitnessDocuments(witnessId);
-            
-        } catch (error) {
-            console.error('❌ Błąd uploadu:', error);
-            uploadBtn.disabled = false;
-            uploadBtn.innerHTML = '📤 Wgraj dokumenty';
-            alert('❌ Błąd: ' + error.message);
-        }
-    },
-    
-    // Podgląd dokumentu świadka (otwórz w modalu aplikacji)
-    viewWitnessDocument: async function(witnessId, docId) {
-        try {
-            // Pobierz dane dokumentu
-            const response = await window.api.request(`/witnesses/${witnessId}/documents`);
-            const documents = response.documents || [];
-            const doc = documents.find(d => d.id === docId);
-            
-            if (!doc) {
-                alert('❌ Dokument nie znaleziony');
-                return;
-            }
-            
-            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-            const token = localStorage.getItem('token');
-            const docUrl = `${apiUrl}/witnesses/${witnessId}/documents/${docId}?view=true&token=${token}`;
-            
-            // Stwórz modal z podglądem (podobny do innych dokumentów w systemie)
-            const modal = document.createElement('div');
-            modal.id = 'witnessDocViewModal';
-            modal.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(0,0,0,0.95); z-index: 10005; display: flex;
-                flex-direction: column; align-items: center; justify-content: center;
-            `;
-            
-            const fileExt = doc.file_name.split('.').pop().toLowerCase();
-            const isPDF = fileExt === 'pdf';
-            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt);
-            const isTXT = fileExt === 'txt';
-            const isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(fileExt);
-            const isAudio = ['mp3', 'wav', 'ogg', 'm4a', 'aac'].includes(fileExt);
-            
-            let content = '';
-            if (isPDF) {
-                content = `<iframe src="${docUrl}" style="width: 90vw; height: 85vh; border: none; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);"></iframe>`;
-            } else if (isImage) {
-                content = `<img src="${docUrl}" style="max-width: 90vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">`;
-            } else if (isTXT) {
-                // Pobierz treść TXT i wyświetl w pięknym boxie z fioletową ramką
-                try {
-                    const txtResponse = await fetch(docUrl);
-                    const txtContent = await txtResponse.text();
-                    content = `<div style="
-                        background: white;
-                        border: 4px solid #9333ea;
-                        border-radius: 16px;
-                        padding: 30px;
-                        max-width: 90vw;
-                        max-height: 80vh;
-                        overflow-y: auto;
-                        box-shadow: 0 8px 32px rgba(147,51,234,0.3);
-                    ">
-                        <div style="
-                            background: linear-gradient(135deg, #9333ea, #7c3aed);
-                            color: white;
-                            padding: 15px 20px;
-                            border-radius: 10px;
-                            margin-bottom: 20px;
-                            font-weight: 700;
-                            font-size: 1.1rem;
-                            text-align: center;
-                            box-shadow: 0 4px 12px rgba(147,51,234,0.4);
-                        ">
-                            📄 ${doc.document_code || doc.file_name}
-                        </div>
-                        <pre style="
-                            white-space: pre-wrap;
-                            word-wrap: break-word;
-                            font-family: 'Segoe UI', Arial, sans-serif;
-                            font-size: 1rem;
-                            line-height: 1.6;
-                            color: #1a2332;
-                            margin: 0;
-                        ">${txtContent}</pre>
-                        <div style="margin-top: 20px; text-align: center;">
-                            <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="
-                                padding: 12px 24px;
-                                background: linear-gradient(135deg, #9333ea, #7c3aed);
-                                color: white;
-                                border: none;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-weight: 700;
-                                font-size: 1rem;
-                                box-shadow: 0 4px 12px rgba(147,51,234,0.3);
-                            ">📥 Pobierz plik</button>
-                        </div>
-                    </div>`;
-                } catch (error) {
-                    console.error('❌ Błąd wczytywania TXT:', error);
-                    content = `<div style="background: white; padding: 40px; border-radius: 12px; text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
-                        <p style="color: #333; font-size: 1.1rem; margin-bottom: 20px;">Nie udało się wczytać pliku tekstowego</p>
-                        <button onclick="window.open('${docUrl.replace('view=true', 'view=false')}', '_blank')" style="padding: 12px 24px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">📥 Pobierz plik</button>
-                    </div>`;
-                }
-            } else if (isVideo) {
-                // Podgląd wideo
-                content = `<div style="background: white; border-radius: 16px; padding: 20px; max-width: 90vw; max-height: 85vh; overflow: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
-                    <div style="text-align: center; margin-bottom: 15px;">
-                        <span style="font-size: 2rem;">🎬</span>
-                        <h3 style="margin: 10px 0; color: #1a2332;">Podgląd nagrania wideo</h3>
-                    </div>
-                    <video controls style="width: 100%; max-height: 70vh; border-radius: 8px; background: #000;">
-                        <source src="${docUrl}" type="video/${fileExt}">
-                        Twoja przeglądarka nie obsługuje odtwarzania wideo.
-                    </video>
-                </div>`;
-            } else if (isAudio) {
-                // Podgląd audio
-                content = `<div style="background: white; border-radius: 16px; padding: 40px; max-width: 600px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
-                    <div style="text-align: center; margin-bottom: 25px;">
-                        <span style="font-size: 4rem;">🎵</span>
-                        <h3 style="margin: 15px 0; color: #1a2332;">Podgląd nagrania audio</h3>
-                    </div>
-                    <audio controls style="width: 100%; margin-bottom: 20px;">
-                        <source src="${docUrl}" type="audio/${fileExt}">
-                        Twoja przeglądarka nie obsługuje odtwarzania audio.
-                    </audio>
-                </div>`;
-            } else {
-                content = `<div style="background: white; padding: 40px; border-radius: 12px; text-align: center;">
-                    <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
-                    <p style="color: #333; font-size: 1.1rem; margin-bottom: 20px;">Podgląd niedostępny dla tego typu pliku</p>
-                    <p style="color: #666; font-size: 0.9rem;">Użyj przycisku "Pobierz" w poprzednim ekranie</p>
-                </div>`;
-            }
-            
-            modal.innerHTML = `
-                <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 12px 24px; border-radius: 12px; color: white; font-weight: 600; z-index: 1;">
-                    📋 ${doc.document_code || doc.file_name}
-                </div>
-                
-                <button onclick="document.getElementById('witnessDocViewModal').remove()" style="
-                    position: absolute; top: 20px; right: 20px; z-index: 2;
-                    background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
-                    border: 2px solid white; color: white;
-                    width: 48px; height: 48px; border-radius: 50%;
-                    cursor: pointer; font-size: 1.8rem; font-weight: 700;
-                    transition: all 0.3s;
-                " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">×</button>
-                
-                ${content}
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Zamknij po kliknięciu w tło
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-            
-        } catch (error) {
-            console.error('❌ Błąd podglądu:', error);
-            alert('❌ Błąd: ' + error.message);
-        }
-    },
-    
-    // Pobierz dokument świadka (download)
-    downloadWitnessDocument: async function(witnessId, docId) {
-        try {
-            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-            const token = localStorage.getItem('token');
-            
-            // Pobierz plik używając download attribute zamiast window.open
-            const a = document.createElement('a');
-            a.href = `${apiUrl}/witnesses/${witnessId}/documents/${docId}?token=${token}`;
-            a.download = '';  // Wymusi pobieranie zamiast otwierania
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        } catch (error) {
-            console.error('❌ Błąd pobierania:', error);
-            alert('❌ Błąd: ' + error.message);
-        }
-    },
-    
-    // Usuń dokument świadka
-    deleteWitnessDocument: async function(witnessId, docId) {
-        try {
-            await window.api.request(`/witnesses/${witnessId}/documents/${docId}`, { method: 'DELETE' });
-            alert('✅ Dokument usunięty');
-            this.loadWitnessDocuments(witnessId);
-        } catch (error) {
-            console.error('❌ Błąd usuwania:', error);
-            alert('❌ Błąd: ' + error.message);
-        }
-    },
-    
-    // Załaduj załączniki dla konkretnego zeznania
-    loadTestimonyAttachments: async function(witnessId, testimonyId, caseId, versionNumber) {
-        try {
-            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-            const token = localStorage.getItem('token');
-            
-            // Pobierz załączniki dla tego zeznania (filtruj po entity_type=testimony i entity_id=testimonyId)
-            const response = await fetch(`${apiUrl}/attachments?entity_type=testimony&entity_id=${testimonyId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            const data = await response.json();
-            const attachments = data.attachments || [];
-            
-            const container = document.getElementById(`testimony-attachments-${testimonyId}`);
-            if (!container) return;
-            
-            if (attachments.length === 0) {
-                container.innerHTML = '<div style="color: #999; font-size: 0.85rem; text-align: center; padding: 8px;">Brak załączników</div>';
-            } else {
-                container.innerHTML = `
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        ${attachments.map(att => `
-                            <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px; background: #f8f9fa; border-left: 4px solid #FFD700; border-radius: 6px;">
-                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                    <span style="background: #FFD700; color: #1a2332; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">
-                                        📋 ${att.attachment_code || 'BRAK KODU'}
-                                    </span>
-                                    <span style="color: #1a2332; font-weight: 500; font-size: 0.9rem;">${att.title || att.file_name}</span>
-                                    <span style="color: #999; font-size: 0.75rem;">(${(att.file_size / 1024).toFixed(1)} KB)</span>
-                                </div>
-                                <div style="display: flex; gap: 6px;">
-                                    <button onclick="event.stopPropagation(); window.crmManager.viewDocument(${att.id}, null, 'attachment')" style="flex: 1; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2332; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem; font-weight: 700; box-shadow: 0 2px 6px rgba(255,215,0,0.3);" title="Pokaż">👁️ Pokaż</button>
-                                    <button onclick="event.stopPropagation(); window.downloadAttachment(${att.id})" style="flex: 1; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem; font-weight: 700; box-shadow: 0 2px 6px rgba(59,130,246,0.3);" title="Pobierz">⬇️ Pobierz</button>
-                                    <button onclick="event.stopPropagation(); witnessesModule.deleteTestimonyAttachment(${att.id}, ${witnessId}, ${testimonyId}, ${caseId}, ${versionNumber})" style="background: #f44336; color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem;" title="Usuń">🗑️</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-        } catch (error) {
-            console.error('❌ Błąd ładowania załączników zeznania:', error);
-        }
-    },
-    
-    // Pokaż formularz dodawania załącznika do zeznania
-    showAddTestimonyAttachment: function(witnessId, testimonyId, caseId, versionNumber) {
-        const modal = document.createElement('div');
-        modal.id = 'addTestimonyAttachmentModal';
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 10003; display: flex;
-            justify-content: center; align-items: center; padding: 20px;
-        `;
-        modal.innerHTML = `
-            <div style="background: white; border-radius: 16px; padding: 25px; max-width: 500px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; color: #1a2332;">📎 Dodaj załącznik do zeznania v${versionNumber}</h3>
-                    <button onclick="document.getElementById('addTestimonyAttachmentModal').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">×</button>
-                </div>
-                
-                <div style="display: grid; gap: 15px;">
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Tytuł załącznika *</label>
-                        <input type="text" id="testimonyAttTitle" placeholder="np. Dokument potwierdzający" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
-                    </div>
-                    
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Plik *</label>
-                        <input type="file" id="testimonyAttFile" style="width: 100%; padding: 10px; border: 2px dashed #FFD700; border-radius: 8px; background: #fffbf0;">
-                    </div>
-                    
-                    <button onclick="witnessesModule.uploadTestimonyAttachment(${witnessId}, ${testimonyId}, ${caseId}, ${versionNumber})" 
-                        style="width: 100%; padding: 14px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2332; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 3px 10px rgba(255,215,0,0.3);">
-                        📤 Wgraj załącznik
-                    </button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    },
-    
-    // Wgraj załącznik do zeznania
-    uploadTestimonyAttachment: async function(witnessId, testimonyId, caseId, versionNumber) {
-        const titleInput = document.getElementById('testimonyAttTitle');
-        const fileInput = document.getElementById('testimonyAttFile');
-        
-        if (!titleInput.value.trim()) {
-            alert('❌ Podaj tytuł załącznika');
-            return;
-        }
-        if (!fileInput.files[0]) {
-            alert('❌ Wybierz plik');
-            return;
-        }
-        
-        // Pokaż ładowanie
-        const loadingModal = document.createElement('div');
-        loadingModal.id = 'uploadLoadingModal';
-        loadingModal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10004;`;
-        loadingModal.innerHTML = `<div style="text-align: center; color: white;"><div style="font-size: 4rem; animation: pulse 1.5s infinite;">📤</div><div style="font-size: 1.3rem; font-weight: 600; margin-top: 15px;">Wgrywanie...</div></div>`;
-        document.body.appendChild(loadingModal);
-        
-        try {
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            formData.append('entity_type', 'testimony');
-            formData.append('entity_id', testimonyId);
-            formData.append('case_id', caseId);
-            formData.append('title', titleInput.value.trim());
-            formData.append('category', 'zeznanie');
-            
-            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-            const token = localStorage.getItem('token');
-            
-            const response = await fetch(`${apiUrl}/attachments/upload`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-            
-            loadingModal.remove();
-            
-            if (response.ok) {
-                document.getElementById('addTestimonyAttachmentModal').remove();
-                // Odśwież listę załączników
-                this.loadTestimonyAttachments(witnessId, testimonyId, caseId, versionNumber);
-            } else {
-                const data = await response.json();
-                alert('❌ Błąd: ' + (data.error || 'Nieznany błąd'));
-            }
-        } catch (error) {
-            loadingModal.remove();
-            console.error('❌ Błąd uploadu:', error);
-            alert('❌ Błąd: ' + error.message);
-        }
-    },
-    
-    // Usuń załącznik zeznania
-    deleteTestimonyAttachment: async function(attachmentId, witnessId, testimonyId, caseId, versionNumber) {
-        if (!confirm('Czy na pewno chcesz usunąć ten załącznik?')) return;
-        
-        try {
-            const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-            const token = localStorage.getItem('token');
-            
-            const response = await fetch(`${apiUrl}/attachments/${attachmentId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            if (response.ok) {
-                alert('✅ Załącznik usunięty');
-                this.loadTestimonyAttachments(witnessId, testimonyId, caseId, versionNumber);
-            } else {
-                alert('❌ Błąd usuwania');
-            }
-        } catch (error) {
-            console.error('❌ Błąd:', error);
             alert('❌ Błąd: ' + error.message);
         }
     },
@@ -1696,8 +1003,8 @@ window.witnessesModule = {
         
         modal.innerHTML = `
             <div style="background: white; border-radius: 16px; padding: 0; max-width: 500px; width: 90%;">
-                <div style="background: linear-gradient(135deg, #FFD700, #FFA500); padding: 20px; border-radius: 16px 16px 0 0; color: #1a2332;">
-                    <h3 style="margin: 0; font-weight: 700;">⚠️ Wycofanie świadka</h3>
+                <div style="background: linear-gradient(135deg, #3B82F6, #1E40AF); padding: 20px; border-radius: 16px 16px 0 0; color: white;">
+                    <h3 style="margin: 0;">⚠️ Wycofanie świadka</h3>
                 </div>
                 <div style="padding: 25px;">
                     <p style="margin: 0 0 20px 0; color: #666;">Podaj powód wycofania świadka:</p>
@@ -1706,7 +1013,7 @@ window.witnessesModule = {
                         <button onclick="document.getElementById('withdrawWitnessModal').remove()" style="flex: 1; padding: 12px; background: #95a5a6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
                             Anuluj
                         </button>
-                        <button onclick="witnessesModule.withdrawWitness(${witnessId}, ${caseId})" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2332; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; box-shadow: 0 2px 8px rgba(255,215,0,0.3);">
+                        <button onclick="witnessesModule.withdrawWitness(${witnessId}, ${caseId})" style="flex: 1; padding: 12px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
                             ⚠️ Wycofaj
                         </button>
                     </div>
@@ -1749,292 +1056,20 @@ window.witnessesModule = {
         }
     },
     
-    // Usuń świadka (z hasłem i pięknym modalem)
-    deleteWitness: async function(witnessId, caseId, witnessName, witnessCode) {
-        console.log('🗑️ Usuwanie świadka:', witnessId, witnessName, witnessCode);
-        
-        // Modal z polem hasła
-        const modal = document.createElement('div');
-        modal.id = 'deleteWitnessModal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: rgba(0,0,0,0.85);
-            z-index: 10003;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: fadeIn 0.3s;
-        `;
-        
-        modal.innerHTML = `
-            <style>
-                @keyframes shake-animation {
-                    0%, 100% { transform: translateX(0); }
-                    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-                    20%, 40%, 60%, 80% { transform: translateX(10px); }
-                }
-                .shake-animation {
-                    animation: shake-animation 0.5s;
-                }
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes slideIn {
-                    from { transform: translateY(-50px); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
-                }
-            </style>
-            <div style="
-                background: white;
-                border-radius: 20px;
-                padding: 0;
-                max-width: 550px;
-                width: 90%;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-                animation: slideIn 0.4s ease-out;
-            ">
-                <!-- Header -->
-                <div style="
-                    background: linear-gradient(135deg, #dc3545, #b02a37);
-                    padding: 25px;
-                    border-radius: 20px 20px 0 0;
-                    color: white;
-                    text-align: center;
-                    position: relative;
-                ">
-                    <div style="font-size: 3.5rem; margin-bottom: 15px; animation: pulse 2s infinite;">⚠️</div>
-                    <h3 style="margin: 0 0 10px 0; font-size: 1.5rem; font-weight: 800;">USUWANIE ŚWIADKA</h3>
-                    <p style="margin: 0; opacity: 0.95; font-size: 0.95rem;">To działanie jest NIEODWRACALNE!</p>
-                </div>
-                
-                <!-- Body -->
-                <div style="padding: 30px;">
-                    <!-- Info o świadku -->
-                    <div style="
-                        padding: 20px;
-                        background: linear-gradient(135deg, rgba(220,53,69,0.1), rgba(176,42,55,0.1));
-                        border-left: 5px solid #dc3545;
-                        border-radius: 12px;
-                        margin-bottom: 25px;
-                    ">
-                        <div style="font-size: 0.85rem; color: #999; margin-bottom: 8px; font-weight: 600; text-transform: uppercase;">Usuwasz świadka:</div>
-                        <div style="font-size: 1.3rem; color: #1a2332; font-weight: 700; margin-bottom: 8px;">👤 ${witnessName}</div>
-                        <div style="font-family: 'Courier New', monospace; color: #dc3545; font-weight: 700; font-size: 1.05rem;">${witnessCode}</div>
-                    </div>
-                    
-                    <!-- Ostrzeżenie -->
-                    <div style="
-                        padding: 18px;
-                        background: #fff3cd;
-                        border: 2px solid #ffc107;
-                        border-radius: 12px;
-                        margin-bottom: 25px;
-                        display: flex;
-                        align-items: center;
-                        gap: 15px;
-                    ">
-                        <div style="font-size: 2.5rem; flex-shrink: 0;">🔥</div>
-                        <div>
-                            <div style="color: #856404; font-weight: 700; margin-bottom: 5px; font-size: 0.95rem;">Zostaną usunięte:</div>
-                            <div style="color: #856404; font-size: 0.85rem; line-height: 1.6;">
-                                • Wszystkie zeznania świadka<br>
-                                • Załączone dokumenty<br>
-                                • Historia i notatki<br>
-                                • Powiązania z dowodami
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Pole hasła -->
-                    <div style="margin-bottom: 25px;">
-                        <label style="
-                            display: block;
-                            color: #1a2332;
-                            font-weight: 700;
-                            margin-bottom: 10px;
-                            font-size: 1rem;
-                        ">🔐 Wpisz swoje hasło aby potwierdzić:</label>
-                        <input 
-                            type="password" 
-                            id="witnessDeletePassword" 
-                            placeholder="Twoje hasło..." 
-                            autocomplete="current-password"
-                            style="
-                                width: 100%;
-                                padding: 15px;
-                                border: 3px solid #e0e0e0;
-                                border-radius: 12px;
-                                font-size: 1.05rem;
-                                transition: all 0.3s;
-                                box-sizing: border-box;
-                            "
-                            onkeypress="if(event.key==='Enter') document.getElementById('confirmDeleteWitnessBtn').click()"
-                            onfocus="this.style.borderColor='#dc3545'; this.style.boxShadow='0 0 0 4px rgba(220,53,69,0.1)'"
-                            onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'"
-                        />
-                    </div>
-                    
-                    <!-- Błąd -->
-                    <div id="witnessPasswordError" style="
-                        display: none;
-                        padding: 12px;
-                        background: #f8d7da;
-                        border: 2px solid #dc3545;
-                        border-radius: 8px;
-                        color: #721c24;
-                        font-weight: 600;
-                        margin-bottom: 20px;
-                        text-align: center;
-                    "></div>
-                    
-                    <!-- Przyciski -->
-                    <div style="display: flex; gap: 12px; margin-top: 30px;">
-                        <button 
-                            onclick="document.getElementById('deleteWitnessModal').remove()" 
-                            style="
-                                flex: 1;
-                                padding: 16px;
-                                background: #6c757d;
-                                color: white;
-                                border: none;
-                                border-radius: 12px;
-                                cursor: pointer;
-                                font-weight: 700;
-                                font-size: 1rem;
-                                transition: all 0.3s;
-                            "
-                            onmouseover="this.style.background='#5a6268'"
-                            onmouseout="this.style.background='#6c757d'"
-                        >
-                            ❌ Anuluj
-                        </button>
-                        <button 
-                            id="confirmDeleteWitnessBtn"
-                            style="
-                                flex: 2;
-                                padding: 16px;
-                                background: linear-gradient(135deg, #dc3545, #b02a37);
-                                color: white;
-                                border: none;
-                                border-radius: 12px;
-                                cursor: pointer;
-                                font-weight: 800;
-                                font-size: 1.05rem;
-                                box-shadow: 0 4px 15px rgba(220,53,69,0.4);
-                                transition: all 0.3s;
-                            "
-                            onmouseover="if(!this.disabled) { this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(220,53,69,0.6)'; }"
-                            onmouseout="if(!this.disabled) { this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(220,53,69,0.4)'; }"
-                        >
-                            🗑️ USUŃ TRWALE
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Focus na pole hasła
-        setTimeout(() => {
-            document.getElementById('witnessDeletePassword')?.focus();
-        }, 100);
-        
-        // Handler usuwania
-        document.getElementById('confirmDeleteWitnessBtn').onclick = async () => {
-            const passwordInput = document.getElementById('witnessDeletePassword');
-            const errorDiv = document.getElementById('witnessPasswordError');
-            const password = passwordInput.value.trim();
+    // Usuń świadka
+    deleteWitness: async function(witnessId, caseId) {
+        try {
+            await window.api.request(`/witnesses/${witnessId}`, { method: 'DELETE' });
             
-            // Walidacja
-            if (!password) {
-                passwordInput.classList.add('shake-animation');
-                passwordInput.style.borderColor = '#dc3545';
-                errorDiv.textContent = '❌ Wpisz hasło!';
-                errorDiv.style.display = 'block';
-                setTimeout(() => passwordInput.classList.remove('shake-animation'), 500);
-                return;
-            }
+            console.log('✅ Usunięto świadka');
+            alert('✅ Usunięto świadka');
             
-            // Disable przycisku
-            const btn = document.getElementById('confirmDeleteWitnessBtn');
-            btn.disabled = true;
-            btn.style.opacity = '0.6';
-            btn.innerHTML = '⏳ Weryfikacja...';
+            window.crmManager.switchCaseTab(caseId, 'witnesses');
             
-            try {
-                // Usuń świadka z weryfikacją hasła
-                const response = await window.api.request(`/witnesses/${witnessId}`, {
-                    method: 'DELETE',
-                    body: {
-                        password: password,
-                        witness_name: witnessName,
-                        witness_code: witnessCode
-                    }
-                });
-                
-                // Zamknij modal
-                modal.remove();
-                
-                // Powiadomienie z szczegółami
-                const testimoniesCount = response.deleted_witness?.testimonies_deleted || 0;
-                const documentsCount = response.deleted_witness?.documents_deleted || 0;
-                const details = testimoniesCount > 0 || documentsCount > 0
-                    ? ` (+ ${testimoniesCount} zeznań, ${documentsCount} dokumentów)`
-                    : '';
-                window.showNotification(`✅ Świadek usunięty i zapisany w historii${details}`, 'success');
-                
-                // Odśwież listę
-                window.crmManager.switchCaseTab(caseId, 'witnesses');
-                
-                // Event bus
-                if (window.eventBus) {
-                    window.eventBus.emit('witness:deleted', {
-                        witnessId,
-                        witnessName,
-                        witnessCode,
-                        testimoniesDeleted: testimoniesCount,
-                        documentsDeleted: documentsCount
-                    });
-                }
-                
-            } catch (error) {
-                console.error('❌ Błąd usuwania:', error);
-                
-                // Sprawdź czy to błąd hasła
-                if (error.message && error.message.includes('hasł')) {
-                    passwordInput.classList.add('shake-animation');
-                    passwordInput.style.borderColor = '#dc3545';
-                    passwordInput.value = '';
-                    errorDiv.textContent = '❌ Nieprawidłowe hasło! Spróbuj ponownie.';
-                    errorDiv.style.display = 'block';
-                    setTimeout(() => passwordInput.classList.remove('shake-animation'), 500);
-                    
-                    // Re-enable przycisk
-                    btn.disabled = false;
-                    btn.style.opacity = '1';
-                    btn.innerHTML = '🗑️ USUŃ TRWALE';
-                    
-                    // Focus z powrotem na pole
-                    passwordInput.focus();
-                } else {
-                    modal.remove();
-                    alert('❌ Błąd: ' + error.message);
-                }
-            }
-        };
-        
-        // Zamknij modal klikając w tło
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.remove();
-            }
-        });
+        } catch (error) {
+            console.error('❌ Błąd usuwania:', error);
+            alert('❌ Błąd: ' + error.message);
+        }
     },
     
     // ================================================
@@ -2167,7 +1202,7 @@ window.witnessesModule = {
                                             </div>
                                         ` : `
                                             <div style="text-align: right;">
-                                                <button onclick="witnessesModule.showRetractTestimonyModal(${witnessId}, ${t.id})" style="
+                                                <button onclick="if(confirm('Na pewno wycofać to zeznanie?')) witnessesModule.retractTestimony(${witnessId}, ${t.id})" style="
                                                     padding: 8px 16px;
                                                     background: #dc3545;
                                                     color: white;
@@ -2449,14 +1484,14 @@ window.witnessesModule = {
                         extension = 'ogg';
                     }
                     
-                    // Przygotuj FormData - zapisz jako załącznik zeznania (entity_type=testimony)
+                    // Przygotuj FormData
                     const formData = new FormData();
                     const filename = `${recordingCode}_v${response.version_number}_${Date.now()}.${extension}`;
                     formData.append('file', this.recordedBlob, filename);
                     formData.append('case_id', witness.case_id);
-                    formData.append('entity_type', 'testimony');
-                    formData.append('entity_id', response.testimony_id);
-                    formData.append('title', `${recordingCode} - Nagranie zeznania v${response.version_number}`);
+                    formData.append('entity_type', 'witness');
+                    formData.append('entity_id', witnessId);
+                    formData.append('title', `${recordingCode} - Zeznanie v${response.version_number}`);
                     formData.append('category', 'zeznanie');
                     formData.append('description', `Nagranie ${this.recordingType === 'video' ? 'wideo' : 'audio'} z dnia ${new Date(date).toLocaleDateString('pl-PL')} (${witness.witness_code})`);
                     
@@ -2464,8 +1499,7 @@ window.witnessesModule = {
                     
                     // Upload
                     const token = localStorage.getItem('token');
-                    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-                    const uploadResponse = await fetch(`${apiUrl}/attachments/upload`, {
+                    const uploadResponse = await fetch('http://localhost:3500/api/attachments/upload', {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -2491,98 +1525,10 @@ window.witnessesModule = {
                 this.stopMediaStream();
             }
             
-            // Piękny modal sukcesu zamiast alertu
-            const successModal = document.createElement('div');
-            successModal.id = 'testimonySuccessModal';
-            successModal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100vh;
-                background: rgba(0,0,0,0.85);
-                z-index: 10004;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                animation: fadeIn 0.3s;
-            `;
+            alert(`✅ Zeznanie zapisane (wersja ${response.version_number})`);
             
-            successModal.innerHTML = `
-                <style>
-                    @keyframes success-pulse {
-                        0%, 100% { transform: scale(1); }
-                        50% { transform: scale(1.1); }
-                    }
-                    @keyframes fadeIn {
-                        from { opacity: 0; }
-                        to { opacity: 1; }
-                    }
-                    @keyframes slideInUp {
-                        from { transform: translateY(100px); opacity: 0; }
-                        to { transform: translateY(0); opacity: 1; }
-                    }
-                </style>
-                <div style="
-                    background: white;
-                    border-radius: 20px;
-                    padding: 0;
-                    max-width: 450px;
-                    width: 90%;
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-                    animation: slideInUp 0.4s ease-out;
-                ">
-                    <div style="
-                        background: linear-gradient(135deg, #28a745, #20c997);
-                        padding: 30px;
-                        border-radius: 20px 20px 0 0;
-                        text-align: center;
-                        color: white;
-                    ">
-                        <div style="font-size: 4.5rem; margin-bottom: 15px; animation: success-pulse 1.5s infinite;">✅</div>
-                        <h3 style="margin: 0 0 10px 0; font-size: 1.6rem; font-weight: 800;">ZEZNANIE ZAPISANE!</h3>
-                        <p style="margin: 0; opacity: 0.95; font-size: 1rem;">Wersja ${response.version_number}</p>
-                    </div>
-                    
-                    <div style="padding: 30px; text-align: center;">
-                        <div style="
-                            padding: 20px;
-                            background: linear-gradient(135deg, rgba(40,167,69,0.1), rgba(32,201,151,0.1));
-                            border-radius: 12px;
-                            margin-bottom: 25px;
-                        ">
-                            <div style="font-size: 1.1rem; color: #28a745; font-weight: 700; margin-bottom: 8px;">📝 Zeznanie dodane pomyślnie</div>
-                            <div style="font-size: 0.95rem; color: #666;">Możesz teraz dodać załączniki lub przejść do listy zeznań</div>
-                        </div>
-                        
-                        <button onclick="document.getElementById('testimonySuccessModal').remove(); document.getElementById('addTestimonyModal').remove();" style="
-                            width: 100%;
-                            padding: 16px;
-                            background: linear-gradient(135deg, #28a745, #20c997);
-                            color: white;
-                            border: none;
-                            border-radius: 12px;
-                            cursor: pointer;
-                            font-weight: 800;
-                            font-size: 1.05rem;
-                            box-shadow: 0 4px 15px rgba(40,167,69,0.4);
-                            transition: all 0.3s;
-                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(40,167,69,0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(40,167,69,0.4)'">
-                            👍 OK, zamknij
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(successModal);
-            
-            // Auto-zamknij po 3 sekundach
-            setTimeout(() => {
-                if (document.getElementById('testimonySuccessModal')) {
-                    document.getElementById('testimonySuccessModal').remove();
-                    document.getElementById('addTestimonyModal').remove();
-                }
-            }, 3000);
+            // Zamknij modala dodawania
+            document.getElementById('addTestimonyModal').remove();
             
             // Odśwież listę zeznań
             const testimModal = document.getElementById('testimoniesModal');
@@ -2597,142 +1543,10 @@ window.witnessesModule = {
         }
     },
     
-    // Pokaż modal wycofania zeznania
-    showRetractTestimonyModal: function(witnessId, testimonyId) {
-        const modal = document.createElement('div');
-        modal.id = 'retractTestimonyModal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: rgba(0,0,0,0.85);
-            z-index: 10005;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: fadeIn 0.3s;
-        `;
-        
-        modal.innerHTML = `
-            <style>
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes slideIn {
-                    from { transform: translateY(-50px); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
-                }
-            </style>
-            <div style="
-                background: white;
-                border-radius: 20px;
-                padding: 0;
-                max-width: 500px;
-                width: 90%;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-                animation: slideIn 0.4s ease-out;
-            ">
-                <div style="
-                    background: linear-gradient(135deg, #ffc107, #ff9800);
-                    padding: 25px;
-                    border-radius: 20px 20px 0 0;
-                    text-align: center;
-                    color: #1a2332;
-                ">
-                    <div style="font-size: 3.5rem; margin-bottom: 15px;">⚠️</div>
-                    <h3 style="margin: 0 0 10px 0; font-size: 1.5rem; font-weight: 800;">WYCOFANIE ZEZNANIA</h3>
-                    <p style="margin: 0; opacity: 0.95; font-size: 0.95rem;">Ta operacja zostanie zapisana w historii</p>
-                </div>
-                
-                <div style="padding: 30px;">
-                    <div style="
-                        padding: 18px;
-                        background: #fff3cd;
-                        border: 2px solid #ffc107;
-                        border-radius: 12px;
-                        margin-bottom: 20px;
-                        display: flex;
-                        align-items: center;
-                        gap: 15px;
-                    ">
-                        <div style="font-size: 2rem;">📝</div>
-                        <div style="color: #856404; font-size: 0.9rem; line-height: 1.5;">
-                            <strong>Wycofanie zeznania</strong> zostanie odnotowane w systemie. Podaj powód wycofania.
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; color: #1a2332; font-weight: 700; margin-bottom: 10px; font-size: 1rem;">📋 Powód wycofania zeznania:</label>
-                        <textarea id="retractReasonInput" placeholder="Wpisz powód wycofania..." style="
-                            width: 100%;
-                            padding: 15px;
-                            border: 3px solid #e0e0e0;
-                            border-radius: 12px;
-                            font-size: 1rem;
-                            min-height: 100px;
-                            resize: vertical;
-                            box-sizing: border-box;
-                            transition: all 0.3s;
-                        " onfocus="this.style.borderColor='#ffc107'; this.style.boxShadow='0 0 0 4px rgba(255,193,7,0.1)'" onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'"></textarea>
-                    </div>
-                    
-                    <div style="display: flex; gap: 12px;">
-                        <button onclick="document.getElementById('retractTestimonyModal').remove()" style="
-                            flex: 1;
-                            padding: 16px;
-                            background: #6c757d;
-                            color: white;
-                            border: none;
-                            border-radius: 12px;
-                            cursor: pointer;
-                            font-weight: 700;
-                            font-size: 1rem;
-                            transition: all 0.3s;
-                        " onmouseover="this.style.background='#5a6268'" onmouseout="this.style.background='#6c757d'">
-                            ❌ Anuluj
-                        </button>
-                        <button onclick="witnessesModule.retractTestimony(${witnessId}, ${testimonyId})" style="
-                            flex: 2;
-                            padding: 16px;
-                            background: linear-gradient(135deg, #ffc107, #ff9800);
-                            color: #1a2332;
-                            border: none;
-                            border-radius: 12px;
-                            cursor: pointer;
-                            font-weight: 800;
-                            font-size: 1.05rem;
-                            box-shadow: 0 4px 15px rgba(255,193,7,0.4);
-                            transition: all 0.3s;
-                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255,193,7,0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255,193,7,0.4)'">
-                            ⚠️ WYCOFAJ ZEZNANIE
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Focus na textarea
-        setTimeout(() => {
-            document.getElementById('retractReasonInput')?.focus();
-        }, 100);
-    },
-    
     // Wycofaj zeznanie
     retractTestimony: async function(witnessId, testimonyId) {
-        const reasonInput = document.getElementById('retractReasonInput');
-        const reason = reasonInput?.value.trim();
-        
-        if (!reason) {
-            reasonInput.style.borderColor = '#dc3545';
-            reasonInput.style.boxShadow = '0 0 0 4px rgba(220,53,69,0.1)';
-            reasonInput.placeholder = '❌ Podaj powód wycofania!';
-            return;
-        }
+        const reason = prompt('Podaj powód wycofania zeznania:');
+        if (!reason) return;
         
         try {
             console.log('❌ Wycofuję zeznanie:', testimonyId);
@@ -2743,89 +1557,11 @@ window.witnessesModule = {
             });
             
             console.log('✅ Zeznanie wycofane');
+            alert('✅ Zeznanie wycofane');
             
-            // Piękny modal sukcesu
-            const successModal = document.createElement('div');
-            successModal.id = 'retractSuccessModal';
-            successModal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100vh;
-                background: rgba(0,0,0,0.85);
-                z-index: 10006;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                animation: fadeIn 0.3s;
-            `;
-            
-            successModal.innerHTML = `
-                <div style="
-                    background: white;
-                    border-radius: 20px;
-                    padding: 0;
-                    max-width: 450px;
-                    width: 90%;
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-                    animation: slideIn 0.4s ease-out;
-                ">
-                    <div style="
-                        background: linear-gradient(135deg, #ffc107, #ff9800);
-                        padding: 30px;
-                        border-radius: 20px 20px 0 0;
-                        text-align: center;
-                        color: #1a2332;
-                    ">
-                        <div style="font-size: 4.5rem; margin-bottom: 15px;">✅</div>
-                        <h3 style="margin: 0 0 10px 0; font-size: 1.6rem; font-weight: 800;">ZEZNANIE WYCOFANE</h3>
-                        <p style="margin: 0; opacity: 0.95; font-size: 1rem;">Operacja zapisana w historii</p>
-                    </div>
-                    
-                    <div style="padding: 30px; text-align: center;">
-                        <div style="
-                            padding: 20px;
-                            background: linear-gradient(135deg, rgba(255,193,7,0.1), rgba(255,152,0,0.1));
-                            border-radius: 12px;
-                            margin-bottom: 25px;
-                        ">
-                            <div style="font-size: 1rem; color: #856404; line-height: 1.6;">
-                                Zeznanie zostało oznaczone jako wycofane i nie będzie używane w sprawie.
-                            </div>
-                        </div>
-                        
-                        <button onclick="document.getElementById('retractSuccessModal').remove(); document.getElementById('retractTestimonyModal').remove();" style="
-                            width: 100%;
-                            padding: 16px;
-                            background: linear-gradient(135deg, #ffc107, #ff9800);
-                            color: #1a2332;
-                            border: none;
-                            border-radius: 12px;
-                            cursor: pointer;
-                            font-weight: 800;
-                            font-size: 1.05rem;
-                            box-shadow: 0 4px 15px rgba(255,193,7,0.4);
-                            transition: all 0.3s;
-                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255,193,7,0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255,193,7,0.4)'">
-                            👍 OK, rozumiem
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(successModal);
-            
-            // Auto-zamknij po 3 sekundach
-            setTimeout(() => {
-                if (document.getElementById('retractSuccessModal')) {
-                    document.getElementById('retractSuccessModal').remove();
-                    document.getElementById('retractTestimonyModal').remove();
-                    // Odśwież listę
-                    document.getElementById('testimoniesModal').remove();
-                    witnessesModule.showTestimonies(witnessId);
-                }
-            }, 3000);
+            // Odśwież listę
+            document.getElementById('testimoniesModal').remove();
+            this.showTestimonies(witnessId);
             
         } catch (error) {
             console.error('❌ Błąd wycofywania zeznania:', error);
@@ -2837,25 +1573,6 @@ window.witnessesModule = {
     viewTestimonyDetails: async function(witnessId, testimonyId) {
         console.log('👁️ Podgląd zeznania:', testimonyId);
         
-        // Pokaż okienko ładowania
-        const loadingModal = document.createElement('div');
-        loadingModal.id = 'testimonyLoadingModal';
-        loadingModal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: flex; align-items: center;
-            justify-content: center; z-index: 10003; animation: fadeIn 0.2s;
-        `;
-        loadingModal.innerHTML = `
-            <div style="text-align: center; color: white;">
-                <div style="font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">📝</div>
-                <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 15px;">Ładowanie zeznania...</div>
-                <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; margin: 0 auto;">
-                    <div style="width: 30%; height: 100%; background: linear-gradient(90deg, #3B82F6, #1E40AF); border-radius: 3px; animation: loadingBar 1.5s ease-in-out infinite;"></div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(loadingModal);
-        
         try {
             // Pobierz wszystkie zeznania
             const testimResp = await window.api.request(`/witnesses/${witnessId}/testimonies`);
@@ -2864,55 +1581,54 @@ window.witnessesModule = {
             // Znajdź konkretne zeznanie
             const testimony = testimonies.find(t => t.id === testimonyId);
             if (!testimony) {
-                const loadingEl = document.getElementById('testimonyLoadingModal');
-                if (loadingEl) loadingEl.remove();
                 alert('❌ Zeznanie nie znalezione');
                 return;
             }
             
-            // Pobierz załączniki zeznania (dla nagrań)
+            // Pobierz załączniki świadka (dla nagrań)
             let recordingAttachment = null;
             if (testimony.testimony_type === 'recorded') {
                 try {
-                    // Pobierz załączniki bezpośrednio dla tego zeznania (entity_type=testimony)
-                    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-                    const token = localStorage.getItem('token');
+                    const witnessResp = await window.api.request(`/witnesses/${witnessId}`);
+                    const witness = witnessResp.witness;
                     
-                    const attachResp = await fetch(`${apiUrl}/attachments?entity_type=testimony&entity_id=${testimonyId}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    const attachData = await attachResp.json();
-                    const attachments = attachData.attachments || [];
+                    const attachResp = await window.api.request(`/attachments/case/${witness.case_id}`);
+                    const attachments = attachResp.attachments || [];
                     
-                    // Znajdź nagranie (wideo lub audio)
+                    // Znajdź załącznik dla tego zeznania (filtruj po witness i kategorii)
                     const recordingAttachments = attachments.filter(a => 
+                        a.entity_type === 'witness' && 
+                        a.entity_id === witnessId &&
                         a.category === 'zeznanie' &&
-                        (a.file_type?.startsWith('video/') || a.file_type?.startsWith('audio/') || 
-                         a.file_name?.endsWith('.webm') || a.file_name?.endsWith('.mp4') || a.file_name?.endsWith('.ogg'))
+                        a.title.includes(`v${testimony.version_number}`)
                     );
                     
                     if (recordingAttachments.length > 0) {
                         recordingAttachment = recordingAttachments[0];
-                        console.log('📎 Znaleziono nagranie zeznania:', recordingAttachment);
+                        console.log('📎 Znaleziono nagranie:', recordingAttachment);
                     }
                 } catch (err) {
-                    console.error('⚠️ Błąd pobierania załączników zeznania:', err);
+                    console.error('⚠️ Błąd pobierania załączników:', err);
                 }
             }
             
-            // Dla nagrania - użyj bezpośredniego URL ze streamingiem (nie pobieraj całego pliku!)
-            let recordingStreamUrl = null;
+            // Pobierz nagranie jako blob URL jeśli istnieje
+            let recordingBlobUrl = null;
             if (recordingAttachment) {
-                const token = localStorage.getItem('token');
-                const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-                // Użyj bezpośredniego URL z tokenem - serwer obsługuje Range requests dla streamingu
-                recordingStreamUrl = `${apiUrl}/attachments/${recordingAttachment.id}/download?token=${token}`;
-                console.log('📹 Streaming URL nagrania:', recordingStreamUrl);
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`http://localhost:3500/api/attachments/${recordingAttachment.id}/download`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        recordingBlobUrl = window.URL.createObjectURL(blob);
+                        console.log('✅ Pobrano nagranie jako blob URL');
+                    }
+                } catch (err) {
+                    console.error('⚠️ Błąd pobierania nagrania:', err);
+                }
             }
-            
-            // Usuń okienko ładowania
-            const loadingEl = document.getElementById('testimonyLoadingModal');
-            if (loadingEl) loadingEl.remove();
             
             // Stwórz modal szczegółów zeznania (z-index wyższy)
             const modal = document.createElement('div');
@@ -2940,7 +1656,7 @@ window.witnessesModule = {
                                 <h3 style="margin: 0 0 5px 0;">📝 Szczegóły zeznania</h3>
                                 <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Wersja ${testimony.version_number}</p>
                             </div>
-                            <button onclick="witnessesModule.closeTestimonyDetailsModal('${recordingStreamUrl || ''}')" style="background: rgba(255,255,255,0.2); border: 2px solid white; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; font-weight: 700;">×</button>
+                            <button onclick="witnessesModule.closeTestimonyDetailsModal('${recordingBlobUrl || ''}')" style="background: rgba(255,255,255,0.2); border: 2px solid white; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; font-weight: 700;">×</button>
                         </div>
                     </div>
                     
@@ -2969,7 +1685,7 @@ window.witnessesModule = {
                         </div>
                         
                         <!-- Odtwarzacz nagrania -->
-                        ${recordingAttachment && recordingStreamUrl ? `
+                        ${recordingAttachment && recordingBlobUrl ? `
                             <div style="margin-bottom: 25px;">
                                 <h4 style="margin: 0 0 15px 0; color: #3B82F6; font-size: 1.1rem;">
                                     ${recordingAttachment.file_type?.startsWith('video/') ? '📹 Nagranie wideo' : '🎤 Nagranie audio'}
@@ -2981,7 +1697,7 @@ window.witnessesModule = {
                                             controls 
                                             controlsList="nodownload"
                                             style="width: 100%; max-height: 400px; border-radius: 12px; background: black;"
-                                            src="${recordingStreamUrl}"
+                                            src="${recordingBlobUrl}"
                                         >
                                             Twoja przeglądarka nie obsługuje odtwarzania wideo.
                                         </video>
@@ -2993,7 +1709,7 @@ window.witnessesModule = {
                                                 controls 
                                                 controlsList="nodownload"
                                                 style="width: 100%; max-width: 500px;"
-                                                src="${recordingStreamUrl}"
+                                                src="${recordingBlobUrl}"
                                             >
                                                 Twoja przeglądarka nie obsługuje odtwarzania audio.
                                             </audio>
@@ -3084,10 +1800,6 @@ window.witnessesModule = {
             document.body.appendChild(modal);
             
         } catch (error) {
-            // Usuń okienko ładowania w przypadku błędu
-            const loadingEl = document.getElementById('testimonyLoadingModal');
-            if (loadingEl) loadingEl.remove();
-            
             console.error('❌ Błąd podglądu zeznania:', error);
             alert('❌ Błąd: ' + error.message);
         }
@@ -3182,22 +1894,9 @@ window.witnessesModule = {
                 ? { video: true, audio: true }
                 : { audio: true };
             
-            console.log('🎙️ Requesting media with constraints:', JSON.stringify(constraints));
             document.getElementById('recordingStatus').innerHTML = '⏳ Czekam na pozwolenie...';
             
             this.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-            
-            // Sprawdź czy audio jest dostępne
-            const audioTracks = this.mediaStream.getAudioTracks();
-            const videoTracks = this.mediaStream.getVideoTracks();
-            console.log('🎙️ Audio tracks:', audioTracks.length, audioTracks.map(t => t.label));
-            console.log('📹 Video tracks:', videoTracks.length, videoTracks.map(t => t.label));
-            
-            if (audioTracks.length === 0) {
-                console.error('❌ BRAK ŚCIEŻKI AUDIO!');
-                document.getElementById('recordingStatus').innerHTML = '⚠️ Mikrofon nie został wykryty!';
-                document.getElementById('recordingStatus').style.color = '#ff9800';
-            }
             
             // Pokaż podgląd wideo jeśli wybrano wideo
             if (type === 'video') {
@@ -3235,14 +1934,8 @@ window.witnessesModule = {
         let mimeType;
         
         if (this.recordingType === 'video') {
-            // Dla wideo - próbuj najpierw VP9+opus, potem VP8+opus, potem fallback
-            if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
-                options = { mimeType: 'video/webm;codecs=vp9,opus' };
-                mimeType = 'video/webm';
-            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
-                options = { mimeType: 'video/webm;codecs=vp8,opus' };
-                mimeType = 'video/webm';
-            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+            // Dla wideo - próbuj najpierw VP9, potem VP8, potem fallback
+            if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
                 options = { mimeType: 'video/webm;codecs=vp9' };
                 mimeType = 'video/webm';
             } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
@@ -3467,4 +2160,3 @@ window.testRecordingSupport = function() {
 };
 
 } // Koniec sprawdzania czy moduł włączony
-

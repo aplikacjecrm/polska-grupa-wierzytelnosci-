@@ -856,7 +856,7 @@ async function loadArticleContent(parsed, codeInfo) {
         });
         
         // Próba pobrania z naszej bazy
-        const API_URL = 'https://web-production-ef868.up.railway.app';
+        const API_URL = 'http://localhost:3500';
         const response = await fetch(`${API_URL}/api/ai/legal-acts/article`, {
             method: 'POST',
             headers: {
@@ -1439,7 +1439,7 @@ window.showArticleContext = async function(code, articleNum) {
     
     for (let i = from; i <= to; i++) {
         try {
-            const response = await fetch(`https://web-production-ef868.up.railway.app/api/ai/legal-acts/article`, {
+            const response = await fetch(`http://localhost:3500/api/ai/legal-acts/article`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1806,4 +1806,3 @@ console.log('✅ [v16] window.LEGAL_CODES:', typeof window.LEGAL_CODES);
 console.log('✅ [v16] window.navigateArticle:', typeof window.navigateArticle);
 console.log('✅ [v16] window.showLegalLibrary:', typeof window.showLegalLibrary);
 console.log('✅ [v16] window.showFullCode:', typeof window.showFullCode);
-

@@ -29,7 +29,7 @@
                 return;
             }
 
-            const response = await fetch('https://web-production-ef868.up.railway.app/api/cases/staff/list', {
+            const response = await fetch('http://localhost:3500/api/cases/staff/list', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -116,4 +116,3 @@
 
     console.log('✅ case-staff-loader.js gotowy');
 })();
-

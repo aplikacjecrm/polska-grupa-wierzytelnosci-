@@ -102,4 +102,4 @@
 
 ## 🚀 KONTYNUUJĘ?
 
-Tworzę wszystkie pozostałe backend routes!
+Tworzę wszystkie pozostałe backend routes

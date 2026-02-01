@@ -77,36 +77,7 @@ html {
 /* Login Screen */
 #loginScreen {
     flex-direction: column;
-    align-items: center;
     background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-light) 100%);
-}
-
-/* Titlebar widoczny w przeglądarce */
-#loginScreen .titlebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    height: 45px;
-    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-}
-
-#loginScreen .titlebar .logo-small {
-    color: var(--text-dark);
-    font-size: 1.5rem;
-    font-weight: bold;
-}
-
-#loginScreen .titlebar .app-title {
-    color: var(--text-dark);
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-#loginScreen .titlebar-btn {
-    display: none; /* Ukryj przyciski okna w przeglądarce */
 }
 
 #loginScreen .login-container {
@@ -114,12 +85,8 @@ html {
     border-radius: 20px;
     padding: 40px;
     width: 450px;
-    max-width: 90vw;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    margin: auto;
 }
 
 .login-header {

@@ -174,13 +174,45 @@ class UniversalDashboard {
                                 padding: 15px; resize: vertical;">${this.escapeHtml(this.privateNotes)}</textarea>
                         </div>
                         
-                        <!-- EMPLOYEE DASHBOARD - Biały panel (formularze są w zakładce Tickety -> + Nowy Ticket) -->
-                        <div id="embeddedEmployeeDashboard" style="background: white; border-radius: 20px; padding: 0; margin-top: 20px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
-                            <div id="embeddedEmployeeDashboardContainer" style="min-height: 400px;">
-                                <div style="padding: 40px; text-align: center; color: #666;">
-                                    <div style="font-size: 2rem; margin-bottom: 10px;">⏳</div>
-                                    Ładowanie dashboardu pracownika...
-                                </div>
+                        <div class="glass-card">
+                            <h3 style="margin: 0 0 15px;">📋 Formularze HR</h3>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                                <button onclick="universalDashboard.showForm('vacation')" style="background: linear-gradient(135deg, #3B82F6, #1E40AF);
+                                    border: none; border-radius: 8px; padding: 12px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    🏖️ Urlop</button>
+                                <button onclick="universalDashboard.showForm('remote')" style="background: linear-gradient(135deg, #3B82F6, #1E40AF);
+                                    border: none; border-radius: 8px; padding: 12px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    🏠 Praca zdalna</button>
+                                <button onclick="universalDashboard.showForm('expense')" style="background: linear-gradient(135deg, #3B82F6, #1E40AF);
+                                    border: none; border-radius: 8px; padding: 12px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    💰 Delegacja</button>
+                                <button onclick="universalDashboard.showForm('sickleave')" style="background: linear-gradient(135deg, #3B82F6, #f5576c);
+                                    border: none; border-radius: 8px; padding: 12px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    🏥 L4</button>
+                                <button onclick="universalDashboard.showForm('training')" style="background: linear-gradient(135deg, #60A5FA, #60A5FA);
+                                    border: none; border-radius: 8px; padding: 12px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    📚 Szkolenie</button>
+                                <button onclick="universalDashboard.showForm('parking')" style="background: linear-gradient(135deg, #3B82F6, #60A5FA);
+                                    border: none; border-radius: 8px; padding: 12px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    🚗 Parking</button>
+                                <button onclick="universalDashboard.showForm('advance')" style="background: linear-gradient(135deg, #fa709a, #3B82F6);
+                                    border: none; border-radius: 8px; padding: 12px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    💳 Zaliczka</button>
+                                <button onclick="universalDashboard.showForm('overtime')" style="background: linear-gradient(135deg, #30cfd0, #330867);
+                                    border: none; border-radius: 8px; padding: 12px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    ⏰ Nadgodziny</button>
+                                <button onclick="universalDashboard.showForm('certificate')" style="background: linear-gradient(135deg, #a8edea, #fed6e3);
+                                    border: none; border-radius: 8px; padding: 12px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    📄 Zaświadczenie</button>
+                                <button onclick="universalDashboard.showForm('access')" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);
+                                    border: none; border-radius: 8px; padding: 12px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    🔑 Dostęp IT</button>
+                                <button onclick="universalDashboard.showForm('phone')" style="background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
+                                    border: none; border-radius: 8px; padding: 12px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    📱 Telefon</button>
+                                <button onclick="universalDashboard.showForm('supplies')" style="background: linear-gradient(135deg, #fdcbf1, #e6dee9);
+                                    border: none; border-radius: 8px; padding: 12px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    🖨️ Materiały</button>
                             </div>
                         </div>
                     </div>
@@ -228,64 +260,6 @@ class UniversalDashboard {
                 </div>
             </div>
         `;
-        
-        // Załaduj embedded employee dashboard po renderowaniu (daj czas na wstawienie HTML do DOM)
-        setTimeout(() => {
-            console.log('🔄 Checking for embeddedEmployeeDashboardContainer...');
-            const checkContainer = document.getElementById('embeddedEmployeeDashboardContainer');
-            console.log('Container found:', !!checkContainer);
-            if (checkContainer) {
-                this.loadEmbeddedEmployeeDashboard();
-            } else {
-                console.error('❌ embeddedEmployeeDashboardContainer not found in DOM!');
-            }
-        }, 500);
-    }
-    
-    async loadEmbeddedEmployeeDashboard() {
-        const container = document.getElementById('embeddedEmployeeDashboardContainer');
-        
-        try {
-            console.log('🔄 Loading embedded employee dashboard...');
-            console.log('Current user:', this.currentUser);
-            
-            if (!this.currentUser || !this.currentUser.id) {
-                console.warn('No current user for embedded dashboard');
-                if (container) container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Zaloguj się aby zobaczyć dashboard</div>';
-                return;
-            }
-            
-            // Sprawdź czy EmployeeDashboard jest dostępny w window
-            if (!window.EmployeeDashboard) {
-                console.warn('⚠️ window.EmployeeDashboard not available, waiting...');
-                // Poczekaj i spróbuj ponownie
-                setTimeout(() => this.loadEmbeddedEmployeeDashboard(), 500);
-                return;
-            }
-            
-            console.log('✅ EmployeeDashboard class found, creating instance...');
-            
-            // Utwórz nową instancję dla embedded dashboardu
-            const embeddedDashboard = new window.EmployeeDashboard(this.currentUser.id);
-            await embeddedDashboard.loadData();
-            await embeddedDashboard.render('embeddedEmployeeDashboardContainer');
-            
-            // Zapisz referencję - WAŻNE: użyj tej samej nazwy co w onclick buttonów!
-            window.employeeDashboard = embeddedDashboard;
-            window.embeddedEmployeeDashboard = embeddedDashboard;
-            
-            console.log('✅ Embedded Employee Dashboard loaded successfully!');
-        } catch (error) {
-            console.error('❌ Error loading embedded employee dashboard:', error);
-            if (container) {
-                container.innerHTML = `
-                    <div style="padding: 40px; text-align: center; color: #dc3545;">
-                        <div style="font-size: 2rem; margin-bottom: 10px;">⚠️</div>
-                        Błąd ładowania: ${error.message}
-                    </div>
-                `;
-            }
-        }
     }
 
     renderTasks(tasks) {
@@ -293,9 +267,9 @@ class UniversalDashboard {
         return tasks.slice(0, 5).map(t => {
             // Priorytet - kolor border
             const priorityColors = {
-                'high': '#F44336',
-                'medium': '#FF9800',
-                'low': '#4CAF50'
+                'high': '#3B82F6',
+                'medium': '#3B82F6',
+                'low': '#3B82F6'
             };
             const borderColor = priorityColors[t.priority] || '#00ffff';
             
@@ -310,10 +284,6 @@ class UniversalDashboard {
             return `
             <div style="background: rgba(255,255,255,0.05); border-left: 4px solid ${borderColor}; padding: 12px;
                 margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: all 0.3s;"
-                data-task-id="${t.id}"
-                data-case-id="${t.case_id || ''}"
-                data-task-title="${this.escapeHtml(t.title)}"
-                onclick="universalDashboard.openTask(this)"
                 onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.transform='translateX(5px)'"
                 onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateX(0)'">
                 
@@ -797,6 +767,17 @@ class UniversalDashboard {
                     { name: 'date', label: 'Data', type: 'date', required: true },
                     { name: 'hours', label: 'Liczba godzin', type: 'number', required: true },
                     { name: 'description', label: 'Opis prac', type: 'textarea', required: true }
+                ]
+            },
+            certificate: { 
+                title: '📄 Zaświadczenie o zatrudnieniu', 
+                department: 'HR',
+                ticketType: 'zaswiadczenie',
+                fields: [
+                    { name: 'purpose', label: 'Cel', type: 'select', options: ['Bank - kredyt hipoteczny', 'Bank - kredyt konsumencki', 'Urząd skarbowy', 'ZUS', 'Urząd miasta', 'Wizę/Konsulat', 'Inne'], required: true, hasOtherOption: true },
+                    { name: 'purposeOther', label: 'Podaj cel', type: 'text', required: false, showWhen: 'purpose', showWhenValue: 'Inne' },
+                    { name: 'language', label: 'Język', type: 'select', options: ['Polski', 'Angielski', 'Niemiecki', 'Francuski'], required: true },
+                    { name: 'additionalInfo', label: 'Dodatkowe informacje (opcjonalnie)', type: 'textarea', required: false }
                 ]
             },
             access: { 
@@ -1698,200 +1679,6 @@ class UniversalDashboard {
                 }
             </style>
         `;
-    }
-    
-    // Otwórz szczegóły zadania - NOWA WERSJA
-    openTask(element) {
-        try {
-            const taskId = element.dataset.taskId;
-            const caseId = element.dataset.caseId;
-            const taskTitle = element.dataset.taskTitle;
-            
-            console.log('📋 Otwieranie zadania:', { taskId, caseId, taskTitle });
-            
-            // Pokaż szczegóły zadania bezpośrednio w modalu
-            this.showTaskDetailsModal(taskId, taskTitle, caseId);
-        } catch (error) {
-            console.error('❌ Błąd parsowania danych zadania:', error);
-        }
-    }
-    
-    // Pokaż szczegóły zadania bezpośrednio w modalu
-    async showTaskDetailsModal(taskId, taskTitle, caseId) {
-        // Pobierz pełne dane zadania z API
-        let taskData = null;
-        let caseData = null;
-        
-        try {
-            const tasksRes = await api.request('/tasks');
-            taskData = (tasksRes.tasks || []).find(t => t.id == taskId);
-            
-            if (caseId && caseId !== '') {
-                const casesRes = await api.request('/cases');
-                caseData = (casesRes.cases || []).find(c => c.id == caseId);
-            }
-        } catch (e) {
-            console.error('Błąd pobierania danych:', e);
-        }
-        
-        // Usuń poprzedni modal
-        const existing = document.getElementById('task-quick-modal');
-        if (existing) existing.remove();
-        
-        const priorityColors = { high: '#EF4444', medium: '#F59E0B', low: '#10B981' };
-        const priorityLabels = { high: 'Wysoki', medium: 'Średni', low: 'Niski' };
-        const priorityColor = priorityColors[taskData?.priority] || '#6B7280';
-        const priorityLabel = priorityLabels[taskData?.priority] || 'Brak';
-        
-        const modal = document.createElement('div');
-        modal.id = 'task-quick-modal';
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); display: flex; align-items: center;
-            justify-content: center; z-index: 999999; animation: fadeIn 0.2s ease;
-        `;
-        
-        modal.innerHTML = `
-            <style>
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-            </style>
-            <div style="background: white; border-radius: 16px; width: 95%; max-width: 550px; max-height: 90vh; overflow: auto;
-                        box-shadow: 0 25px 60px rgba(0,0,0,0.4); animation: slideUp 0.3s ease;">
-                
-                <!-- Header -->
-                <div style="background: linear-gradient(135deg, #3B82F6, #1E40AF); color: white; padding: 20px; position: relative;">
-                    <button onclick="document.getElementById('task-quick-modal').remove()" 
-                            style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); border: none; 
-                                   color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.3rem;">✕</button>
-                    <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 5px;">📋 ZADANIE #${taskId}</div>
-                    <h2 style="margin: 0; font-size: 1.3rem; padding-right: 40px;">${this.escapeHtml(taskTitle)}</h2>
-                </div>
-                
-                <!-- Content -->
-                <div style="padding: 20px;">
-                    <!-- Priorytet i status -->
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-                        <span style="background: ${priorityColor}; color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                            ● ${priorityLabel} priorytet
-                        </span>
-                        ${taskData?.status ? `<span style="background: #E5E7EB; color: #374151; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem;">
-                            ${taskData.status === 'completed' ? '✅ Ukończone' : taskData.status === 'in_progress' ? '🔄 W trakcie' : '📌 Do zrobienia'}
-                        </span>` : ''}
-                    </div>
-                    
-                    <!-- Sprawa -->
-                    ${caseData ? `
-                    <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <div style="font-weight: 600; color: #92400E; margin-bottom: 5px;">📂 Przypisane do sprawy</div>
-                        <div style="color: #78350F; font-size: 1.1rem; font-weight: 600;">${caseData.case_number}</div>
-                        ${caseData.title ? `<div style="color: #92400E; font-size: 0.9rem;">${caseData.title}</div>` : ''}
-                    </div>
-                    ` : ''}
-                    
-                    <!-- Termin -->
-                    ${taskData?.due_date ? `
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding: 12px; background: #F3F4F6; border-radius: 8px;">
-                        <span style="font-size: 1.5rem;">📅</span>
-                        <div>
-                            <div style="font-size: 0.8rem; color: #6B7280;">Termin wykonania</div>
-                            <div style="font-weight: 600; color: #111827;">${new Date(taskData.due_date).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
-                        </div>
-                    </div>
-                    ` : ''}
-                    
-                    <!-- Opis -->
-                    ${taskData?.description ? `
-                    <div style="margin-bottom: 15px;">
-                        <div style="font-size: 0.85rem; color: #6B7280; margin-bottom: 5px;">📝 Opis</div>
-                        <div style="background: #F9FAFB; padding: 12px; border-radius: 8px; color: #374151; line-height: 1.5;">${this.escapeHtml(taskData.description)}</div>
-                    </div>
-                    ` : ''}
-                    
-                    <!-- Przyciski -->
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        ${caseData ? `
-                        <button onclick="document.getElementById('task-quick-modal').remove(); window.app.switchView('crm'); setTimeout(() => window.crmManager.viewCase(${caseId}), 300);" 
-                                style="flex: 1; padding: 14px; background: #3B82F6; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: 600;">
-                            📂 Otwórz sprawę
-                        </button>
-                        ` : ''}
-                        <button onclick="document.getElementById('task-quick-modal').remove();" 
-                                style="flex: 1; padding: 14px; background: #E5E7EB; color: #374151; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: 600;">
-                            Zamknij
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-    }
-    
-    // Modal ze szczegółami zadania (stary)
-    showTaskModal(taskId, taskTitle, caseId) {
-        // Usuń poprzedni modal jeśli istnieje
-        const existingModal = document.getElementById('task-detail-modal');
-        if (existingModal) existingModal.remove();
-        
-        const modal = document.createElement('div');
-        modal.id = 'task-detail-modal';
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); display: flex; align-items: center;
-            justify-content: center; z-index: 100000; animation: fadeIn 0.3s ease;
-        `;
-        
-        modal.innerHTML = `
-            <style>
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes slideIn { from { transform: scale(0.8) translateY(-20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
-                @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 50% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); } }
-            </style>
-            <div style="
-                background: white; border-radius: 20px; width: 95%; max-width: 500px;
-                box-shadow: 0 25px 80px rgba(0,0,0,0.4); overflow: hidden;
-                animation: slideIn 0.4s ease, pulse 1s ease infinite;
-            ">
-                <div style="background: linear-gradient(135deg, #3B82F6, #1E40AF); color: white; padding: 25px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 5px;">📋 ZADANIE #${taskId}</div>
-                            <h2 style="margin: 0; font-size: 1.4rem;">${this.escapeHtml(taskTitle)}</h2>
-                        </div>
-                        <button onclick="document.getElementById('task-detail-modal').remove()" 
-                                style="background: rgba(255,255,255,0.2); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.5rem;">✕</button>
-                    </div>
-                </div>
-                
-                <div style="padding: 25px;">
-                    <div style="background: #e8f5e9; border-left: 4px solid #4CAF50; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        <div style="font-weight: 600; color: #2e7d32; margin-bottom: 5px;">✅ To jest Twoje zadanie!</div>
-                        <div style="color: #388e3c; font-size: 0.9rem;">Kliknij poniżej aby przejść do szczegółów${caseId ? ' w sprawie' : ''}.</div>
-                    </div>
-                    
-                    ${caseId ? `
-                        <button onclick="document.getElementById('task-detail-modal').remove(); setTimeout(() => { const tasksTab = document.querySelector('[data-tab=\\'tasks\\']'); if(tasksTab) tasksTab.click(); }, 300);" 
-                                style="width: 100%; padding: 15px; background: #3B82F6; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1rem; font-weight: 600; margin-bottom: 10px;">
-                            📂 Przejdź do zadań w sprawie
-                        </button>
-                    ` : ''}
-                    
-                    <button onclick="document.getElementById('task-detail-modal').remove();" 
-                            style="width: 100%; padding: 12px; background: #f5f5f5; color: #333; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem;">
-                        Zamknij
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Zamknij po kliknięciu w tło
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.remove();
-        });
     }
 }
 

@@ -27,7 +27,7 @@ window.contractQuestionnaire = {
     id: 'contract',
     title: '📄 Ankieta Umowna',
     description: 'Sprawy umów cywilno-prawnych - roszczenia, zapłata, wykonanie',
-    color: '#1a2332', // Pro Meritum granatowy
+    color: '#1a2332', // E-PGW granatowy
     icon: '📄',
     prefix: 'UMO',
     

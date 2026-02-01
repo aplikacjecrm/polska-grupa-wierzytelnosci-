@@ -165,9 +165,12 @@ window.appConfig = {
     
     // === INFORMACJE O APLIKACJI ===
     app: {
-        name: 'Pro Meritum Komunikator',
+        name: 'E-PGW',
         version: '2.0.0',
-        build: '2025.11.03'
+        build: '2025.11.03',
+        fullName: 'Polska Grupa Wierzytelności',
+        website: 'https://e-pgw.pl',
+        phone: '+48 720 13 14 15'
     }
 };
 

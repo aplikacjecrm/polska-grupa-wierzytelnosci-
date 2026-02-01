@@ -144,9 +144,9 @@ class AuthManager {
         mainScreen.classList.remove('active');
         loginScreen.classList.add('active');
         
-        // Wyczysc pola logowania
-        document.getElementById('loginEmail').value = '';
-        document.getElementById('loginPassword').value = '';
+        // DEV MODE: wypełnij pola
+        document.getElementById('loginEmail').value = 'admin@pro-meritum.pl';
+        document.getElementById('loginPassword').value = 'admin123';
         document.getElementById('loginError').textContent = '';
         
         void loginScreen.offsetHeight;

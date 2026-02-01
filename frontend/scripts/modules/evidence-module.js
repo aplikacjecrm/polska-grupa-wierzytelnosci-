@@ -590,26 +590,10 @@ const evidenceModule = {
                     <div id="testimony_details" style="color: #666; font-size: 0.95rem;"></div>
                   </div>
                 </div>
-                
-                <!-- WYBÓR ZAŁĄCZNIKÓW ZEZNANIA (pokazuje się gdy wybrano zeznanie) -->
-                <div id="witness_attachments_section" style="background: rgba(76, 175, 80, 0.08); border: 2px dashed #4CAF50; border-radius: 8px; padding: 20px; margin-top: 15px; display: none;">
-                  <h4 style="margin: 0 0 15px 0; color: #2e7d32;">📎 Załączniki zeznania</h4>
-                  
-                  <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 1.05rem; color: #1a2332;">Pliki powiązane z wybranym zeznaniem</label>
-                    <div id="witness_attachments_list" style="background: white; border: 2px solid #4CAF50; border-radius: 6px; padding: 15px; min-height: 60px;">
-                      <small style="color: #999;">Wybierz zeznanie aby zobaczyć jego załączniki</small>
-                    </div>
-                    <small style="color: #666; display: block; margin-top: 8px;">
-                      📌 Załączniki są dodawane przy zeznaniach w zakładce <strong>Świadkowie</strong><br>
-                      💡 Zaznacz pliki które chcesz dodać jako dowód powiązany z zeznaniem
-                    </small>
-                  </div>
-                </div>
               </div>
               
-              <!-- POSZLAKI (jeśli typ = circumstantial) - UKRYTE -->
-              <div id="circumstantial_section" style="display: none !important;">
+              <!-- POSZLAKI (jeśli typ = circumstantial) -->
+              <div id="circumstantial_section" style="background: #fff9c4; border: 2px solid #fbc02d; border-radius: 8px; padding: 20px; margin-bottom: 20px; display: none;">
                 <h3 style="margin: 0 0 15px 0; color: #f57f17;">🔍 Szczegóły poszlaki</h3>
                 
                 <div style="margin-bottom: 15px;">
@@ -726,46 +710,39 @@ const evidenceModule = {
       // Załaduj świadków
       this.loadWitnessesForSelect(caseId);
       
-      // SEKCJA POSZLAKI WYŁĄCZONA - nieużywana funkcjonalność
-      // (kod event listenera usunięty)
+      // Pokaż sekcję poszlak gdy wybrano typ "circumstantial"
+      document.getElementById('evidence_type').addEventListener('change', (e) => {
+        const circumstantialSection = document.getElementById('circumstantial_section');
+        if (e.target.value === 'circumstantial') {
+          circumstantialSection.style.display = 'block';
+        } else {
+          circumstantialSection.style.display = 'none';
+        }
+      });
       
-      // Pokaż sekcję zeznania i załączników gdy wybrano świadka
+      // Pokaż sekcję zeznania gdy wybrano świadka i załaduj jego zeznania
       document.getElementById('witness_id').addEventListener('change', async (e) => {
         const testimonySection = document.getElementById('testimony_section');
-        const attachmentsSection = document.getElementById('witness_attachments_section');
         const selectedWitnessId = e.target.value;
         
         if (selectedWitnessId && selectedWitnessId !== 'load') {
           testimonySection.style.display = 'block';
-          attachmentsSection.style.display = 'none'; // Ukryj - pokaże się po wybraniu zeznania
           this.selectedWitnessId = selectedWitnessId;
           // Załaduj zeznania świadka
           await this.loadWitnessTestimonies(selectedWitnessId);
-          // Wyczyść listę załączników
-          const listDiv = document.getElementById('witness_attachments_list');
-          if (listDiv) {
-            listDiv.innerHTML = '<small style="color: #999;">Wybierz zeznanie aby zobaczyć jego załączniki</small>';
-          }
         } else {
           testimonySection.style.display = 'none';
-          attachmentsSection.style.display = 'none';
           this.selectedWitnessId = null;
         }
       });
       
-      // Podgląd wybranego zeznania + załaduj załączniki zeznania
-      document.getElementById('testimony_id').addEventListener('change', async (e) => {
+      // Podgląd wybranego zeznania
+      document.getElementById('testimony_id').addEventListener('change', (e) => {
         const testimonyId = e.target.value;
-        const attachmentsSection = document.getElementById('witness_attachments_section');
-        
         if (testimonyId) {
           this.showTestimonyPreview(testimonyId);
-          attachmentsSection.style.display = 'block';
-          // Załaduj załączniki przypisane do tego zeznania
-          await this.loadTestimonyAttachments(testimonyId, caseId);
         } else {
           document.getElementById('testimony_preview').style.display = 'none';
-          attachmentsSection.style.display = 'none';
         }
       });
       
@@ -814,266 +791,6 @@ const evidenceModule = {
       }
     } catch (error) {
       console.error('❌ Błąd ładowania zeznań:', error);
-    }
-  },
-  
-  // === ZAŁADUJ ZAŁĄCZNIKI ŚWIADKA ===
-  
-  async loadWitnessAttachments(witnessId, caseId) {
-    try {
-      console.log('📎 Ładowanie załączników świadka:', witnessId);
-      
-      // Pobierz załączniki świadka z API
-      const response = await window.api.request(`/attachments?entity_type=witness&entity_id=${witnessId}&case_id=${caseId}`);
-      const attachments = response.attachments || [];
-      
-      const listDiv = document.getElementById('witness_attachments_list');
-      if (!listDiv) return;
-      
-      if (attachments.length === 0) {
-        listDiv.innerHTML = `
-          <div style="text-align: center; padding: 20px; color: #999;">
-            <div style="font-size: 2rem; margin-bottom: 10px;">📭</div>
-            <div>Brak załączników dla tego świadka</div>
-            <small style="display: block; margin-top: 5px;">Dodaj załączniki w zakładce <strong>Świadkowie</strong></small>
-          </div>
-        `;
-        return;
-      }
-      
-      // Wyświetl listę załączników z checkboxami i podglądem
-      listDiv.innerHTML = attachments.map(att => {
-        const fileExt = att.file_name ? att.file_name.split('.').pop().toLowerCase() : '';
-        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
-        const isPdf = fileExt === 'pdf';
-        const icon = isImage ? '🖼️' : isPdf ? '📄' : '📎';
-        
-        return `
-          <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px; border: 2px solid transparent; transition: all 0.2s;" 
-               onmouseover="this.style.borderColor='#4CAF50'" 
-               onmouseout="this.style.borderColor='transparent'">
-            <input type="checkbox" 
-                   id="witness_att_${att.id}" 
-                   name="witness_attachments" 
-                   value="${att.id}"
-                   data-filename="${att.file_name || ''}"
-                   data-code="${att.attachment_code || ''}"
-                   style="width: 20px; height: 20px; cursor: pointer;">
-            <label for="witness_att_${att.id}" style="flex: 1; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.5rem;">${icon}</span>
-              <div>
-                <div style="font-weight: 600; color: #1a2332;">${att.title || att.file_name || 'Bez nazwy'}</div>
-                <div style="font-size: 0.85rem; color: #666;">
-                  ${att.attachment_code ? `<span style="background: #e8f5e9; padding: 2px 6px; border-radius: 4px; margin-right: 8px;">${att.attachment_code}</span>` : ''}
-                  ${att.file_name || ''}
-                </div>
-              </div>
-            </label>
-            <button type="button" onclick="evidenceModule.previewWitnessAttachment(${att.id}, '${(att.file_name || '').replace(/'/g, "\\'")}', '${att.case_id}')" 
-                    style="padding: 8px 12px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 5px;">
-              👁️ Podgląd
-            </button>
-          </div>
-        `;
-      }).join('');
-      
-      console.log(`✅ Załadowano ${attachments.length} załączników świadka`);
-      
-    } catch (error) {
-      console.error('❌ Błąd ładowania załączników świadka:', error);
-      const listDiv = document.getElementById('witness_attachments_list');
-      if (listDiv) {
-        listDiv.innerHTML = `<div style="color: #f44336; padding: 10px;">❌ Błąd ładowania załączników</div>`;
-      }
-    }
-  },
-  
-  // === ZAŁADUJ ZAŁĄCZNIKI ZEZNANIA + DOKUMENTY ŚWIADKA ===
-  
-  async loadTestimonyAttachments(testimonyId, caseId) {
-    try {
-      console.log('📎 Ładowanie załączników zeznania + dokumentów świadka:', testimonyId);
-      
-      const listDiv = document.getElementById('witness_attachments_list');
-      if (!listDiv) return;
-      
-      // Pokaż loading
-      listDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;"><div style="animation: spin 1s linear infinite;">⏳</div> Ładowanie...</div>';
-      
-      // 1. Pobierz załączniki zeznania (entity_type=testimony)
-      const testimonyAttResponse = await window.api.request(`/attachments?entity_type=testimony&entity_id=${testimonyId}`);
-      const testimonyAttachments = testimonyAttResponse.attachments || [];
-      console.log(`✅ Załączniki zeznania: ${testimonyAttachments.length}`);
-      
-      // 2. Pobierz ID świadka z wybranego zeznania
-      const witnessId = this.selectedWitnessId || this.editWitnessId;
-      
-      // 3. Pobierz dokumenty świadka (DOK/SWI/ZEZ/...)
-      let witnessDocuments = [];
-      if (witnessId) {
-        try {
-          const docResponse = await window.api.request(`/witnesses/${witnessId}/documents`);
-          witnessDocuments = docResponse.documents || [];
-          console.log(`✅ Dokumenty świadka: ${witnessDocuments.length}`);
-        } catch (err) {
-          console.warn('⚠️ Nie można pobrać dokumentów świadka:', err);
-        }
-      }
-      
-      // 4. Pobierz załączniki bezpośrednio przypisane do świadka (ZAL/...)
-      let witnessAttachments = [];
-      if (witnessId) {
-        try {
-          const attResponse = await window.api.request(`/attachments?entity_type=witness&entity_id=${witnessId}&case_id=${caseId}`);
-          witnessAttachments = attResponse.attachments || [];
-          console.log(`✅ Załączniki świadka: ${witnessAttachments.length}`);
-        } catch (err) {
-          console.warn('⚠️ Nie można pobrać załączników świadka:', err);
-        }
-      }
-      
-      // Połącz wszystkie pliki
-      const allFiles = [
-        ...testimonyAttachments.map(att => ({ ...att, source: 'testimony', sourceLabel: '📝 Z zeznania' })),
-        ...witnessDocuments.map(doc => ({ ...doc, id: doc.id, file_name: doc.filename, source: 'witness_doc', sourceLabel: '📋 Dokument świadka' })),
-        ...witnessAttachments.map(att => ({ ...att, source: 'witness_att', sourceLabel: '📎 Załącznik świadka' }))
-      ];
-      
-      if (allFiles.length === 0) {
-        listDiv.innerHTML = `
-          <div style="text-align: center; padding: 20px; color: #999;">
-            <div style="font-size: 2rem; margin-bottom: 10px;">📭</div>
-            <div>Brak plików dla tego świadka</div>
-            <small style="display: block; margin-top: 5px;">Dodaj załączniki lub dokumenty w zakładce <strong>Świadkowie</strong></small>
-          </div>
-        `;
-        return;
-      }
-      
-      // Wyświetl listę plików z checkboxami i podglądem
-      listDiv.innerHTML = allFiles.map((file, idx) => {
-        const filename = file.file_name || file.filename || '';
-        const fileExt = filename ? filename.split('.').pop().toLowerCase() : '';
-        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
-        const isVideo = ['mp4', 'webm', 'mov', 'avi'].includes(fileExt);
-        const isPdf = fileExt === 'pdf';
-        const icon = isVideo ? '🎬' : isImage ? '🖼️' : isPdf ? '📄' : '📎';
-        
-        // Określ kolor ramki w zależności od źródła
-        const borderColor = file.source === 'testimony' ? '#4CAF50' : file.source === 'witness_doc' ? '#9C27B0' : '#FF9800';
-        
-        return `
-          <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid ${borderColor}; transition: all 0.2s;">
-            <input type="checkbox" 
-                   id="file_${idx}" 
-                   name="testimony_attachments" 
-                   value="${file.id}"
-                   data-filename="${filename}"
-                   data-code="${file.attachment_code || file.document_number || ''}"
-                   data-source="${file.source}"
-                   style="width: 20px; height: 20px; cursor: pointer;">
-            <label for="file_${idx}" style="flex: 1; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.5rem;">${icon}</span>
-              <div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                  <span style="font-weight: 600; color: #1a2332;">${file.title || filename || 'Bez nazwy'}</span>
-                  <span style="font-size: 0.75rem; background: ${borderColor}; color: white; padding: 2px 6px; border-radius: 4px;">${file.sourceLabel}</span>
-                </div>
-                <div style="font-size: 0.85rem; color: #666;">
-                  ${file.attachment_code || file.document_number ? `<span style="background: #e8f5e9; padding: 2px 6px; border-radius: 4px; margin-right: 8px; font-weight: 600;">${file.attachment_code || file.document_number}</span>` : ''}
-                  ${filename} ${file.file_size ? `• ${(file.file_size / 1024).toFixed(1)} KB` : ''}
-                </div>
-              </div>
-            </label>
-            <button type="button" onclick="window.crmManager.viewDocument(${file.id}, ${caseId}, '${file.source === 'witness_doc' ? 'witness_document' : 'attachment'}')" 
-                    style="padding: 8px 12px; background: #FFD700; color: #1a2332; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 5px;">
-              👁️ Podgląd
-            </button>
-          </div>
-        `;
-      }).join('');
-      
-      console.log(`✅ Załadowano ${allFiles.length} plików (${testimonyAttachments.length} zeznanie + ${witnessDocuments.length} dokumenty + ${witnessAttachments.length} załączniki)`);
-      
-    } catch (error) {
-      console.error('❌ Błąd ładowania załączników:', error);
-      const listDiv = document.getElementById('witness_attachments_list');
-      if (listDiv) {
-        listDiv.innerHTML = `<div style="color: #f44336; padding: 10px;">❌ Błąd ładowania: ${error.message}</div>`;
-      }
-    }
-  },
-  
-  // === PODGLĄD ZAŁĄCZNIKA ŚWIADKA ===
-  
-  async previewWitnessAttachment(attachmentId, filename, caseId) {
-    try {
-      console.log('👁️ Podgląd załącznika świadka:', attachmentId, filename);
-      
-      const apiBaseUrl = window.api?.baseURL || 'https://web-production-ef868.up.railway.app/api';
-      const token = localStorage.getItem('token');
-      
-      const response = await fetch(`${apiBaseUrl}/attachments/${attachmentId}/download`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (!response.ok) throw new Error('Błąd pobierania pliku');
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const fileType = blob.type;
-      const fileExt = filename ? filename.split('.').pop().toLowerCase() : '';
-      
-      // Stwórz modal podglądu
-      const modal = document.createElement('div');
-      modal.id = 'witness-attachment-preview-modal';
-      modal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.9); display: flex; align-items: center;
-        justify-content: center; z-index: 100001; animation: fadeIn 0.2s ease;
-      `;
-      
-      let previewContent = '';
-      if (fileType.includes('pdf') || fileExt === 'pdf') {
-        previewContent = `<iframe src="${url}" style="width: 100%; height: 100%; border: none; border-radius: 8px;"></iframe>`;
-      } else if (fileType.includes('image') || ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
-        previewContent = `<img src="${url}" style="max-width: 95%; max-height: 90%; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">`;
-      } else {
-        previewContent = `
-          <div style="text-align: center; color: white; padding: 40px; background: rgba(255,255,255,0.1); border-radius: 12px;">
-            <div style="font-size: 4rem; margin-bottom: 20px;">📄</div>
-            <div style="font-size: 1.2rem; margin-bottom: 10px;">${filename}</div>
-            <div style="margin-bottom: 20px; opacity: 0.7;">Podgląd niedostępny dla tego typu pliku</div>
-            <button onclick="const a = document.createElement('a'); a.href = '${url}'; a.download = '${filename}'; document.body.appendChild(a); a.click(); document.body.removeChild(a);" 
-                style="padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
-              📥 Pobierz plik
-            </button>
-          </div>
-        `;
-      }
-      
-      modal.innerHTML = `
-        <style>@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }</style>
-        <div style="position: relative; width: 95%; height: 95%; display: flex; flex-direction: column;">
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 12px 12px 0 0;">
-            <div style="color: white; font-weight: 600; font-size: 1.1rem;">📎 ${filename}</div>
-            <div style="display: flex; gap: 10px;">
-              <button onclick="const a = document.createElement('a'); a.href = '${url}'; a.download = '${filename}'; document.body.appendChild(a); a.click(); document.body.removeChild(a);" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Pobierz</button>
-              <button onclick="document.getElementById('witness-attachment-preview-modal').remove()" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✕ Zamknij</button>
-            </div>
-          </div>
-          <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px;">
-            ${previewContent}
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(modal);
-      modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-      
-    } catch (error) {
-      console.error('❌ Błąd podglądu załącznika:', error);
-      alert('Błąd wyświetlania załącznika: ' + error.message);
     }
   },
   
@@ -1282,86 +999,22 @@ const evidenceModule = {
           </div>
           
           <div style="flex: 1; overflow-y: auto; padding: 20px;">
-            ${documents.map(doc => {
-              // Określ typ ikony i kolor
-              const filename = doc.filename || '';
-              const fileExt = filename.split('.').pop().toLowerCase();
-              const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
-              const isVideo = ['mp4', 'webm', 'mov', 'avi'].includes(fileExt);
-              const isPdf = fileExt === 'pdf';
-              const isDoc = ['doc', 'docx'].includes(fileExt);
-              const icon = isVideo ? '🎬' : isImage ? '🖼️' : isPdf ? '📄' : isDoc ? '📝' : '📎';
-              
-              // Data dodania
-              const uploadDate = doc.upload_date || doc.created_at || null;
-              const dateStr = uploadDate ? new Date(uploadDate).toLocaleDateString('pl-PL', {day: '2-digit', month: '2-digit', year: 'numeric'}) : 'Brak daty';
-              
-              return `
-              <div style="background: #f5f5f5; padding: 16px; border-radius: 12px; margin-bottom: 12px; border: 2px solid transparent; transition: all 0.3s; border-left: 4px solid #9c27b0;" 
+            ${documents.map(doc => `
+              <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.3s;" 
+                   onclick="this.classList.toggle('selected'); this.style.borderColor = this.classList.contains('selected') ? '#9c27b0' : 'transparent'; this.style.background = this.classList.contains('selected') ? '#f3e5f5' : '#f5f5f5';"
                    data-doc-id="${doc.id}"
-                   data-doc-filename="${doc.filename || doc.file_name || 'Bez nazwy'}"
-                   data-doc-path="${doc.file_path || ''}"
-                   data-doc-attachment-code="${doc.attachment_code || ''}"
-                   data-doc-document-number="${doc.document_number || ''}">
-                <div style="display: flex; align-items: start; gap: 12px;">
-                  <!-- Checkbox -->
-                  <input type="checkbox" 
-                         class="doc-checkbox" 
-                         data-doc-id="${doc.id}"
-                         style="width: 20px; height: 20px; margin-top: 4px; cursor: pointer;"
-                         onchange="this.closest('[data-doc-id]').style.background = this.checked ? '#f3e5f5' : '#f5f5f5'; this.closest('[data-doc-id]').style.borderColor = this.checked ? '#9c27b0' : 'transparent';">
-                  
-                  <!-- Ikona -->
-                  <div style="font-size: 2.5rem;">${icon}</div>
-                  
-                  <!-- Informacje -->
+                   data-doc-filename="${doc.filename}"
+                   data-doc-path="${doc.file_path || ''}">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                  <div style="font-size: 2rem;">📄</div>
                   <div style="flex: 1;">
-                    <!-- Nazwa pliku -->
-                    <div style="font-weight: 700; color: #1a2332; margin-bottom: 6px; font-size: 1rem;">${doc.filename}</div>
-                    
-                    <!-- Numer dokumentu lub załącznika -->
-                    ${doc.document_number || doc.attachment_code ? `
-                      <div style="display: inline-block; background: #9c27b0; color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-bottom: 6px;">
-                        📋 ${doc.document_number || doc.attachment_code}
-                      </div>
-                    ` : ''}
-                    
-                    <!-- Szczegóły -->
-                    <div style="font-size: 0.85rem; color: #666; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;">
-                      <span style="display: inline-flex; align-items: center; gap: 4px;">
-                        📊 <strong>${(doc.file_size / 1024).toFixed(1)} KB</strong>
-                      </span>
-                      <span style="color: #e0e0e0;">•</span>
-                      <span style="display: inline-flex; align-items: center; gap: 4px;">
-                        📅 <strong>${dateStr}</strong>
-                      </span>
-                      ${doc.uploaded_by_name ? `
-                        <span style="color: #e0e0e0;">•</span>
-                        <span style="display: inline-flex; align-items: center; gap: 4px;">
-                          👤 <strong>${doc.uploaded_by_name}</strong>
-                        </span>
-                      ` : ''}
-                    </div>
-                    
-                    <!-- Opis (jeśli istnieje) -->
-                    ${doc.description ? `
-                      <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 6px; font-size: 0.85rem; color: #555; font-style: italic;">
-                        💬 ${doc.description}
-                      </div>
-                    ` : ''}
+                    <div style="font-weight: 600; color: #1a2332; margin-bottom: 4px;">${doc.filename}</div>
+                    <div style="font-size: 0.85rem; color: #666;">${doc.document_number || 'Brak numeru'} • ${(doc.file_size / 1024).toFixed(1)} KB</div>
                   </div>
-                  
-                  <!-- Przycisk podglądu -->
-                  <button onclick="event.stopPropagation(); window.crmManager.viewDocument(${doc.id}, ${caseId}, 'document')" 
-                          style="padding: 10px 16px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2332; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; box-shadow: 0 2px 8px rgba(255,215,0,0.3); transition: all 0.3s; white-space: nowrap; height: fit-content;"
-                          onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,215,0,0.5)'"
-                          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(255,215,0,0.3)'">
-                    👁️ Podgląd
-                  </button>
+                  <div id="check_${doc.id}" style="width: 24px; height: 24px; border: 2px solid #9c27b0; border-radius: 4px; display: none; background: #9c27b0; color: white; text-align: center; line-height: 20px;">✓</div>
                 </div>
               </div>
-            `;
-            }).join('')}
+            `).join('')}
           </div>
           
           <div style="padding: 20px; border-top: 2px solid #e0e0e0; display: flex; gap: 10px;">
@@ -1373,6 +1026,16 @@ const evidenceModule = {
       
       document.body.appendChild(modal);
       
+      // Toggle checkmark visibility
+      modal.querySelectorAll('[data-doc-id]').forEach(el => {
+        el.addEventListener('click', () => {
+          const check = el.querySelector('[id^="check_"]');
+          if (check) {
+            check.style.display = el.classList.contains('selected') ? 'block' : 'none';
+          }
+        });
+      });
+      
     } catch (error) {
       console.error('❌ Błąd ładowania dokumentów:', error);
       alert('Błąd: ' + error.message);
@@ -1383,46 +1046,33 @@ const evidenceModule = {
   
   async addSystemDocuments() {
     const modal = document.getElementById('systemDocsModal');
-    const selectedCheckboxes = modal.querySelectorAll('.doc-checkbox:checked');
+    const selectedDocs = modal.querySelectorAll('[data-doc-id].selected');
     
-    if (selectedCheckboxes.length === 0) {
+    if (selectedDocs.length === 0) {
       alert('Nie wybrano żadnych dokumentów');
       return;
     }
     
     // Zapisz wybrane dokumenty do globalnej zmiennej
-    this.selectedSystemDocs = Array.from(selectedCheckboxes).map(checkbox => {
-      const docEl = checkbox.closest('[data-doc-id]');
-      return {
-        id: docEl.dataset.docId,
-        filename: docEl.dataset.docFilename,
-        file_name: docEl.dataset.docFilename,
-        path: docEl.dataset.docPath,
-        attachment_code: docEl.dataset.docAttachmentCode || null,
-        document_number: docEl.dataset.docDocumentNumber || null
-      };
-    });
+    this.selectedSystemDocs = Array.from(selectedDocs).map(el => ({
+      id: el.dataset.docId,
+      filename: el.dataset.docFilename,
+      path: el.dataset.docPath
+    }));
     
     // Pokaż listę wybranych
     const previewDiv = document.getElementById('selected_system_docs');
     const listDiv = document.getElementById('system_docs_list');
     
-    listDiv.innerHTML = this.selectedSystemDocs.map((doc, index) => {
-      const displayName = doc.filename || doc.file_name || 'Bez nazwy';
-      const codeLabel = doc.attachment_code || doc.document_number || '';
-      return `
+    listDiv.innerHTML = this.selectedSystemDocs.map((doc, index) => `
       <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #9c27b0; display: flex; justify-content: space-between; align-items: center;">
-        <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+        <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 1.2rem;">📄</span>
-          <div style="flex: 1;">
-            <div style="font-weight: 600; color: #1a2332; margin-bottom: 2px;">${displayName}</div>
-            ${codeLabel ? `<div style="font-size: 0.75rem; color: #666;">📋 ${codeLabel}</div>` : ''}
-          </div>
+          <span style="font-weight: 600; color: #1a2332;">${doc.filename}</span>
         </div>
         <button onclick="evidenceModule.removeSystemDoc(${index})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">✕</button>
       </div>
-    `;
-    }).join('');
+    `).join('');
     
     previewDiv.style.display = 'block';
     
@@ -1441,22 +1091,15 @@ const evidenceModule = {
     if (this.selectedSystemDocs.length === 0) {
       previewDiv.style.display = 'none';
     } else {
-      listDiv.innerHTML = this.selectedSystemDocs.map((doc, i) => {
-        const displayName = doc.filename || doc.file_name || 'Bez nazwy';
-        const codeLabel = doc.attachment_code || doc.document_number || '';
-        return `
+      listDiv.innerHTML = this.selectedSystemDocs.map((doc, i) => `
         <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #9c27b0; display: flex; justify-content: space-between; align-items: center;">
-          <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+          <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-size: 1.2rem;">📄</span>
-            <div style="flex: 1;">
-              <div style="font-weight: 600; color: #1a2332; margin-bottom: 2px;">${displayName}</div>
-              ${codeLabel ? `<div style="font-size: 0.75rem; color: #666;">📋 ${codeLabel}</div>` : ''}
-            </div>
+            <span style="font-weight: 600; color: #1a2332;">${doc.filename}</span>
           </div>
           <button onclick="evidenceModule.removeSystemDoc(${i})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">✕</button>
         </div>
-      `;
-      }).join('');
+      `).join('');
     }
   },
   
@@ -1523,24 +1166,6 @@ const evidenceModule = {
       console.log('📂 Brak dokumentów z systemu do zlinkowania');
     }
     
-    // Załączniki zeznania - pobierz zaznaczone checkboxy
-    const allTestimonyCheckboxes = document.querySelectorAll('input[name="testimony_attachments"]');
-    console.log(`📎 Wszystkie checkboxy załączników zeznania: ${allTestimonyCheckboxes.length}`);
-    
-    const testimonyAttachmentCheckboxes = document.querySelectorAll('input[name="testimony_attachments"]:checked');
-    console.log(`📎 Zaznaczone checkboxy: ${testimonyAttachmentCheckboxes.length}`);
-    
-    if (testimonyAttachmentCheckboxes.length > 0) {
-      const testimonyAttachmentIds = Array.from(testimonyAttachmentCheckboxes).map(cb => {
-        console.log(`   - checkbox value: ${cb.value}, checked: ${cb.checked}`);
-        return cb.value;
-      });
-      console.log(`📎 Wybrano ${testimonyAttachmentIds.length} załączników zeznania:`, testimonyAttachmentIds);
-      formData.testimonyAttachmentIds = testimonyAttachmentIds;
-    } else {
-      console.log('📎 Brak zaznaczonych załączników zeznania');
-    }
-    
     if (attachments.length > 0) {
       formData.attachments = attachments;
       console.log('📎 Załączniki do wysłania:', attachments.length);
@@ -1551,17 +1176,12 @@ const evidenceModule = {
       console.log('⚠️ Brak załączników do wysłania');
     }
     
-    console.log('📤 Wysyłam formData:');
-    console.log('   - testimonyAttachmentIds w formData:', formData.testimonyAttachmentIds);
-    console.log('   - wszystkie klucze:', Object.keys(formData));
+    console.log('📤 Wysyłam formData:', JSON.stringify(formData).substring(0, 500) + '...');
     
     // Wyczyść wybrane dokumenty
     this.selectedSystemDocs = [];
     
     try {
-      console.log('🚀 Wysyłam żądanie POST /evidence...');
-      console.log('📦 Rozmiar danych:', JSON.stringify(formData).length, 'znaków');
-      
       const result = await window.api.request('/evidence', {
         method: 'POST',
         body: formData
@@ -1578,7 +1198,6 @@ const evidenceModule = {
       }
     } catch (error) {
       console.error('❌ Błąd zapisu dowodu:', error);
-      console.error('❌ Szczegóły błędu:', error.message, error.stack);
       alert('Błąd zapisu: ' + error.message);
     }
   },
@@ -1673,7 +1292,15 @@ const evidenceModule = {
               </div>
             ` : ''}
             
-            <!-- SEKCJA POSZLAKI UKRYTA - NIEUŻYWANA -->
+            ${evidence.circumstantial_type ? `
+              <div style="background: #fff9c4; border-left: 4px solid #fbc02d; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 10px 0; color: #f57f17;">🔍 Szczegóły poszlaki</h3>
+                <p style="margin: 5px 0;"><strong>Typ poszlaki:</strong> ${evidence.circumstantial_type}</p>
+                ${evidence.circumstantial_strength ? `<p style="margin: 5px 0;"><strong>Siła dowodowa:</strong> ${evidence.circumstantial_strength}</p>` : ''}
+                ${evidence.circumstantial_connections ? `<p style="margin: 5px 0;"><strong>Powiązania:</strong> ${evidence.circumstantial_connections}</p>` : ''}
+                ${evidence.alternative_explanations ? `<p style="margin: 5px 0;"><strong>Alternatywne wyjaśnienia:</strong> ${evidence.alternative_explanations}</p>` : ''}
+              </div>
+            ` : ''}
             
             ${evidence.notes ? `
               <div style="background: #F8FAFC; border-left: 4px solid #3B82F6; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -1697,8 +1324,8 @@ const evidenceModule = {
               
               ${attachments.length > 0 ? `
                 <div style="background: rgba(255,255,255,0.8); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                  <div style="color: #2e7d32 !important; font-weight: 600 !important; margin-bottom: 8px; font-size: 0.95rem !important;">💡 Dla AI i analizy strategicznej:</div>
-                  <div style="color: #1b5e20 !important; font-size: 0.9rem !important; line-height: 1.6;">
+                  <div style="color: #2e7d32; font-weight: 600; margin-bottom: 8px; font-size: 0.95rem;">💡 Dla AI i analizy strategicznej:</div>
+                  <div style="color: #1b5e20; font-size: 0.9rem; line-height: 1.6;">
                     Te pliki mogą być analizowane przez AI w celu:<br>
                     • Ekstrakcji kluczowych informacji z dokumentów<br>
                     • Rozpoznawania wzorców i powiązań<br>
@@ -1718,24 +1345,24 @@ const evidenceModule = {
                             <span style="background: #2e7d32; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
                               #${index + 1}
                             </span>
-                            <div style="font-weight: 700 !important; color: #1a2332 !important; font-size: 1.1rem !important;">${att.filename}</div>
+                            <div style="font-weight: 700; color: #1a2332; font-size: 1.1rem;">${att.filename}</div>
                           </div>
                           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 10px;">
                             <div style="background: #f5f5f5; padding: 8px 12px; border-radius: 6px;">
-                              <div style="font-size: 0.75rem !important; color: #666 !important; text-transform: uppercase; letter-spacing: 0.5px;">Rozmiar</div>
-                              <div style="font-weight: 600 !important; color: #1a2332 !important; font-size: 0.95rem !important;">${(att.filesize / 1024).toFixed(1)} KB</div>
+                              <div style="font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px;">Rozmiar</div>
+                              <div style="font-weight: 600; color: #1a2332; font-size: 0.95rem;">${(att.filesize / 1024).toFixed(1)} KB</div>
                             </div>
                             <div style="background: #f5f5f5; padding: 8px 12px; border-radius: 6px;">
-                              <div style="font-size: 0.75rem !important; color: #666 !important; text-transform: uppercase; letter-spacing: 0.5px;">Typ</div>
-                              <div style="font-weight: 600 !important; color: #1a2332 !important; font-size: 0.95rem !important;">${att.mimetype.split('/')[1].toUpperCase()}</div>
+                              <div style="font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px;">Typ</div>
+                              <div style="font-weight: 600; color: #1a2332; font-size: 0.95rem;">${att.mimetype.split('/')[1].toUpperCase()}</div>
                             </div>
                             <div style="background: #f5f5f5; padding: 8px 12px; border-radius: 6px;">
-                              <div style="font-size: 0.75rem !important; color: #666 !important; text-transform: uppercase; letter-spacing: 0.5px;">Format</div>
-                              <div style="font-weight: 600 !important; color: #1a2332 !important; font-size: 0.95rem !important;">${att.filename.split('.').pop().toUpperCase()}</div>
+                              <div style="font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px;">Format</div>
+                              <div style="font-weight: 600; color: #1a2332; font-size: 0.95rem;">${att.filename.split('.').pop().toUpperCase()}</div>
                             </div>
                             <div style="background: #f5f5f5; padding: 8px 12px; border-radius: 6px;">
-                              <div style="font-size: 0.75rem !important; color: #666 !important; text-transform: uppercase; letter-spacing: 0.5px;">Data dodania</div>
-                              <div style="font-weight: 600 !important; color: #1a2332 !important; font-size: 0.95rem !important;">${att.uploaded_at ? new Date(att.uploaded_at).toLocaleDateString('pl-PL') : 'Nieznana'}</div>
+                              <div style="font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px;">Data dodania</div>
+                              <div style="font-weight: 600; color: #1a2332; font-size: 0.95rem;">${att.uploaded_at ? new Date(att.uploaded_at).toLocaleDateString('pl-PL') : 'Nieznana'}</div>
                             </div>
                           </div>
                         </div>
@@ -1747,8 +1374,8 @@ const evidenceModule = {
                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(76,175,80,0.3)'">
                           ⬇️ Pobierz
                         </button>
-                        ${att.mimetype && (att.mimetype.includes('image') || att.mimetype.includes('video') || att.mimetype.includes('audio')) ? `
-                          <button data-attachment-id="${att.id}" data-filename="${encodeURIComponent(att.filename || 'plik')}" data-mimetype="${att.mimetype}" class="preview-attachment-btn"
+                        ${att.mimetype && att.mimetype.includes('image') ? `
+                          <button data-attachment-id="${att.id}" data-filename="${encodeURIComponent(att.filename || 'obraz')}" class="preview-attachment-btn"
                                   style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
                             👁️ Podgląd
                           </button>
@@ -1760,8 +1387,8 @@ const evidenceModule = {
               ` : `
                 <div style="text-align: center; padding: 40px; background: rgba(255,255,255,0.6); border-radius: 8px;">
                   <div style="font-size: 4rem; margin-bottom: 15px; opacity: 0.5;">📎</div>
-                  <div style="font-size: 1.1rem !important; font-weight: 600 !important; color: #1a2332 !important; margin-bottom: 8px;">Brak załączników</div>
-                  <div style="color: #555 !important; font-size: 0.9rem !important;">Ten dowód nie ma jeszcze żadnych załączonych plików</div>
+                  <div style="font-size: 1.1rem; font-weight: 600; color: #666; margin-bottom: 8px;">Brak załączników</div>
+                  <div style="color: #999; font-size: 0.9rem;">Ten dowód nie ma jeszcze żadnych załączonych plików</div>
                 </div>
               `}
             </div>
@@ -1784,9 +1411,9 @@ const evidenceModule = {
                         📄
                       </div>
                       <div>
-                        <div style="font-weight: 700 !important; color: #1a2332 !important; font-size: 1rem !important;">${doc.filename || doc.attachment_code || 'Załącznik #' + (index + 1)}</div>
-                        <div style="font-size: 0.85rem !important; color: #333 !important;">
-                          ${doc.source_type === 'document' ? '📁 Dokument sprawy' : '📎 Załącznik świadka'} 
+                        <div style="font-weight: 600; color: #1a2332;">${doc.filename || 'Dokument'}</div>
+                        <div style="font-size: 0.8rem; color: #666;">
+                          ${doc.source_type === 'document' ? '📁 Dokument sprawy' : '📎 Załącznik'} 
                           ${doc.filesize ? `• ${(doc.filesize / 1024).toFixed(1)} KB` : ''}
                         </div>
                       </div>
@@ -1844,8 +1471,7 @@ const evidenceModule = {
         btn.onclick = () => {
           const id = btn.dataset.attachmentId;
           const filename = decodeURIComponent(btn.dataset.filename);
-          const mimetype = btn.dataset.mimetype || 'application/octet-stream';
-          this.previewAttachment(id, filename, mimetype);
+          this.previewAttachment(id, filename, 'image/png');
         };
       });
       
@@ -2080,26 +1706,10 @@ const evidenceModule = {
                   </small>
                 </div>
               </div>
-              
-              <!-- WYBÓR ZAŁĄCZNIKÓW ZEZNANIA (pokazuje się gdy wybrano zeznanie) -->
-              <div id="edit_witness_attachments_section" style="background: rgba(76, 175, 80, 0.08); border: 2px dashed #4CAF50; border-radius: 8px; padding: 20px; margin-top: 15px; display: none;">
-                <h4 style="margin: 0 0 15px 0; color: #2e7d32;">📎 Załączniki i dokumenty świadka</h4>
-                
-                <div style="margin-bottom: 15px;">
-                  <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 1.05rem; color: #1a2332;">Wszystkie pliki powiązane ze świadkiem</label>
-                  <div id="edit_witness_attachments_list" style="background: white; border: 2px solid #4CAF50; border-radius: 6px; padding: 15px; min-height: 60px; max-height: 400px; overflow-y: auto;">
-                    <small style="color: #999;">Wybierz zeznanie aby zobaczyć pliki świadka</small>
-                  </div>
-                  <small style="color: #666; display: block; margin-top: 8px;">
-                    📌 Lista zawiera: załączniki zeznania, dokumenty świadka (DOK/SWI/ZEZ), załączniki świadka (ZAL)<br>
-                    💡 Możesz przeglądać pliki klikając "👁️ Podgląd"
-                  </small>
-                </div>
-              </div>
             </div>
             
-            <!-- POSZLAKI (gdy typ = circumstantial) - UKRYTE -->
-            <div id="edit_circumstantial_section" style="display: none !important;">
+            <!-- POSZLAKI (gdy typ = circumstantial) -->
+            <div id="edit_circumstantial_section" style="background: #fff9c4; border: 2px solid #fbc02d; border-radius: 8px; padding: 20px; margin-bottom: 20px; display: ${evidence.evidence_type === 'circumstantial' ? 'block' : 'none'};">
               <h3 style="margin: 0 0 15px 0; color: #f57f17;">🔍 Szczegóły poszlaki</h3>
               
               <div style="margin-bottom: 15px;">
@@ -2254,74 +1864,33 @@ const evidenceModule = {
       // Załaduj świadków
       this.loadWitnessesForEditSelect(evidence.case_id, evidence.witness_id);
       
-      // SEKCJA POSZLAKI WYŁĄCZONA - nieużywana funkcjonalność
-      // (kod event listenera usunięty)
+      // Pokaż sekcję poszlak gdy wybrano typ "circumstantial"
+      document.getElementById('edit_evidence_type').addEventListener('change', (e) => {
+        const circumstantialSection = document.getElementById('edit_circumstantial_section');
+        if (e.target.value === 'circumstantial') {
+          circumstantialSection.style.display = 'block';
+        } else {
+          circumstantialSection.style.display = 'none';
+        }
+      });
       
       // Pokaż sekcję zeznania gdy wybrano świadka
       document.getElementById('edit_witness_id').addEventListener('change', async (e) => {
         const testimonySection = document.getElementById('edit_testimony_section');
-        const attachmentsSection = document.getElementById('edit_witness_attachments_section');
         const selectedWitnessId = e.target.value;
         
         if (selectedWitnessId && selectedWitnessId !== 'loading' && selectedWitnessId !== '') {
           testimonySection.style.display = 'block';
-          attachmentsSection.style.display = 'none'; // Ukryj - pokaże się po wybraniu zeznania
-          this.editWitnessId = selectedWitnessId; // Zapisz ID świadka
           await this.loadTestimoniesForEditSelect(selectedWitnessId, evidence.testimony_id);
-          // Wyczyść listę załączników
-          const listDiv = document.getElementById('edit_witness_attachments_list');
-          if (listDiv) {
-            listDiv.innerHTML = '<small style="color: #999;">Wybierz zeznanie aby zobaczyć pliki świadka</small>';
-          }
         } else {
           testimonySection.style.display = 'none';
-          attachmentsSection.style.display = 'none';
-          this.editWitnessId = null;
-        }
-      });
-      
-      // Podgląd wybranego zeznania + załaduj załączniki zeznania (EDYCJA)
-      document.getElementById('edit_testimony_id').addEventListener('change', async (e) => {
-        const testimonyId = e.target.value;
-        const attachmentsSection = document.getElementById('edit_witness_attachments_section');
-        
-        if (testimonyId) {
-          attachmentsSection.style.display = 'block';
-          // Użyj tej samej funkcji co w dodawaniu, ale z innym ID kontenera
-          const originalContainerId = 'witness_attachments_list';
-          const editContainerId = 'edit_witness_attachments_list';
-          
-          // Tymczasowo podmień ID kontenera
-          const editContainer = document.getElementById(editContainerId);
-          if (editContainer) {
-            editContainer.id = originalContainerId;
-            await this.loadTestimonyAttachments(testimonyId, evidence.case_id);
-            editContainer.id = editContainerId; // Przywróć oryginalne ID
-          }
-        } else {
-          attachmentsSection.style.display = 'none';
         }
       });
       
       // Jeśli dowód ma świadka, pokaż sekcję zeznań
       if (evidence.witness_id) {
-        this.editWitnessId = evidence.witness_id; // Zapisz ID świadka
         document.getElementById('edit_testimony_section').style.display = 'block';
         await this.loadTestimoniesForEditSelect(evidence.witness_id, evidence.testimony_id);
-        
-        // Jeśli ma też zeznanie, załaduj załączniki
-        if (evidence.testimony_id) {
-          const attachmentsSection = document.getElementById('edit_witness_attachments_section');
-          attachmentsSection.style.display = 'block';
-          
-          // Użyj tej samej funkcji co w dodawaniu
-          const editContainer = document.getElementById('edit_witness_attachments_list');
-          if (editContainer) {
-            editContainer.id = 'witness_attachments_list';
-            await this.loadTestimonyAttachments(evidence.testimony_id, evidence.case_id);
-            editContainer.id = 'edit_witness_attachments_list';
-          }
-        }
       }
       
     } catch (error) {
@@ -2530,225 +2099,31 @@ const evidenceModule = {
   
   // === USUŃ DOWÓD ===
   async deleteEvidence(evidenceId) {
-    // Znajdź dowód w liście
-    const evidence = this.evidenceList.find(e => e.id === evidenceId);
-    const evidenceName = evidence ? evidence.name : `Dowód #${evidenceId}`;
-    const evidenceCode = evidence ? evidence.evidence_code : '';
+    if (!confirm('Czy na pewno chcesz usunąć ten dowód?\n\nTEJ OPERACJI NIE MOŻNA COFNĄĆ!')) {
+      return;
+    }
     
-    // Stwórz piękny modal potwierdzenia z polem hasła
-    const modal = document.createElement('div');
-    modal.id = 'deleteEvidenceModal';
-    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0,0,0,0.85); z-index: 10005; display: flex; justify-content: center; align-items: center; padding: 20px;';
-    
-    modal.innerHTML = `
-      <div style="background: white; border-radius: 20px; width: 90vw; max-width: 550px; box-shadow: 0 20px 60px rgba(220,53,69,0.4); overflow: hidden; animation: modalSlideIn 0.3s ease-out;">
-        <style>
-          @keyframes modalSlideIn {
-            from {
-              opacity: 0;
-              transform: translateY(-30px) scale(0.95);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0) scale(1);
-            }
-          }
-          @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-          }
-          .shake-animation {
-            animation: shake 0.5s ease-in-out;
-          }
-        </style>
-        
-        <!-- NAGŁÓWEK Z GRADIENTEM -->
-        <div style="background: linear-gradient(135deg, #dc3545, #c82333); padding: 30px; text-align: center; color: white;">
-          <div style="font-size: 4rem; margin-bottom: 15px;">⚠️</div>
-          <h2 style="margin: 0 0 10px 0; font-size: 1.8rem; font-weight: 700;">Potwierdzenie usunięcia</h2>
-          <p style="margin: 0; opacity: 0.95; font-size: 0.95rem;">Ta operacja jest NIEODWRACALNA!</p>
-        </div>
-        
-        <!-- TREŚĆ -->
-        <div style="padding: 30px;">
-          <!-- INFO O DOWODZIE -->
-          <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
-            <div style="display: flex; align-items: start; gap: 15px;">
-              <div style="font-size: 2.5rem; flex-shrink: 0;">🗑️</div>
-              <div style="flex: 1;">
-                <div style="font-weight: 700; color: #1a2332; font-size: 1.1rem; margin-bottom: 5px;">
-                  ${window.crmManager.escapeHtml(evidenceName)}
-                </div>
-                ${evidenceCode ? `
-                  <div style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">
-                    ${evidenceCode}
-                  </div>
-                ` : ''}
-                <div style="color: #856404; font-size: 0.9rem; line-height: 1.5;">
-                  <strong>⚠️ UWAGA:</strong> Usunięcie dowodu spowoduje:<br>
-                  • Nieodwracalną utratę danych<br>
-                  • Usunięcie wszystkich załączników<br>
-                  • Zapis w historii sprawy
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- POLE HASŁA -->
-          <div style="margin-bottom: 25px;">
-            <label style="display: block; font-weight: 700; margin-bottom: 12px; color: #1a2332; font-size: 1.05rem;">
-              🔐 Wpisz swoje hasło aby potwierdzić usunięcie:
-            </label>
-            <input 
-              type="password" 
-              id="deletePasswordInput" 
-              placeholder="Twoje hasło"
-              style="width: 100%; padding: 15px; border: 3px solid #dc3545; border-radius: 10px; font-size: 1rem; font-weight: 600; color: #1a2332; transition: all 0.3s;"
-              onfocus="this.style.borderColor='#c82333'; this.style.boxShadow='0 0 0 4px rgba(220,53,69,0.2)'"
-              onblur="this.style.borderColor='#dc3545'; this.style.boxShadow='none'"
-            >
-            <small style="color: #666; display: block; margin-top: 8px;">
-              💡 To hasło które używasz do logowania się do systemu
-            </small>
-            <div id="passwordError" style="color: #dc3545; font-weight: 600; margin-top: 10px; display: none;">
-              ❌ Nieprawidłowe hasło! Spróbuj ponownie.
-            </div>
-          </div>
-          
-          <!-- PRZYCISKI -->
-          <div style="display: flex; gap: 15px;">
-            <button 
-              onclick="document.getElementById('deleteEvidenceModal').remove()" 
-              style="flex: 1; padding: 16px; background: linear-gradient(135deg, #6c757d, #5a6268); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 1.05rem; transition: all 0.3s;"
-              onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(108,117,125,0.4)'"
-              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-              ← Anuluj
-            </button>
-            <button 
-              id="confirmDeleteBtn"
-              style="flex: 1; padding: 16px; background: linear-gradient(135deg, #dc3545, #c82333); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 1.05rem; transition: all 0.3s;"
-              onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(220,53,69,0.5)'"
-              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-              🗑️ USUŃ TRWALE
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Focus na pole hasła
-    setTimeout(() => {
-      document.getElementById('deletePasswordInput').focus();
-    }, 100);
-    
-    // Obsługa Enter w polu hasła
-    document.getElementById('deletePasswordInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('confirmDeleteBtn').click();
-      }
-    });
-    
-    // Obsługa kliknięcia przycisku usuwania
-    document.getElementById('confirmDeleteBtn').onclick = async () => {
-      const password = document.getElementById('deletePasswordInput').value;
-      const errorDiv = document.getElementById('passwordError');
-      const passwordInput = document.getElementById('deletePasswordInput');
+    try {
+      await window.api.request(`/evidence/${evidenceId}`, {
+        method: 'DELETE'
+      });
       
-      if (!password) {
-        passwordInput.classList.add('shake-animation');
-        passwordInput.style.borderColor = '#dc3545';
-        errorDiv.textContent = '❌ Musisz wpisać hasło!';
-        errorDiv.style.display = 'block';
-        setTimeout(() => passwordInput.classList.remove('shake-animation'), 500);
-        return;
-      }
+      window.showNotification('✅ Dowód usunięty', 'success');
+      this.renderTab(this.currentCaseId);
       
-      // Disable przycisku podczas weryfikacji
-      const btn = document.getElementById('confirmDeleteBtn');
-      btn.disabled = true;
-      btn.style.opacity = '0.6';
-      btn.innerHTML = '⏳ Weryfikacja...';
-      
-      try {
-        // Usuń dowód z weryfikacją hasła
-        const response = await window.api.request(`/evidence/${evidenceId}`, {
-          method: 'DELETE',
-          body: {
-            password: password,
-            evidence_name: evidenceName,
-            evidence_code: evidenceCode
-          }
-        });
-        
-        // Zamknij modal
-        modal.remove();
-        
-        // Powiadomienie z szczegółami
-        const attachmentsCount = response.deleted_evidence?.attachments_deleted || 0;
-        const linksCount = response.deleted_evidence?.document_links_deleted || 0;
-        const details = attachmentsCount > 0 || linksCount > 0 
-          ? ` (+ ${attachmentsCount} załączników, ${linksCount} linków)`
-          : '';
-        window.showNotification(`✅ Dowód usunięty i zapisany w historii${details}`, 'success');
-        
-        // Odśwież listę
-        this.renderTab(this.currentCaseId);
-        
-        // Event bus
-        if (window.eventBus) {
-          window.eventBus.emit('evidence:deleted', { 
-            evidenceId, 
-            evidenceName, 
-            evidenceCode,
-            attachmentsDeleted: attachmentsCount,
-            linksDeleted: linksCount
-          });
-        }
-        
-      } catch (error) {
-        console.error('❌ Błąd usuwania:', error);
-        
-        // Sprawdź czy to błąd hasła
-        if (error.message && error.message.includes('hasł')) {
-          passwordInput.classList.add('shake-animation');
-          passwordInput.style.borderColor = '#dc3545';
-          passwordInput.value = '';
-          errorDiv.textContent = '❌ Nieprawidłowe hasło! Spróbuj ponownie.';
-          errorDiv.style.display = 'block';
-          setTimeout(() => passwordInput.classList.remove('shake-animation'), 500);
-          
-          // Re-enable przycisk
-          btn.disabled = false;
-          btn.style.opacity = '1';
-          btn.innerHTML = '🗑️ USUŃ TRWALE';
-          
-          // Focus z powrotem na pole
-          passwordInput.focus();
-        } else {
-          modal.remove();
-          alert('❌ Błąd: ' + error.message);
-        }
+      if (window.eventBus) {
+        window.eventBus.emit('evidence:deleted', { evidenceId });
       }
-    };
-    
-    // Zamknij modal klikając w tło
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        modal.remove();
-      }
-    });
+    } catch (error) {
+      console.error('❌ Błąd usuwania:', error);
+      alert('Błąd: ' + error.message);
+    }
   },
   
   // === POBIERZ ZAŁĄCZNIK ===
   async downloadAttachment(attachmentId, filename) {
     const token = localStorage.getItem('token');
-    const apiBaseUrl = window.api?.baseURL || window.getApiBaseUrl?.() || 'https://web-production-ef868.up.railway.app/api';
-    const downloadUrl = `${apiBaseUrl}/attachments/${attachmentId}/download?download=true`;
-    
-    console.log('⬇️ Pobieranie załącznika:', attachmentId, filename, downloadUrl);
+    const downloadUrl = `http://localhost:3500/api/attachments/${attachmentId}/download?download=true`;
     
     try {
       const response = await fetch(downloadUrl, {
@@ -2776,27 +2151,20 @@ const evidenceModule = {
   // === PODGLĄD ZLINKOWANEGO DOKUMENTU ===
   async viewLinkedDocument(docId, sourceType, filename) {
     const token = localStorage.getItem('token');
-    const apiBaseUrl = window.api?.baseURL || 'https://web-production-ef868.up.railway.app/api';
     let url;
     
     if (sourceType === 'document') {
-      url = `${apiBaseUrl}/documents/download/${docId}`;
+      url = `http://localhost:3500/api/documents/download/${docId}`;
     } else {
-      url = `${apiBaseUrl}/attachments/${docId}/download`;
+      url = `http://localhost:3500/api/attachments/${docId}/download`;
     }
-    
-    console.log('📄 Podgląd zlinkowanego dokumentu:', docId, sourceType, filename, url);
     
     try {
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (!response.ok) {
-        console.error('❌ Błąd pobierania:', response.status, response.statusText);
-        alert(`Nie można pobrać pliku. Plik może nie istnieć na serwerze.\n\nStatus: ${response.status}`);
-        return;
-      }
+      if (!response.ok) throw new Error('Błąd pobierania dokumentu');
       
       const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
@@ -2807,63 +2175,11 @@ const evidenceModule = {
       modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0,0,0,0.95); z-index: 10003; display: flex; justify-content: center; align-items: center; padding: 20px;';
       
       let contentHtml = '';
-      let iconEmoji = '📄';
       
       if (blob.type.includes('image')) {
-        iconEmoji = '🖼️';
         contentHtml = `<img src="${objectUrl}" style="max-width: 90vw; max-height: 85vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">`;
-      } else if (blob.type.includes('video')) {
-        iconEmoji = '🎥';
-        contentHtml = `
-          <video controls autoplay style="max-width: 90vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-            <source src="${objectUrl}" type="${blob.type}">
-            Twoja przeglądarka nie obsługuje odtwarzania wideo.
-          </video>
-        `;
-      } else if (blob.type.includes('audio')) {
-        iconEmoji = '🎵';
-        contentHtml = `
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; background: white; border-radius: 12px;">
-            <div style="font-size: 5rem; margin-bottom: 30px;">🎵</div>
-            <audio controls autoplay style="width: 100%; max-width: 500px;">
-              <source src="${objectUrl}" type="${blob.type}">
-              Twoja przeglądarka nie obsługuje odtwarzania audio.
-            </audio>
-          </div>
-        `;
       } else if (blob.type.includes('pdf')) {
         contentHtml = `<iframe src="${objectUrl}" style="width: 90vw; height: 85vh; border: none; border-radius: 8px;"></iframe>`;
-      } else if (blob.type.includes('text') || filename?.endsWith('.txt')) {
-        // Dla plików TXT - pokaż treść
-        iconEmoji = '📝';
-        try {
-          const text = await blob.text();
-          contentHtml = `
-            <div style="
-              background: white;
-              border: 4px solid #9333ea;
-              border-radius: 16px;
-              padding: 30px;
-              max-width: 90vw;
-              max-height: 80vh;
-              overflow-y: auto;
-              box-shadow: 0 8px 32px rgba(147,51,234,0.3);
-            ">
-              <pre style="
-                white-space: pre-wrap;
-                word-wrap: break-word;
-                font-family: 'Courier New', monospace;
-                font-size: 0.95rem;
-                line-height: 1.6;
-                color: #1a2332;
-                margin: 0;
-              ">${text}</pre>
-            </div>
-          `;
-        } catch (err) {
-          console.error('Błąd odczytu TXT:', err);
-          contentHtml = `<div style="color: white; padding: 40px;">Błąd odczytu pliku tekstowego</div>`;
-        }
       } else {
         // Dla innych plików - pobierz
         const a = document.createElement('a');
@@ -2872,7 +2188,6 @@ const evidenceModule = {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(objectUrl);
         return;
       }
       
@@ -2880,7 +2195,7 @@ const evidenceModule = {
         <div style="position: relative; max-width: 95vw; max-height: 95vh; display: flex; flex-direction: column;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 15px; background: white; border-radius: 12px;">
             <h3 style="margin: 0; color: #1a2332; display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.5rem;">${iconEmoji}</span>
+              <span style="font-size: 1.5rem;">📄</span>
               ${filename}
             </h3>
             <div style="display: flex; gap: 10px;">
@@ -2927,36 +2242,21 @@ const evidenceModule = {
   },
   
   // === PODGLĄD ZAŁĄCZNIKA ===
-  async previewAttachment(attachmentId, filename, mimetype) {
+  previewAttachment(attachmentId, filename, mimetype) {
     const token = localStorage.getItem('token');
-    const apiBaseUrl = window.api?.baseURL || window.getApiBaseUrl?.() || 'https://web-production-ef868.up.railway.app/api';
-    const fileUrl = `${apiBaseUrl}/attachments/${attachmentId}/download`;
-    
-    console.log('👁️ Podgląd załącznika:', attachmentId, filename);
-    console.log('   - apiBaseUrl:', apiBaseUrl);
-    console.log('   - fileUrl:', fileUrl);
-    console.log('   - token:', token ? 'OK' : 'BRAK');
+    const imageUrl = `http://localhost:3500/api/attachments/${attachmentId}/download`;
     
     const modal = document.createElement('div');
     modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0,0,0,0.95); z-index: 10002; display: flex; justify-content: center; align-items: center; padding: 20px;';
     
-    // Określ typ zawartości
-    const isVideo = mimetype && mimetype.includes('video');
-    const isAudio = mimetype && mimetype.includes('audio');
-    const isImage = mimetype && mimetype.includes('image');
-    const iconEmoji = isVideo ? '🎥' : isAudio ? '🎵' : '🖼️';
-    
     modal.innerHTML = `
       <div style="position: relative; max-width: 95vw; max-height: 95vh; background: white; border-radius: 12px; padding: 20px; display: flex; flex-direction: column;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
-          <h3 style="margin: 0; color: #1a2332;">${iconEmoji} ${filename}</h3>
+          <h3 style="margin: 0; color: #1a2332;">📷 ${filename}</h3>
           <button id="closePreviewBtn" style="background: #dc3545; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; font-weight: 600;">✕</button>
         </div>
-        <div id="previewContent" style="flex: 1; overflow: auto; display: flex; justify-content: center; align-items: center; min-height: 300px;">
-          <div style="text-align: center; color: #666;">
-            <div style="font-size: 2rem; animation: pulse 1.5s infinite;">⏳</div>
-            <div>Ładowanie...</div>
-          </div>
+        <div style="flex: 1; overflow: auto; display: flex; justify-content: center; align-items: center; min-height: 300px;">
+          <img id="previewImage" src="" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
         </div>
       </div>
     `;
@@ -2965,57 +2265,20 @@ const evidenceModule = {
     
     // Obsługa zamknięcia
     document.getElementById('closePreviewBtn').onclick = () => modal.remove();
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.remove();
-    });
     
-    try {
-      // Pobierz plik z autoryzacją
-      const response = await fetch(fileUrl, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Błąd pobierania: ${response.status}`);
-      }
-      
-      const blob = await response.blob();
+    // Pobierz obraz z autoryzacją
+    fetch(imageUrl, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(response => response.blob())
+    .then(blob => {
       const objectUrl = URL.createObjectURL(blob);
-      const contentDiv = document.getElementById('previewContent');
-      
-      if (blob.type.includes('video')) {
-        contentDiv.innerHTML = `
-          <video controls autoplay style="max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-            <source src="${objectUrl}" type="${blob.type}">
-            Twoja przeglądarka nie obsługuje odtwarzania wideo.
-          </video>
-        `;
-      } else if (blob.type.includes('audio')) {
-        contentDiv.innerHTML = `
-          <div style="text-align: center; padding: 40px;">
-            <div style="font-size: 5rem; margin-bottom: 20px;">🎵</div>
-            <audio controls autoplay style="width: 100%; max-width: 400px;">
-              <source src="${objectUrl}" type="${blob.type}">
-            </audio>
-          </div>
-        `;
-      } else {
-        contentDiv.innerHTML = `
-          <img src="${objectUrl}" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-        `;
-      }
-    } catch (err) {
-      console.error('❌ Błąd ładowania podglądu:', err);
-      
-      // Automatycznie otwórz w nowej karcie gdy fetch nie działa
-      console.log('🔄 Otwieram załącznik w nowej karcie...');
-      const token = localStorage.getItem('token');
-      const newTabUrl = `${fileUrl}?token=${token}`;
-      window.open(newTabUrl, '_blank');
-      
-      // Zamknij modal
-      modal.remove();
-    }
+      document.getElementById('previewImage').src = objectUrl;
+    })
+    .catch(err => {
+      console.error('Błąd ładowania podglądu:', err);
+      document.getElementById('previewImage').alt = 'Błąd ładowania obrazu';
+    });
     
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
@@ -3030,5 +2293,4 @@ window.renderEvidenceTab = (caseId) => evidenceModule.renderTab(caseId);
 window.evidenceModule = evidenceModule; // ✅ Eksport modułu do użycia w ankietach
 
 console.log('✅ Moduł dowodów gotowy do użycia');
-
 

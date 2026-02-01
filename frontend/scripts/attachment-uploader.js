@@ -166,34 +166,9 @@ class AttachmentUploader {
     const category = categoryInput ? categoryInput.value : (this.category || this.categories[0].value);
     formData.append('category', category);
     
-    // Pokaż okienko ładowania
-    const loadingModal = document.createElement('div');
-    loadingModal.id = 'uploadLoadingModal';
-    loadingModal.style.cssText = `
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85); display: flex; align-items: center;
-      justify-content: center; z-index: 10001;
-    `;
-    loadingModal.innerHTML = `
-      <div style="text-align: center; color: white;">
-        <div style="font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">📤</div>
-        <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 15px;">Wgrywanie pliku...</div>
-        <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; margin: 0 auto;">
-          <div style="width: 30%; height: 100%; background: linear-gradient(90deg, #4CAF50, #45a049); border-radius: 3px; animation: loadingBar 1.5s ease-in-out infinite;"></div>
-        </div>
-        <div style="margin-top: 15px; font-size: 0.9rem; opacity: 0.7;">Proszę czekać...</div>
-        <style>
-          @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-          @keyframes loadingBar { 0% { width: 0%; margin-left: 0%; } 50% { width: 60%; margin-left: 20%; } 100% { width: 0%; margin-left: 100%; } }
-        </style>
-      </div>
-    `;
-    document.body.appendChild(loadingModal);
-    
     try {
       const token = localStorage.getItem('token');
-      const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-      const response = await fetch(`${apiUrl}/api/attachments/upload`, {
+      const response = await fetch('http://localhost:3500/api/attachments/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -204,7 +179,6 @@ class AttachmentUploader {
       const data = await response.json();
       
       if (response.ok) {
-        loadingModal.remove();
         alert('✅ Załącznik został dodany!');
         
         // Wyczyść formularz
@@ -220,11 +194,9 @@ class AttachmentUploader {
           this.onSuccess(data);
         }
       } else {
-        loadingModal.remove();
         alert('❌ Błąd: ' + (data.error || 'Nieznany błąd'));
       }
     } catch (error) {
-      loadingModal.remove();
       console.error('❌ Błąd uploadu:', error);
       alert('❌ Błąd uploadu: ' + error.message);
     }
@@ -233,9 +205,8 @@ class AttachmentUploader {
   async loadAttachments() {
     try {
       const token = localStorage.getItem('token');
-      const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
       const response = await fetch(
-        `${apiUrl}/api/attachments?entity_type=${this.entityType}&entity_id=${this.entityId}`,
+        `http://localhost:3500/api/attachments?entity_type=${this.entityType}&entity_id=${this.entityId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -288,18 +259,9 @@ class AttachmentUploader {
               <td class="attachment-date">${this.formatDate(att.uploaded_at)}</td>
               <td class="attachment-actions">
                 <button 
-                  class="btn btn-sm btn-view" 
-                  onclick="viewAttachment(${att.id})"
-                  title="Pokaż"
-                  style="background: #FFD700; color: #1a2332; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-weight: 600;"
-                >
-                  👁️
-                </button>
-                <button 
                   class="btn btn-sm btn-download" 
                   onclick="downloadAttachment(${att.id})"
                   title="Pobierz"
-                  style="background: #2196F3; color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-weight: 600;"
                 >
                   ⬇️
                 </button>
@@ -307,7 +269,6 @@ class AttachmentUploader {
                   class="btn btn-sm btn-delete" 
                   onclick="deleteAttachment(${att.id}, '${this.containerId}')"
                   title="Usuń"
-                  style="background: #f44336; color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-weight: 600;"
                 >
                   🗑️
                 </button>
@@ -334,46 +295,10 @@ class AttachmentUploader {
 }
 
 // Funkcje globalne dla akcji
-window.viewAttachment = function(attachmentId) {
-  // Użyj funkcji z CRM Manager jeśli dostępna
-  if (window.crmManager && window.crmManager.viewDocument) {
-    window.crmManager.viewDocument(attachmentId, null, 'attachment');
-  } else {
-    // Fallback - otwórz w nowej karcie
-    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-    const token = localStorage.getItem('token');
-    window.open(`${apiUrl}/api/attachments/${attachmentId}/download?token=${token}`, '_blank');
-  }
-};
-
 window.downloadAttachment = async function(attachmentId) {
-  // Pokaż okienko ładowania
-  const loadingModal = document.createElement('div');
-  loadingModal.id = 'downloadLoadingModal';
-  loadingModal.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.85); display: flex; align-items: center;
-    justify-content: center; z-index: 10001;
-  `;
-  loadingModal.innerHTML = `
-    <div style="text-align: center; color: white;">
-      <div style="font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">⬇️</div>
-      <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 15px;">Pobieranie pliku...</div>
-      <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; margin: 0 auto;">
-        <div style="width: 30%; height: 100%; background: linear-gradient(90deg, #2196F3, #1976D2); border-radius: 3px; animation: loadingBar 1.5s ease-in-out infinite;"></div>
-      </div>
-      <style>
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-        @keyframes loadingBar { 0% { width: 0%; margin-left: 0%; } 50% { width: 60%; margin-left: 20%; } 100% { width: 0%; margin-left: 100%; } }
-      </style>
-    </div>
-  `;
-  document.body.appendChild(loadingModal);
-  
   try {
     const token = localStorage.getItem('token');
-    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-    const response = await fetch(`${apiUrl}/api/attachments/${attachmentId}/download?download=true`, {
+    const response = await fetch(`http://localhost:3500/api/attachments/${attachmentId}/download`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -384,7 +309,7 @@ window.downloadAttachment = async function(attachmentId) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = response.headers.get('content-disposition')?.split('filename=')[1]?.replace(/['"]/g, '') || 'attachment';
+      a.download = response.headers.get('content-disposition')?.split('filename=')[1] || 'attachment';
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -395,8 +320,6 @@ window.downloadAttachment = async function(attachmentId) {
   } catch (error) {
     console.error('❌ Błąd pobierania:', error);
     alert('❌ Błąd pobierania: ' + error.message);
-  } finally {
-    loadingModal.remove();
   }
 };
 
@@ -407,8 +330,7 @@ window.deleteAttachment = async function(attachmentId, containerId) {
   
   try {
     const token = localStorage.getItem('token');
-    const apiUrl = window.getApiBaseUrl ? window.getApiBaseUrl() : 'https://web-production-ef868.up.railway.app';
-    const response = await fetch(`${apiUrl}/api/attachments/${attachmentId}`, {
+    const response = await fetch(`http://localhost:3500/api/attachments/${attachmentId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -435,4 +357,3 @@ window.attachmentUploaders = window.attachmentUploaders || {};
 
 // Eksportuj klasę
 window.AttachmentUploader = AttachmentUploader;
-

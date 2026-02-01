@@ -79,7 +79,7 @@ function createWindow() {
         },
         {
           label: 'Dokumentacja',
-          click: () => require('electron').shell.openExternal('https://kancelaria-pro-meritum.pl/pomoc')
+          click: () => require('electron').shell.openExternal('https://e-pgw.pl/kontakt')
         }
       ]
     }

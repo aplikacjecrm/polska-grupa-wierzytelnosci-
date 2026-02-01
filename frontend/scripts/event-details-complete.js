@@ -4,29 +4,6 @@
 console.log('📋 Event Details Complete - Ładowanie...');
 
 window.viewEventDetails = async function(eventId) {
-    // Pokaż okienko ładowania
-    const loadingModal = document.createElement('div');
-    loadingModal.id = 'eventLoadingModal';
-    loadingModal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.85); display: flex; align-items: center;
-        justify-content: center; z-index: 10000;
-    `;
-    loadingModal.innerHTML = `
-        <div style="text-align: center; color: white;">
-            <div style="font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">📅</div>
-            <div style="font-size: 1.3rem; font-weight: 600; margin-bottom: 15px;">Ładowanie wydarzenia...</div>
-            <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; margin: 0 auto;">
-                <div style="width: 30%; height: 100%; background: linear-gradient(90deg, #FFD700, #d4af37); border-radius: 3px; animation: loadingBar 1.5s ease-in-out infinite;"></div>
-            </div>
-            <style>
-                @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-                @keyframes loadingBar { 0% { width: 0%; margin-left: 0%; } 50% { width: 60%; margin-left: 20%; } 100% { width: 0%; margin-left: 100%; } }
-            </style>
-        </div>
-    `;
-    document.body.appendChild(loadingModal);
-    
     try {
         console.log(`📋 Ładuję szczegóły wydarzenia ID: ${eventId}`);
         
@@ -35,8 +12,6 @@ window.viewEventDetails = async function(eventId) {
         const event = response.event;
         
         if (!event) {
-            const loadingEl = document.getElementById('eventLoadingModal');
-            if (loadingEl) loadingEl.remove();
             alert('❌ Nie znaleziono wydarzenia');
             return;
         }
@@ -265,14 +240,6 @@ window.viewEventDetails = async function(eventId) {
             `;
         };
         
-        // Płynne przejście z ładowania do modala
-        const loadingEl = document.getElementById('eventLoadingModal');
-        if (loadingEl) {
-            loadingEl.style.transition = 'opacity 0.3s ease';
-            loadingEl.style.opacity = '0';
-            setTimeout(() => loadingEl.remove(), 300);
-        }
-        
         // Stwórz modal
         const modal = document.createElement('div');
         modal.id = 'eventDetailsModal';
@@ -287,6 +254,7 @@ window.viewEventDetails = async function(eventId) {
             display: flex;
             align-items: center;
             justify-content: center;
+            animation: fadeIn 0.3s;
         `;
         
         modal.innerHTML = `
@@ -395,24 +363,7 @@ window.viewEventDetails = async function(eventId) {
         
         document.body.appendChild(modal);
         
-        // Płynne pojawienie się modala
-        const modalContent = modal.querySelector('div');
-        if (modalContent) {
-            modalContent.style.opacity = '0';
-            modalContent.style.transform = 'scale(0.95)';
-            modalContent.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-            
-            requestAnimationFrame(() => {
-                modalContent.style.opacity = '1';
-                modalContent.style.transform = 'scale(1)';
-            });
-        }
-        
     } catch (error) {
-        // Usuń okienko ładowania w przypadku błędu
-        const loadingEl = document.getElementById('eventLoadingModal');
-        if (loadingEl) loadingEl.remove();
-        
         console.error('❌ Błąd ładowania szczegółów wydarzenia:', error);
         alert('❌ Błąd: ' + error.message);
     }

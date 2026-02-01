@@ -10,7 +10,7 @@ class SocketManager {
             this.socket.disconnect();
         }
 
-        this.socket = io('https://web-production-ef868.up.railway.app');
+        this.socket = io('http://localhost:3500');
 
         this.socket.on('connect', () => {
             console.log('✅ Połączono z serwerem Socket.IO');
@@ -134,4 +134,3 @@ class SocketManager {
 }
 
 const socketManager = new SocketManager();
-

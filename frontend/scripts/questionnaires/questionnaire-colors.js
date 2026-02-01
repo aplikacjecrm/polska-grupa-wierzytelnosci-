@@ -95,7 +95,7 @@ window.questionnaireColors = {
 window.getQuestionnaireStyles = () => window.questionnaireColors;
 
 console.log('✅ Schemat kolorystyczny ankiet załadowany!');
-console.log('🎨 Kolory Pro Meritum:');
+console.log('🎨 Kolory E-PGW:');
 console.log('   - Złoty:', window.questionnaireColors.brand.gold);
 console.log('   - Ciemnoniebieski:', window.questionnaireColors.brand.darkBlue);
 console.log('   - Granatowy:', window.questionnaireColors.brand.navy);
